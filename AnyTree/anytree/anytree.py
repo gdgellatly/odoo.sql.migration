@@ -35,9 +35,12 @@ parser.add_argument('-x', '--excluded', nargs='+', help="One or many models"
 
 args = parser.parse_args()
 
-username = args.user_from
-pwd = args.pwd_from
-dbname = args.db_name_from
+username_from = args.user_from
+username_to = args.user_to
+pwd_from = args.pwd_from
+pwd_to = args.pwd_to
+dbname_from = args.db_name_from
+dbname_to = args.db_name_to
 models = args.models
 excluded_models = args.excluded
 
@@ -107,23 +110,30 @@ def get_ordre_importation(username, pwd, dbname, models, excluded_models,
     return res
 
 
-def get_mapping_migration(username, pwd, dbname, model):
+def get_mapping_migration(username_from, username_to, pwd_from, pwd_to, dbname_from, dbname_to, model):
 
     #conn = psycopg2.connect(database=dbname, user='fjouatte', password='')
     #cur = conn.cursor()
-    sock_common = xmlrpclib.ServerProxy('http://localhost:8069/xmlrpc/common')
-    uid = sock_common.login(dbname, username, pwd)
-    sock = xmlrpclib.ServerProxy('http://localhost:8069/xmlrpc/object')
+    sock_common_from = xmlrpclib.ServerProxy('http://localhost:8069/xmlrpc/common')
+    uid_from = sock_common_from.login(dbname_from, username_from, pwd_from)
+    sock_from = xmlrpclib.ServerProxy('http://localhost:8069/xmlrpc/object')
+    sock_common_to = xmlrpclib.ServerProxy('http://localhost:8069/xmlrpc/common')
+    uid_to = sock_common_to.login(dbname_to, username_to, pwd_to)
+    sock_to = xmlrpclib.ServerProxy('http://localhost:8069/xmlrpc/object')
+    
+    
     for m in model:
-	import pdb
-	pdb.set_trace()
         #m = m.replace('.', '_')
-        records = sock.execute(dbname, uid, pwd, 'ir.model.data', 'search',
+        records = sock_from.execute(dbname_from, uid_from, pwd_from, 'ir.model.data', 'search',
                                [('model', '=', m)])
         if records :
-		xml_ids = sock.execute(dbname, uid, pwd, 'ir.model.data',
-			  	       'read', )
+		import pdb
+		pdb.set_trace()
+		xml_ids = sock_to.execute(dbname_from, uid_from, pwd_from, 'ir.model.data',
+			  	       'read', records, ['name'])
 	print(records)
+	print(xml_ids)
+
         #select_query = "SELECT * FROM %s;" %m
         #cur.execute(select_query)
         #cur.fetchone()
@@ -131,5 +141,5 @@ def get_mapping_migration(username, pwd, dbname, model):
     #cur.close()
     #conn.close()
 
-get_mapping_migration(username, pwd, dbname, models)
+get_mapping_migration(username_from, username_to, pwd_from, pwd_to, dbname_from, dbname_to, models)
 #get_ordre_importation(username, pwd, dbname, models, excluded_models)
