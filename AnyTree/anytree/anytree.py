@@ -12,23 +12,32 @@ parser = argparse.ArgumentParser(description='Return the dependencies order'
 
 parser.add_argument('-m', '--models', nargs='+', help="One or many models",
                     required=True)
-parser.add_argument('-d', '--db_name',
-                    help="Name of the database to connect to",
+parser.add_argument('-df', '--db_name_from',
+                    help="Name of the database to migrate data from",
                     required=True)
-parser.add_argument('-u', '--user',
-                    help="Name of the user to log into the database with",
+parser.add_argument('-dt', '--db_name_to',
+		    help="Name of the database to migrate data to",
+		    required=False) # Temporary, will be required
+parser.add_argument('-ut', '--user_to',
+		    help="Name of the user of the database aimed",
+		    required=False) # Temporay, will be required
+parser.add_argument('-uf', '--user_from',
+                    help="Name of the user of the database source",
                     required=True)
-parser.add_argument('-p', '--pwd',
-                    help="Password of the previous user",
+parser.add_argument('-pf', '--pwd_from',
+                    help="Password of the user of the database source",
                     required=True)
+parser.add_argument('-pt', '--pwd_to',
+		    help="Password of the user of the database aimed",
+		    required=False) # Temporary, will be required
 parser.add_argument('-x', '--excluded', nargs='+', help="One or many models"
                     " to exclude", required=False, default=None)
 
 args = parser.parse_args()
 
-username = args.user
-pwd = args.pwd
-dbname = args.db_name
+username = args.user_from
+pwd = args.pwd_from
+dbname = args.db_name_from
 models = args.models
 excluded_models = args.excluded
 
@@ -106,10 +115,15 @@ def get_mapping_migration(username, pwd, dbname, model):
     uid = sock_common.login(dbname, username, pwd)
     sock = xmlrpclib.ServerProxy('http://localhost:8069/xmlrpc/object')
     for m in model:
+	import pdb
+	pdb.set_trace()
         #m = m.replace('.', '_')
         records = sock.execute(dbname, uid, pwd, 'ir.model.data', 'search',
                                [('model', '=', m)])
-        print(records)
+        if records :
+		xml_ids = sock.execute(dbname, uid, pwd, 'ir.model.data',
+			  	       'read', )
+	print(records)
         #select_query = "SELECT * FROM %s;" %m
         #cur.execute(select_query)
         #cur.fetchone()
