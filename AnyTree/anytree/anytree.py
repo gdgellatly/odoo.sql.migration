@@ -16,11 +16,11 @@ parser.add_argument('-df', '--db_name_from',
                     help="Name of the database to migrate data from",
                     required=True)
 parser.add_argument('-dt', '--db_name_to',
-		    help="Name of the database to migrate data to",
-		    required=False) # Temporary, will be required
+                    help="Name of the database to migrate data to",
+                    required=False)  # Temporary, will be required
 parser.add_argument('-ut', '--user_to',
-		    help="Name of the user of the database aimed",
-		    required=False) # Temporay, will be required
+                    help="Name of the user of the database aimed",
+                    required=False)  # Temporay, will be required
 parser.add_argument('-uf', '--user_from',
                     help="Name of the user of the database source",
                     required=True)
@@ -28,8 +28,8 @@ parser.add_argument('-pf', '--pwd_from',
                     help="Password of the user of the database source",
                     required=True)
 parser.add_argument('-pt', '--pwd_to',
-		    help="Password of the user of the database aimed",
-		    required=False) # Temporary, will be required
+                    help="Password of the user of the database aimed",
+                    required=False)  # Temporary, will be required
 parser.add_argument('-x', '--excluded', nargs='+', help="One or many models"
                     " to exclude", required=False, default=None)
 
@@ -110,36 +110,47 @@ def get_ordre_importation(username, pwd, dbname, models, excluded_models,
     return res
 
 
-def get_mapping_migration(username_from, username_to, pwd_from, pwd_to, dbname_from, dbname_to, model):
-
-    #conn = psycopg2.connect(database=dbname, user='fjouatte', password='')
-    #cur = conn.cursor()
+def get_mapping_migration(username_from, username_to, pwd_from, pwd_to,
+                          dbname_from, dbname_to, model):
     sock_common_from = xmlrpclib.ServerProxy('http://localhost:8069/xmlrpc/common')
     uid_from = sock_common_from.login(dbname_from, username_from, pwd_from)
     sock_from = xmlrpclib.ServerProxy('http://localhost:8069/xmlrpc/object')
-    sock_common_to = xmlrpclib.ServerProxy('http://localhost:8069/xmlrpc/common')
+    sock_common_to = xmlrpclib.ServerProxy('http://localhost:8169/xmlrpc/common')
     uid_to = sock_common_to.login(dbname_to, username_to, pwd_to)
-    sock_to = xmlrpclib.ServerProxy('http://localhost:8069/xmlrpc/object')
-    
-    
+    sock_to = xmlrpclib.ServerProxy('http://localhost:8169/xmlrpc/object')
     for m in model:
-        #m = m.replace('.', '_')
-        records = sock_from.execute(dbname_from, uid_from, pwd_from, 'ir.model.data', 'search',
-                               [('model', '=', m)])
-        if records :
-		import pdb
-		pdb.set_trace()
-		xml_ids = sock_to.execute(dbname_from, uid_from, pwd_from, 'ir.model.data',
-			  	       'read', records, ['name'])
-	print(records)
-	print(xml_ids)
+        records_source = sock_from.execute(dbname_from, uid_from, pwd_from,
+                                           'ir.model.data', 'search',
+                                           [('model', '=', m)])
+        if records_source:
+            xml_ids_source = sock_from.execute(dbname_from, uid_from, pwd_from,
+                                               'ir.model.data',
+                                               'read', records_source, ['name', 'res_id'])
+            if xml_ids_source:
+                records_cible = []
+                for xml_id in xml_ids_source:
+                    records_cible += sock_to.execute(dbname_to, uid_to, pwd_to,
+                                                     'ir.model.data',
+                                                     'search',
+                                                     [('name', '=',
+                                                     xml_id['name'])])
 
-        #select_query = "SELECT * FROM %s;" %m
-        #cur.execute(select_query)
-        #cur.fetchone()
-    #conn.commit()
-    #cur.close()
-    #conn.close()
+        if records_cible:
+            xml_ids_cible = sock_to.execute(dbname_to, uid_to, pwd_to,
+                                            'ir.model.data',
+                                            'read', records_cible,
+                                            ['name', 'res_id'])
+
+            for xml_id_cible in xml_ids_cible:
+                for xml_id_source in xml_ids_source:
+                    if xml_id_cible['res_id'] ==  xml_id_source['res_id']:
+                        print('XML ID CORRESPONDANT')
+                    else:
+                        print('RES_ID DIFFERENT')
+
+    print(xml_ids_source)
+    print
+    print(xml_ids_cible)
 
 get_mapping_migration(username_from, username_to, pwd_from, pwd_to, dbname_from, dbname_to, models)
 #get_ordre_importation(username, pwd, dbname, models, excluded_models)
