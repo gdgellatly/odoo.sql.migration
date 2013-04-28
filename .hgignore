@@ -3,3 +3,4 @@ sandbox/
 .*\.pyc$
 AnyTree/PyYAML.*
 AnyTree/AnyTree.egg-info/
+AnyTree/psycopg2

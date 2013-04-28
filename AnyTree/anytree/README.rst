@@ -51,7 +51,7 @@ Given a source table or csv file, this mapping should be able to return the targ
 We read the mapping:
 
     >>> from anytree.mapping import Mapping
-    >>> import anytree
+    >>> import os, anytree
     >>> from os.path import join, dirname
     >>> test_file = join(dirname(anytree.mapping.__file__), 'test', 'test_mapping.yml')
     >>> mapping = Mapping(['base'], test_file)
@@ -107,13 +107,14 @@ Exporting CSV data
 
 We must be able to export the source tables :
 
-    >>> source_tables = ['res_users', 'res_partner', 'mail_alias']
+    >>> source_tables = ['res_users', 'res_partner']
     >>> from anytree import exporting
     >>> from tempfile import mkdtemp
     >>> destination_dir = mkdtemp()
-    >>> exporting.export_tables(source_tables, dest=destination_dir)
-    >>> ordered(os.listdir(destination_dir))
-    ['mail_alias.csv', 'res_partner.csv', 'res_users.csv']
+    >>> exporting.export_tables(source_tables, dest_dir=destination_dir, db="test")
+    >>> sorted(os.listdir(destination_dir))
+    ['res_partner.csv', 'res_users.csv']
+    >>> import shutil; shutil.rmtree(destination_dir)
 
 Processing and importing the CSV files
 ======================================
