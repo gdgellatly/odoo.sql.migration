@@ -114,7 +114,6 @@ We must be able to export the source tables :
     >>> exporting.export_tables(source_tables, dest_dir=destination_dir, db="test")
     >>> sorted(os.listdir(destination_dir))
     ['res_partner.csv', 'res_users.csv']
-    >>> import shutil; shutil.rmtree(destination_dir)
 
 Processing and importing the CSV files
 ======================================
@@ -125,6 +124,10 @@ or before importing, foreign keys should be applied an offset?
 Now we can import a csv file using the mapping:
 
     >>> from anytree import importing
-    >>> importing.import_csv(join(destination_dir, 'mail_alias.csv')
+    >>> importing.import_csv(join(destination_dir, 'res_users.csv'))
+    Traceback (most recent call last):
+    ...
+    IntegrityError: ...
+    >>> import shutil; shutil.rmtree(destination_dir)
 
 

@@ -7,6 +7,7 @@ def export_tables(source_tables, db=None, user='admin', pwd='admin', dest_dir=No
     """
     connection = psycopg2.connect("dbname=%s" % db)
     cursor = connection.cursor()
-    for table in source_tables:
-        with open(join(dest_dir, table + '.csv'), 'w') as f:
-            cursor.copy_to(f, table)
+    with connection.cursor() as cursor:
+        for table in source_tables:
+            with open(join(dest_dir, table + '.csv'), 'w') as f:
+                cursor.copy_to(f, table)
