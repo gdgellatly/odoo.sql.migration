@@ -1,5 +1,5 @@
 import unittest
-from AnyTree.anytree import anytree
+from anytree import anytree
 
 
 class TestResolvingTree(unittest.TestCase):

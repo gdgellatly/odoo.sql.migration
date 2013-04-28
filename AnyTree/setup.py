@@ -11,4 +11,5 @@ setup(
     install_requires=[
         "openobject-library < 2.0",
     ],
+    test_suite = 'anytree.test.load_tests',
 )

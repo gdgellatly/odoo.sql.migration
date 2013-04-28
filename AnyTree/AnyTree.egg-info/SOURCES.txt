@@ -1,9 +1,0 @@
-setup.py
-AnyTree.egg-info/PKG-INFO
-AnyTree.egg-info/SOURCES.txt
-AnyTree.egg-info/dependency_links.txt
-AnyTree.egg-info/requires.txt
-AnyTree.egg-info/top_level.txt
-anytree/__init__.py
-anytree/anytree.py
-anytree/test/__init__.py
