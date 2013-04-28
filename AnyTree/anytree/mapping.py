@@ -18,6 +18,18 @@ class Mapping(object):
                 self.mapping.setdefault(src_column, dest_columns)
                 self.mapping[src_column].update(dest_columns)
 
+        # compute the output columns
+        out_columns = []
+        for values in self.mapping.values():
+            out_columns.extend(values.keys())
+        self.out_columns = {}
+        for column in out_columns:
+            table = column.split('.')[0]
+            column = column.split('.')[1]
+            if table not in self.out_columns:
+                self.out_columns[table] = set()
+            self.out_columns[table].add(column)
+
     def get_targets(self, source):
         """ Return the target mapping for a column or table
         """

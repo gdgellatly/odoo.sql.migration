@@ -10,6 +10,8 @@ base:
         res_partner.id: return lines['res_partner_address']['partner_id']
     res_partner.date:
         res_partner.login_date:
+    res_partner.name:
+        res_partner.name:
     res_partner_address.name:
         res_partner.name:
     res_partner_address.partner_id:

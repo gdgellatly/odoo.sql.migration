@@ -88,13 +88,23 @@ And the target tables and fields from a source field:
      'res_users.name': "return lines['res_users']['login'].lower()"}
 
 
-The mapping shows only unexpected mappings: if all the fields and columns are the same, the mapping is empy.
+The mapping is explicit: all the target columns is present.
+It also allows to compute the output columns:
+
+    >>> pprint(mapping.out_columns, width=1)
+    {'mail_alias': set(['alias']),
+     'res_partner': set(['id',
+                         'login_date',
+                         'name',
+                         'parent_id']),
+     'res_users': set(['name'])}
 
     >>> mapping = Mapping(['base'], test_file)
 
 This means the 'name' column is unchanged:
 
     >>> mapping.get_targets('res_partner.name')
+    {'res_partner.name': None}
 
 this means: the 'date' column is renamed to login_date:
 
@@ -115,8 +125,21 @@ We must be able to export the source tables :
     >>> sorted(os.listdir(destination_dir))
     ['res_partner.csv', 'res_users.csv']
 
-Processing and importing the CSV files
-======================================
+Processing csv files
+====================
+
+The exported csv files should now be processed with the mapping, so that new
+csv files be generated
+
+    >>> from anytree.processing import CSVProcessor
+    >>> processor = CSVProcessor(mapping)
+    >>> processor.process(join(destination_dir, 'res_users.csv'))
+    >>> sorted(os.listdir(destination_dir))
+    ['res_partner.csv', 'res_users.csv', 'res_users.out.csv']
+
+
+Importing the CSV files
+=======================
 
 Before importing, existing init data should be matched to csv data if possible.
 or before importing, foreign keys should be applied an offset?
