@@ -50,10 +50,11 @@ Given a source table or csv file, this mapping should be able to return the targ
 
 We read the mapping:
 
-    >>> from anytree import mapping
+    >>> from anytree.mapping import Mapping
+    >>> import anytree
     >>> from os.path import join, dirname
-    >>> test_file = join(dirname(mapping.__file__), 'test', 'test_mapping.yml')
-    >>> mapping = mapping.Mapping(['base'], test_file)
+    >>> test_file = join(dirname(anytree.mapping.__file__), 'test', 'test_mapping.yml')
+    >>> mapping = Mapping(['base'], test_file)
 
 After selecting a target table, a mapping is constructed from the different
 mappings contained in the different modules, and gives the target tables and
@@ -73,34 +74,32 @@ And the target tables and fields from a source field:
 
     >>> from pprint import pprint
     >>> pprint(mapping.get_targets('res_users.login'), width=1)
-    {'res_users': {
-        'login': None
-        'name' "return lines['res_users']['login'].lower()"
-     'res_partner': {
-        'name': "return lines['res_users']['login']"},
-    }
+    {'res_partner.name': "return lines['res_users']['login']",
+     'res_users.name': "return lines['res_users']['login'].lower()"}
 
-    >>> pprint(mapping.get_targets('res_users', 'address_id'), width=1)
-    {'res_partner': 'id'}
 
-    >>> mapping = mapping.Mapping(['base', 'mail'], test_file)
+    >>> pprint(mapping.get_targets('res_users.address_id'), width=1)
+    {'res_partner.id': "return lines['res_users']['address_id']"}
+
+    >>> mapping = Mapping(['base', 'mail'], test_file)
     >>> pprint(mapping.get_targets('res_users.login'), width=1)
-    {'res_users': {
-        'login': None
-        'name' "return lines['res_users']['login'].lower()"
-     'res_partner': {
-        'name': "return lines['res_users']['login']"},
-     'mail_alias': {
-        'alias': "return lines['res_users']['login']"},
-    }
+    {'mail_alias.alias': "return lines['res_users']['login']",
+     'res_partner.name': "return lines['res_users']['login']",
+     'res_users.name': "return lines['res_users']['login'].lower()"}
+
 
 The mapping shows only unexpected mappings: if all the fields and columns are the same, the mapping is empy.
 
-    >>> mapping = mapping.Mapping(['base'], test_file)
-    >>> mapping.get_targets(['base'], 'res_partner.name')
-    >>> mapping.get_targets(['base'], 'res_partner.date')
-    {'res_partner': 'login_date'}
+    >>> mapping = Mapping(['base'], test_file)
 
+This means the 'name' column is unchanged:
+
+    >>> mapping.get_targets('res_partner.name')
+
+this means: the 'date' column is renamed to login_date:
+
+    >>> mapping.get_targets('res_partner.date')
+    {'res_partner.login_date': None}
 
 
 Exporting CSV data

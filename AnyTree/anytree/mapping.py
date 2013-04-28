@@ -14,13 +14,15 @@ class Mapping(object):
         # filter to keep only wanted modules
         self.mapping = {}
         for module in modules:
-            self.mapping.update(full_mapping[module])
+            for src_column, dest_columns in full_mapping[module].items():
+                self.mapping.setdefault(src_column, dest_columns)
+                self.mapping[src_column].update(dest_columns)
 
     def get_targets(self, source):
         """ Return the target mapping for a column or table
         """
         if '.' in source:  # asked for a column
-            pass
+            return self.mapping.get(source, None)
         else:  # asked for a table
             self.target_tables = set()
             target_fields = [t[1] for t in self.mapping.items() if t[0].split('.')[0] == source]
