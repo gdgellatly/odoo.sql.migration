@@ -1,2 +1,5 @@
 sandbox/
 .*\.swp$
+.*\.pyc$
+AnyTree/PyYAML.*
+AnyTree/AnyTree.egg-info/

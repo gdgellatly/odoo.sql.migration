@@ -1,13 +1,17 @@
 base:
     res_users.login:
-        res_users.login:
         res_users.name: return lines['res_users']['login'].lower()
         res_partner.name: return lines['res_users']['login']
     res_users.partner_id:
         res_partner.id: return lines['res_users']['partner_id']
     res_partner.address_id:
         res_partner.id: return lines['res_partner_address']['partner_id']
-    res_partner.date: res_partner.login_date
+    res_partner.date:
+        res_partner.login_date:
+    res_partner_address.name:
+        res_partner.name:
+    res_partner_address.partner_id:
+        res_partner.parent_id:
 mail:
     res_users.login:
         mail_alias.alias: return lines['res_users']['login']

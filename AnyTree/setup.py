@@ -10,6 +10,7 @@ setup(
     description='Resolving dependencies tree',
     install_requires=[
         "openobject-library < 2.0",
+        "PyYAML",
     ],
     test_suite = 'anytree.test.load_tests',
 )

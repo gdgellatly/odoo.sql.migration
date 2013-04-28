@@ -36,7 +36,7 @@ keys: 'res_partner', 'mail_alias', etc.  When importing 'res_users', we must
 also import the dependent child tables.  So we must get a list of tables to
 import, and this list should be ordered so we get the child tables first.
 
->>> 
+>>>
 
 
 Building a mapping
@@ -53,7 +53,7 @@ We read the mapping:
     >>> from anytree import mapping
     >>> from os.path import join, dirname
     >>> test_file = join(dirname(mapping.__file__), 'test', 'test_mapping.yml')
-    >>> mapping = mapping.Mapping(test_file)
+    >>> mapping = mapping.Mapping(['base'], test_file)
 
 After selecting a target table, a mapping is constructed from the different
 mappings contained in the different modules, and gives the target tables and
@@ -61,25 +61,30 @@ fields, given a source table.
 
 Now we can get the target tables from a source table, given a module:
 
-    >>> mapping.get_targets(['base'], 'res_users')
-    ['res_users', 'res_partner', 'mail_alias']
+    >>> mapping.get_targets('res_users')
+    ['res_users', 'res_partner']
 
 Or the source tables from a target table:
 
-    >>> mapping.get_sources(['base'], 'res_partner')
-    ['res_partner', 'res_partner_address']
+    >>> mapping.get_sources('res_partner')
+    ['res_partner', 'res_partner_address', 'res_users']
 
 And the target tables and fields from a source field:
 
     >>> from pprint import pprint
-    >>> pprint(mapping.get_targets(['base'], 'res_users.login'), width=1)
+    >>> pprint(mapping.get_targets('res_users.login'), width=1)
     {'res_users': {
         'login': None
         'name' "return lines['res_users']['login'].lower()"
      'res_partner': {
         'name': "return lines['res_users']['login']"},
     }
-    >>> pprint(mapping.get_targets(['base' 'mail'], 'res_users.login'), width=1)
+
+    >>> pprint(mapping.get_targets('res_users', 'address_id'), width=1)
+    {'res_partner': 'id'}
+
+    >>> mapping = mapping.Mapping(['base', 'mail'], test_file)
+    >>> pprint(mapping.get_targets('res_users.login'), width=1)
     {'res_users': {
         'login': None
         'name' "return lines['res_users']['login'].lower()"
@@ -89,11 +94,9 @@ And the target tables and fields from a source field:
         'alias': "return lines['res_users']['login']"},
     }
 
-    >>> pprint(mapping.get_targets(['base'], 'res_users', 'address_id'), width=1)
-    {'res_partner': 'id'}
-
 The mapping shows only unexpected mappings: if all the fields and columns are the same, the mapping is empy.
 
+    >>> mapping = mapping.Mapping(['base'], test_file)
     >>> mapping.get_targets(['base'], 'res_partner.name')
     >>> mapping.get_targets(['base'], 'res_partner.date')
     {'res_partner': 'login_date'}
