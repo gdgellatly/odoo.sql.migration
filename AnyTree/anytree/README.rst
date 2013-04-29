@@ -74,30 +74,31 @@ And the target tables and fields from a source field:
 
     >>> from pprint import pprint
     >>> pprint(mapping.get_targets('res_users.login'), width=1)
-    {'res_partner.name': "return lines['res_users']['login']",
-     'res_users.name': "return lines['res_users']['login'].lower()"}
+    {'res_partner.name': <function mapping_function at ...,
+     'res_users.name': <function mapping_function at ...}
 
 
     >>> pprint(mapping.get_targets('res_users.address_id'), width=1)
-    {'res_partner.id': "return lines['res_users']['address_id']"}
+    {'res_partner.id': <function mapping_function at ...}
 
     >>> mapping = Mapping(['base', 'mail'], test_file)
     >>> pprint(mapping.get_targets('res_users.login'), width=1)
-    {'mail_alias.alias': "return lines['res_users']['login']",
-     'res_partner.name': "return lines['res_users']['login']",
-     'res_users.name': "return lines['res_users']['login'].lower()"}
+    {'mail_alias.alias': <function mapping_function at ...,
+     'res_partner.name': <function mapping_function at ...,
+     'res_users.name': <function mapping_function at ...}
 
 
 The mapping is explicit: all the target columns is present.
 It also allows to compute the output columns:
 
-    >>> pprint(mapping.out_columns, width=1)
+    >>> pprint(mapping.dst_columns, width=1)
     {'mail_alias': set(['alias']),
      'res_partner': set(['id',
                          'login_date',
                          'name',
                          'parent_id']),
-     'res_users': set(['name'])}
+     'res_users': set(['id',
+                       'name'])}
 
     >>> mapping = Mapping(['base'], test_file)
 
@@ -135,7 +136,9 @@ csv files be generated
     >>> processor = CSVProcessor(mapping)
     >>> processor.process(join(destination_dir, 'res_users.csv'))
     >>> sorted(os.listdir(destination_dir))
-    ['res_partner.csv', 'res_users.csv', 'res_users.out.csv']
+    ['res_partner.csv', 'res_partner.out.csv', 'res_users.csv', 'res_users.out.csv']
+    >>> open(join(destination_dir, 'res_users.out.csv')).readline()
+    'name,id\r\n'
 
 
 Importing the CSV files

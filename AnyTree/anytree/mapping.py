@@ -1,3 +1,4 @@
+# coding: utf-8
 import yaml
 
 
@@ -19,16 +20,28 @@ class Mapping(object):
                 self.mapping[src_column].update(dest_columns)
 
         # compute the output columns
-        out_columns = []
+        dst_columns = []
         for values in self.mapping.values():
-            out_columns.extend(values.keys())
-        self.out_columns = {}
-        for column in out_columns:
+            dst_columns.extend(values.keys())
+        self.dst_columns = {}
+        for column in dst_columns:
             table = column.split('.')[0]
             column = column.split('.')[1]
-            if table not in self.out_columns:
-                self.out_columns[table] = set()
-            self.out_columns[table].add(column)
+            if table not in self.dst_columns:
+                self.dst_columns[table] = set()
+            self.dst_columns[table].add(column)
+
+        # replace function bodies with real functions
+        for incolumn in self.mapping:
+            for outcolumn in self.mapping[incolumn]:
+                mapping = self.mapping[incolumn][outcolumn]
+                if mapping is not None:
+                    function_body = "def mapping_function(line):\n"
+                    function_body += '\n'.join([4*' ' + line for line in mapping.split('\n')])
+                    mapping_function = None
+                    exec(compile(function_body, '<' + incolumn + ' → ' + outcolumn + '>', 'exec'))
+                    self.mapping[incolumn][outcolumn] = mapping_function
+                    del mapping_function
 
     def get_targets(self, source):
         """ Return the target mapping for a column or table
