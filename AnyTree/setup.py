@@ -15,6 +15,6 @@ setup(
     ],
     test_suite = 'anytree.test.load_tests',
     entry_points="""[console_scripts]
-migrate=anytree.script:main"""
+migrate=anytree.migrating:main"""
 
 )

@@ -13,8 +13,10 @@ def main():
     parser = argparse.ArgumentParser(prog=__file__)
     parser.add_argument('-i', '--input',
                         default='test',
+                        required=True,
                         help='Migration input.\npg:dbname only supported for now')
     parser.add_argument('-o', '--output',
+                        required=True,
                         help=('Migration output. Ex:\n'
                               '  csv:/tmp/ for a csv output\n'
                               '  or pg:dbname for a postgres db insertion'))
