@@ -10,7 +10,7 @@ class Mapping(object):
         """
         # load the full mapping file
         with open(filename) as stream:
-            full_mapping = yaml.load(stream, Loader=yaml.Loader)
+            full_mapping = yaml.load(stream)
 
         # filter to keep only wanted modules
         self.mapping = {}

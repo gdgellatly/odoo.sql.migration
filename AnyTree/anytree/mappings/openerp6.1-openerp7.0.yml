@@ -47,8 +47,6 @@ base:
         res_users.signature:
     res_users.menu_id:
         res_users.menu_id:
-    res_users.partner_id:
-        res_partner.id: return line['partner_id']
     res_users.address_id:
         res_partner.id: return line['address_id']
     res_partner.address_id:

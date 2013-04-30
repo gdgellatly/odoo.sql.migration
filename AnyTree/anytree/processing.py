@@ -52,7 +52,7 @@ class CSVProcessor(object):
                     if mapping is None:
                         origin = source_table + '.' + source_column
                         if origin not in self.missing:
-                            LOG.warn('No mapping found for column %s', origin)
+                            LOG.warn('No mapping definition found for column %s', origin)
                             self.missing.append(origin)
                         continue
                     # we found a mapping, use it
