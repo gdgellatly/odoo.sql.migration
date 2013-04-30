@@ -14,4 +14,7 @@ setup(
         "psycopg2",
     ],
     test_suite = 'anytree.test.load_tests',
+    entry_points="""[console_scripts]
+migrate=anytree.script:main"""
+
 )
