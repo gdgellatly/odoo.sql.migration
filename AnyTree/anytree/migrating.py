@@ -55,9 +55,6 @@ def migrate(from_db, to_dir=None, to_db=None):
     filename = os.path.join(HERE, 'mappings', 'openerp6.1-openerp7.0.yml')
     mapping = Mapping(modules, filename)
     processing = CSVProcessor(mapping)
-    cwd = os.getcwd()
-    os.chdir(to_dir)
     for filename in csv_filenames:
         filepath = os.path.join(to_dir, filename)
         processing.process(filepath)
-    os.chdir(cwd)
