@@ -30,17 +30,17 @@ def main():
         return
 
     if output_type == 'csv':
-        migrate(from_db=input_name,
-                to_dir=output_name)
+        migrate(source_db=input_name,
+                target_dir=output_name)
     if output_type == 'pg':
         print u"'pg' output is not yet implemented"
         return
 
 
-def migrate(from_db, to_dir=None, to_db=None):
+def migrate(source_db, target_dir=None, target_db=None):
     """ Migrate using importing/mapping/processing modules
     """
-    if to_db is not None or to_dir is None:
+    if target_db is not None or target_dir is None:
         raise NotImplementedError
     # FIXME automatically determine dependent tables
     tables = [
@@ -50,11 +50,9 @@ def migrate(from_db, to_dir=None, to_db=None):
         'res_partner_title'
     ]
     modules = ['base']
-    csv_filenames = export_tables(tables, to_dir, db=from_db)
+    filenames = export_tables(tables, target_dir, db=source_db)
     # TODO autodetect mapping with input and output db
-    filename = os.path.join(HERE, 'mappings', 'openerp6.1-openerp7.0.yml')
-    mapping = Mapping(modules, filename)
+    mappingfile = os.path.join(HERE, 'mappings', 'openerp6.1-openerp7.0.yml')
+    mapping = Mapping(modules, mappingfile)
     processing = CSVProcessor(mapping)
-    for filename in csv_filenames:
-        filepath = os.path.join(to_dir, filename)
-        processing.process(filepath)
+    processing.process(target_dir, filenames)

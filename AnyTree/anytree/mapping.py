@@ -17,21 +17,21 @@ class Mapping(object):
         for module in modules:
             if module not in full_mapping:
                 raise ValueError('The %s module is not in the mapping' % module)
-            for src_column, dest_columns in full_mapping[module].items():
-                self.mapping.setdefault(src_column, dest_columns)
-                self.mapping[src_column].update(dest_columns)
+            for source_column, target_columns in full_mapping[module].items():
+                self.mapping.setdefault(source_column, target_columns)
+                self.mapping[source_column].update(target_columns)
 
         # compute the output columns
-        dst_columns = []
+        target_columns = []
         for values in self.mapping.values():
-            dst_columns.extend(values.keys())
-        self.dst_columns = {}
-        for column in dst_columns:
+            target_columns.extend(values.keys())
+        self.target_columns = {}
+        for column in target_columns:
             table = column.split('.')[0]
             column = column.split('.')[1]
-            if table not in self.dst_columns:
-                self.dst_columns[table] = set()
-            self.dst_columns[table].add(column)
+            if table not in self.target_columns:
+                self.target_columns[table] = set()
+            self.target_columns[table].add(column)
 
         # replace function bodies with real functions
         for incolumn in self.mapping:

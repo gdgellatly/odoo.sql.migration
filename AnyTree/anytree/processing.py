@@ -1,6 +1,6 @@
 import csv
 import logging
-from os.path import dirname, basename, join
+from os.path import basename, join
 
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(basename(__file__))
@@ -13,43 +13,57 @@ class CSVProcessor(object):
     def __init__(self, mapping):
         self.mapping = mapping
         self.missing = []
+        self.target_columns = self.mapping.target_columns
+        self.writers = {}
 
-    def process(self, src_filepath):
+    def process(self, directory, source_filenames):
         """ The main processing method
         """
-        directory = dirname(src_filepath)
-        src_table = basename(src_filepath).rsplit('.', 1)[0]
-        dst_columns = self.mapping.dst_columns
-        with open(src_filepath, 'rb') as src_csv:
-            reader = csv.DictReader(src_csv, delimiter=',')
-            dst_files = {t: open(join(directory, t + '.out.csv'), 'ab') for t in dst_columns}
-            writers = {t: csv.DictWriter(f, dst_columns[t], delimiter=',')
-                       for t, f in dst_files.items()}
-            for writer in writers.values():
-                writer.writeheader()
+        # open target files for writing
+        self.target_files = {
+            table: open(join(directory, table + '.out.csv'), 'ab')
+            for table in self.target_columns
+        }
+        # create csv writers
+        self.writers = {t: csv.DictWriter(f, self.target_columns[t], delimiter=',')
+                        for t, f in self.target_files.items()}
+        # write csv headers once
+        for writer in self.writers.values():
+            writer.writeheader()
+        # process csv files
+        for source_filename in source_filenames:
+            source_filepath = join(directory, source_filename)
+            self.process_one(source_filepath)
+        for target_file in self.target_files.values():
+            target_file.close()
+
+    def process_one(self, source_filepath):
+        """ Process one csv file
+        """
+        source_table = basename(source_filepath).rsplit('.', 1)[0]
+        with open(source_filepath, 'rb') as source_csv:
+            reader = csv.DictReader(source_csv, delimiter=',')
             # process each csv line
-            for src_row in reader:
-                dst_rows = {t: {} for t in dst_columns}
+            for source_row in reader:
+                target_rows = {t: {} for t in self.target_columns}
                 # process each column
-                for src_column in src_row:
-                    mapping = self.mapping.mapping.get(src_table + '.' + src_column)
+                for source_column in source_row:
+                    mapping = self.mapping.mapping.get(source_table + '.' + source_column)
                     if mapping is None:
-                        origin = src_table + '.' + src_column
+                        origin = source_table + '.' + source_column
                         if origin not in self.missing:
                             LOG.warn('No mapping found for column %s', origin)
                             self.missing.append(origin)
                         continue
                     # we found a mapping, use it
-                    for dst_column, function in mapping.items():
-                        dst_table, dst_column = dst_column.split('.')
+                    for target_column, function in mapping.items():
+                        target_table, target_column = target_column.split('.')
                         if function is None:
                             # mapping is empty: use identity
-                            dst_rows[dst_table][dst_column] = src_row[src_column]
+                            target_rows[target_table][target_column] = source_row[source_column]
                         else:
                             # mapping is a function
-                            dst_rows[dst_table][dst_column] = function(src_row)
-                for table, dst_row in dst_rows.items():
-                    if any(dst_row.values()):
-                        writers[table].writerow(dst_row)
-            for dst_file in dst_files.values():
-                dst_file.close()
+                            target_rows[target_table][target_column] = function(source_row)
+                for table, target_row in target_rows.items():
+                    if any(target_row.values()):
+                        self.writers[table].writerow(target_row)

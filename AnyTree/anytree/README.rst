@@ -91,7 +91,7 @@ And the target tables and fields from a source field:
 The mapping is explicit: all the target columns is present.
 It also allows to compute the output columns:
 
-    >>> pprint(mapping.dst_columns, width=1)
+    >>> pprint(mapping.target_columns, width=1)
     {'mail_alias': set(['alias']),
      'res_partner': set(['id',
                          'login_date',
@@ -135,7 +135,7 @@ csv files be generated
 
     >>> from anytree.processing import CSVProcessor
     >>> processor = CSVProcessor(mapping)
-    >>> processor.process(join(destination_dir, 'res_users.csv'))
+    >>> processor.process(destination_dir, ['res_users.csv'])
     >>> sorted(os.listdir(destination_dir))
     ['res_partner.csv', 'res_partner.out.csv', 'res_users.csv', 'res_users.out.csv']
     >>> open(join(destination_dir, 'res_users.out.csv')).readline()
