@@ -2,7 +2,7 @@ from os.path import join
 import psycopg2
 
 
-def export_tables(source_tables, db=None, user='admin', pwd='admin', dest_dir=None):
+def export_tables(source_tables, dest_dir, db=None, user='admin', pwd='admin'):
     """ Export the list of tables using postgresql COPY
     """
     connection = psycopg2.connect("dbname=%s" % db)

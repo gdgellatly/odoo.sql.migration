@@ -12,6 +12,7 @@ class CSVProcessor(object):
     """
     def __init__(self, mapping):
         self.mapping = mapping
+        self.missing = []
 
     def process(self, src_filename):
         """ The main processing method
@@ -33,17 +34,20 @@ class CSVProcessor(object):
                 for src_column in src_row:
                     mapping = self.mapping.mapping.get(src_table + '.' + src_column)
                     if mapping is None:
-                        LOG.warn('No mapping found for column %s', src_table + '.' + src_column)
+                        origin = src_table + '.' + src_column
+                        if origin not in self.missing:
+                            LOG.warn('No mapping found for column %s', origin)
+                            self.missing.append(origin)
                         continue
                     # we found a mapping, use it
                     for dst_column, function in mapping.items():
                         dst_table, dst_column = dst_column.split('.')
                         if function is None:
                             # mapping is empty: use identity
-                            dst_rows[src_table][dst_column] = src_row[src_column]
+                            dst_rows[dst_table][dst_column] = src_row[src_column]
                         else:
-                            # mapping is a function.
-                            dst_rows[src_table][dst_column] = function(src_row)
+                            # mapping is a function
+                            dst_rows[dst_table][dst_column] = function(src_row)
                 for table, dst_row in dst_rows.items():
                     writers[table].writerow(dst_row)
             for dst_file in dst_files.values():

@@ -15,6 +15,8 @@ class Mapping(object):
         # filter to keep only wanted modules
         self.mapping = {}
         for module in modules:
+            if module not in full_mapping:
+                raise ValueError('The %s module is not in the mapping' % module)
             for src_column, dest_columns in full_mapping[module].items():
                 self.mapping.setdefault(src_column, dest_columns)
                 self.mapping[src_column].update(dest_columns)
