@@ -122,7 +122,8 @@ We must be able to export the source tables :
     >>> from anytree import exporting
     >>> from tempfile import mkdtemp
     >>> destination_dir = mkdtemp()
-    >>> exporting.export_tables(source_tables, dest_dir=destination_dir, db="test")
+    >>> exporting.export_tables(source_tables, destination_dir, db="test")
+    ['/tmp/.../res_users.csv', '/tmp/.../res_partner.csv']
     >>> sorted(os.listdir(destination_dir))
     ['res_partner.csv', 'res_users.csv']
 

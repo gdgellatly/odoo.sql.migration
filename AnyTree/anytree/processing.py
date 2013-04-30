@@ -14,13 +14,13 @@ class CSVProcessor(object):
         self.mapping = mapping
         self.missing = []
 
-    def process(self, src_filename):
+    def process(self, src_filepath):
         """ The main processing method
         """
-        directory = dirname(src_filename)
-        src_table = basename(src_filename).rsplit('.', 1)[0]
+        directory = dirname(src_filepath)
+        src_table = basename(src_filepath).rsplit('.', 1)[0]
         dst_columns = self.mapping.dst_columns
-        with open(src_filename, 'rb') as src_csv:
+        with open(src_filepath, 'rb') as src_csv:
             reader = csv.DictReader(src_csv, delimiter=',')
             dst_files = {t: open(join(directory, t + '.out.csv'), 'wb') for t in dst_columns}
             writers = {t: csv.DictWriter(f, dst_columns[t], delimiter=',')
