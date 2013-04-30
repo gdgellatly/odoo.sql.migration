@@ -22,7 +22,7 @@ class CSVProcessor(object):
         dst_columns = self.mapping.dst_columns
         with open(src_filepath, 'rb') as src_csv:
             reader = csv.DictReader(src_csv, delimiter=',')
-            dst_files = {t: open(join(directory, t + '.out.csv'), 'wb') for t in dst_columns}
+            dst_files = {t: open(join(directory, t + '.out.csv'), 'ab') for t in dst_columns}
             writers = {t: csv.DictWriter(f, dst_columns[t], delimiter=',')
                        for t, f in dst_files.items()}
             for writer in writers.values():
@@ -49,6 +49,7 @@ class CSVProcessor(object):
                             # mapping is a function
                             dst_rows[dst_table][dst_column] = function(src_row)
                 for table, dst_row in dst_rows.items():
-                    writers[table].writerow(dst_row)
+                    if any(dst_row.values()):
+                        writers[table].writerow(dst_row)
             for dst_file in dst_files.values():
                 dst_file.close()
