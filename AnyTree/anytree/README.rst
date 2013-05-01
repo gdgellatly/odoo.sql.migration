@@ -126,7 +126,9 @@ We must be able to export the source tables :
     >>> from anytree import exporting
     >>> from tempfile import mkdtemp
     >>> directory = mkdtemp()
-    >>> exporting.export_tables(source_tables, directory, db="test")
+    >>> import psycopg2
+    >>> connection = psycopg2.connect("dbname=test")
+    >>> exporting.export_tables(source_tables, directory, connection)
     ['/tmp/.../res_users.csv', '/tmp/.../res_partner.csv']
     >>> sorted(os.listdir(directory))
     ['res_partner.csv', 'res_users.csv']
@@ -145,7 +147,7 @@ csv files be generated
                          'name']),
      'res_users': set(['name',
                        'partner_id'])}
-    >>> processor.process(directory, ['res_users.csv'], directory,)
+    >>> processor.process(directory, ['res_users.csv'], directory)
     >>> sorted(os.listdir(directory))
     ['res_partner.csv', 'res_partner.out.csv', 'res_users.csv', 'res_users.out.csv']
     >>> import csv
@@ -172,7 +174,7 @@ or before importing, foreign keys should be applied an offset?
 Now we can import a csv file using the mapping:
 
     >>> from anytree import importing
-    >>> importing.import_csv(join(directory, 'res_users.csv'))
+    >>> importing.import_csv(join(directory, 'res_users.csv'), connection)
     Traceback (most recent call last):
     ...
     IntegrityError: ...

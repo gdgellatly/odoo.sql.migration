@@ -6,7 +6,7 @@ class Mapping(object):
     """ Stores the mapping and offers a simple API
     """
 
-    last_id = 1000
+    last_id = {}
 
     def __init__(self, modules, filename):
         """ Open the file and store the mapping
@@ -38,11 +38,12 @@ class Mapping(object):
                     self.mapping[incolumn][outcolumn] = mapping_function
                     del mapping_function
 
-    def newid(self):
+    def newid(self, table):
         """ increment the global stored last_id
         """
-        self.last_id += 1
-        return self.last_id
+        self.last_id.setdefault(table, 0)
+        self.last_id[table] += 1
+        return self.last_id[table]
 
     def get_targets(self, source):
         """ Return the target mapping for a column or table

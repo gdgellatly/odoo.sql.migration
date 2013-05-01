@@ -8,8 +8,12 @@ base:
     res_users.name:
         res_partner.name:
     res_users.id:
-        res_users.id:
-        res_partner.:
+        res_users.partner_id:
+        res_partner.id: |
+            i = newid('res_partner')
+            target_rows['res_users']['partner_id'] = i
+            target_rows['res_partner']['id'] = i
+            return i
     res_users.address_id:
         # foireux
         res_partner.id: return source_row['address_id']
@@ -22,7 +26,6 @@ base:
         res_partner.login_date:
     res_partner.lang:
         res_partner.lang:
-        res_users.lang:
 
     res_partner_address.*:
         res_partner.*:
