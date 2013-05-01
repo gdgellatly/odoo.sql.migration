@@ -34,13 +34,14 @@ base:
     res_users.password:
         res_users.password:
     res_users.login:
-        res_users.name: return line['login'].lower()
-        res_partner.name: return line['login']
         res_users.login:
+    res_users.name:
+        res_partner.name:
     res_users.active:
         res_users.active:
     res_users.id:
         res_users.id:
+        res_partner.:
     res_users.action_id:
         res_users.action_id:
     res_users.signature:
