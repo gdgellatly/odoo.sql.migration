@@ -121,10 +121,10 @@ We must be able to export the source tables :
     >>> source_tables = ['res_users', 'res_partner']
     >>> from anytree import exporting
     >>> from tempfile import mkdtemp
-    >>> destination_dir = mkdtemp()
-    >>> exporting.export_tables(source_tables, destination_dir, db="test")
+    >>> directory = mkdtemp()
+    >>> exporting.export_tables(source_tables, directory, db="test")
     ['/tmp/.../res_users.csv', '/tmp/.../res_partner.csv']
-    >>> sorted(os.listdir(destination_dir))
+    >>> sorted(os.listdir(directory))
     ['res_partner.csv', 'res_users.csv']
 
 Processing csv files
@@ -135,12 +135,11 @@ csv files be generated
 
     >>> from anytree.processing import CSVProcessor
     >>> processor = CSVProcessor(mapping)
-    >>> processor.process(destination_dir, ['res_users.csv'])
-    >>> sorted(os.listdir(destination_dir))
+    >>> processor.process(directory, ['res_users.csv'], directory,)
+    >>> sorted(os.listdir(directory))
     ['res_partner.csv', 'res_partner.out.csv', 'res_users.csv', 'res_users.out.csv']
-    >>> open(join(destination_dir, 'res_users.out.csv')).readline()
+    >>> open(join(directory, 'res_users.out.csv')).readline()
     'name,id\r\n'
-
 
 Importing the CSV files
 =======================
@@ -151,10 +150,10 @@ or before importing, foreign keys should be applied an offset?
 Now we can import a csv file using the mapping:
 
     >>> from anytree import importing
-    >>> importing.import_csv(join(destination_dir, 'res_users.csv'))
+    >>> importing.import_csv(join(directory, 'res_users.csv'))
     Traceback (most recent call last):
     ...
     IntegrityError: ...
-    >>> import shutil; shutil.rmtree(destination_dir)
+    >>> import shutil; shutil.rmtree(directory)
 
 

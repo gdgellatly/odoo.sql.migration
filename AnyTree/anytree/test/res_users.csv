@@ -1,0 +1,5 @@
+id,name,active,login,password,user_email,context_tz,signature,context_lang,company_id,create_uid,create_date,write_date,write_uid,menu_id,address_id,menu_tips,date,action_id,context_department_id,context_project_id,context_section_id,share
+10,Foo Bar,t,foobar,foobar.,,Europe/Paris,,fr_FR,1,1,2012-01-05 03:19:31.713441,2012-04-17 21:25:39.344472,1,1,107,t,2012-01-05 14:38:24.795504,748,,10,,f
+1,Administrator,t,admin,admin,,Europe/Paris,Administrator,fr_FR,1,,,2013-02-20 01:24:38.451276,1,1,1,f,2013-02-14 15:16:30.686384,923,,,,
+2,Christophe Combelles,t,ccomb,ccomb,ccomb@anybox.fr,Europe/Paris,"-- Anybox http://anybox.fr/blog",fr_FR,1,1,2011-02-11 22:17:59.348305,2013-03-01 20:33:15.573502,1,1,2,f,2013-03-27 20:13:36.982894,,,,,f
+15,Test Test,t,test,test,,Europe/Paris,,fr_FR,1,1,2012-02-15 16:37:03.819095,2012-04-17 21:25:39.344472,1,1,,t,2012-02-08 16:03:28.306642,,,,,f

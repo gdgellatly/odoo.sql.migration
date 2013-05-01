@@ -16,12 +16,12 @@ class CSVProcessor(object):
         self.target_columns = self.mapping.target_columns
         self.writers = {}
 
-    def process(self, directory, source_filenames):
+    def process(self, source_dir, source_filenames, target_dir):
         """ The main processing method
         """
         # open target files for writing
         self.target_files = {
-            table: open(join(directory, table + '.out.csv'), 'ab')
+            table: open(join(target_dir, table + '.out.csv'), 'ab')
             for table in self.target_columns
         }
         # create csv writers
@@ -32,7 +32,7 @@ class CSVProcessor(object):
             writer.writeheader()
         # process csv files
         for source_filename in source_filenames:
-            source_filepath = join(directory, source_filename)
+            source_filepath = join(source_dir, source_filename)
             self.process_one(source_filepath)
         for target_file in self.target_files.values():
             target_file.close()
