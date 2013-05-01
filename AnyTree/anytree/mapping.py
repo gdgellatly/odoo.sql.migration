@@ -5,6 +5,9 @@ import yaml
 class Mapping(object):
     """ Stores the mapping and offers a simple API
     """
+
+    last_id = 1000
+
     def __init__(self, modules, filename):
         """ Open the file and store the mapping
         """
@@ -27,12 +30,19 @@ class Mapping(object):
             for outcolumn in self.mapping[incolumn]:
                 mapping = self.mapping[incolumn][outcolumn]
                 if mapping is not None:
-                    function_body = "def mapping_function(line):\n"
+                    function_body = "def mapping_function(source_row, target_rows):\n"
                     function_body += '\n'.join([4*' ' + line for line in mapping.split('\n')])
                     mapping_function = None
-                    exec(compile(function_body, '<' + incolumn + ' → ' + outcolumn + '>', 'exec'))
+                    exec(compile(function_body, '<' + incolumn + ' → ' + outcolumn + '>', 'exec'),
+                         globals().update({'newid': self.newid}))
                     self.mapping[incolumn][outcolumn] = mapping_function
                     del mapping_function
+
+    def newid(self):
+        """ increment the global stored last_id
+        """
+        self.last_id += 1
+        return self.last_id
 
     def get_targets(self, source):
         """ Return the target mapping for a column or table

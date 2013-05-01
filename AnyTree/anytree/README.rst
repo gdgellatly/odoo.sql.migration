@@ -143,14 +143,14 @@ csv files be generated
     >>> pprint(processor.get_target_columns(filepaths), width=1)
     {'res_partner': set(['id',
                          'name']),
-     'res_users': set(['id',
-                       'name'])}
+     'res_users': set(['name',
+                       'partner_id'])}
     >>> processor.process(directory, ['res_users.csv'], directory,)
     >>> sorted(os.listdir(directory))
     ['res_partner.csv', 'res_partner.out.csv', 'res_users.csv', 'res_users.out.csv']
     >>> import csv
     >>> sorted(csv.DictReader(open(join(directory, 'res_users.out.csv'))).next().keys())
-    ['id', 'name']
+    ['name', 'partner_id']
 
 We can try more complex scenarios, such as:
 

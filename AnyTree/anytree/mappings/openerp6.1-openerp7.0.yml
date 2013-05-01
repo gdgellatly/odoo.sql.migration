@@ -12,12 +12,12 @@ base:
         res_partner.:
     res_users.address_id:
         # foireux
-        res_partner.id: return line['address_id']
+        res_partner.id: return source_row['address_id']
 
     res_partner.*:
     res_partner.address_id:
         # foireux
-        res_partner.id: return line['partner_id']
+        res_partner.id: return source_row['partner_id']
     res_partner.date:
         res_partner.login_date:
     res_partner.lang:
@@ -55,5 +55,5 @@ base:
 
 mail:
     res_users.login:
-        mail_alias.alias: return line['login']
+        mail_alias.alias: return source_row['login']
 

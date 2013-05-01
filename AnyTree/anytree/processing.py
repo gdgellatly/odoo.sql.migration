@@ -84,7 +84,8 @@ class CSVProcessor(object):
                             target_rows[target_table][target_column] = source_row[source_column]
                         else:
                             # mapping is a function
-                            target_rows[target_table][target_column] = function(source_row)
+                            result = function(source_row, target_rows)
+                            target_rows[target_table][target_column] = result
                 for table, target_row in target_rows.items():
                     if any(target_row.values()):
                         self.writers[table].writerow(target_row)

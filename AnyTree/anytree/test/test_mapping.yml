@@ -1,20 +1,25 @@
 base:
     res_users.id:
-        res_users.id:
+        res_users.partner_id:
+        res_partner.id: |
+            i = newid()
+            target_rows['res_users']['partner_id'] = i
+            target_rows['res_partner']['id'] = i
+            return i
     res_users.login:
-        res_users.name: return line['login']
-        res_partner.name: return line['login']
+        res_users.name: return source_row['login']
+        res_partner.name: return source_row['login']
     res_users.name:
         res_partner.name:
     res_users.partner_id:
-        res_partner.id: return line['partner_id']
+        res_partner.id: return source_row['partner_id']
     res_users.address_id:
-        res_partner.id: return line['address_id']
+        res_partner.id: return source_row['address_id']
 
     res_partner.id:
         res_partner.id:
     res_partner.address_id:
-        res_partner.id: return line['partner_id']
+        res_partner.id: return source_row['partner_id']
     res_partner.date:
         res_partner.login_date:
     res_partner.name:
@@ -28,4 +33,4 @@ base:
         res_partner.parent_id:
 mail:
     res_users.login:
-        mail_alias.alias: return line['login']
+        mail_alias.alias: return source_row['login']
