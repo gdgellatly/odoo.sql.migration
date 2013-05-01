@@ -1,15 +1,9 @@
 base:
-    res_users.id:
-        res_users.id:
-    res_users.login:
-        res_users.name: return line['login']
-        res_partner.name: return line['login']
-    res_users.name:
-        res_partner.name:
-    res_users.partner_id:
-        res_partner.id: return line['partner_id']
-    res_users.address_id:
-        res_partner.id: return line['address_id']
+    # this means: match every field except 'password'
+    # for which we return an empty string
+    res_users._:
+    res_users.password:
+        res_users.password: return ''
 
     res_partner.id:
         res_partner.id:

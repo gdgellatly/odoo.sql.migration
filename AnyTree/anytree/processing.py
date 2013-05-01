@@ -48,7 +48,8 @@ class CSVProcessor(object):
                 target_rows = {t: {} for t in self.target_columns}
                 # process each column
                 for source_column in source_row:
-                    mapping = self.mapping.mapping.get(source_table + '.' + source_column)
+                    mapping = self.mapping.get_targets(source_table + '.' + source_column)
+                    # no mapping found, we warn the user
                     if mapping is None:
                         origin = source_table + '.' + source_column
                         if origin not in self.missing:
@@ -57,6 +58,7 @@ class CSVProcessor(object):
                         continue
                     # we found a mapping, use it
                     for target_column, function in mapping.items():
+
                         target_table, target_column = target_column.split('.')
                         if function is None:
                             # mapping is empty: use identity

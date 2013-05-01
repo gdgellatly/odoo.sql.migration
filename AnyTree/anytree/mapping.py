@@ -18,6 +18,7 @@ class Mapping(object):
             if module not in full_mapping:
                 raise ValueError('The %s module is not in the mapping' % module)
             for source_column, target_columns in full_mapping[module].items():
+                target_columns = target_columns or {}
                 self.mapping.setdefault(source_column, target_columns)
                 self.mapping[source_column].update(target_columns)
 
@@ -49,7 +50,17 @@ class Mapping(object):
         """ Return the target mapping for a column or table
         """
         if '.' in source:  # asked for a column
-            return self.mapping.get(source, None)
+            mapping = self.mapping.get(source, None)
+            # not found? We look for wildcards
+            if mapping is None:
+                # wildcard, we match the source
+                if '_._' in self.mapping.keys():
+                    return {source: None}
+                # partial wildcard, we match only for the table
+                if '%s._' % source.split('.')[0] in self.mapping.keys():
+                    return {source: None}
+            return mapping
+
         else:  # asked for a table
             self.target_tables = set()
             target_fields = [t[1] for t in self.mapping.items() if t[0].split('.')[0] == source]

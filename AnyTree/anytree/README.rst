@@ -36,7 +36,7 @@ keys: 'res_partner', 'mail_alias', etc.  When importing 'res_users', we must
 also import the dependent child tables.  So we must get a list of tables to
 import, and this list should be ordered so we get the child tables first.
 
->>>
+    >>>
 
 
 Building a mapping
@@ -53,7 +53,8 @@ We read the mapping:
     >>> from anytree.mapping import Mapping
     >>> import os, anytree
     >>> from os.path import join, dirname
-    >>> test_file = join(dirname(anytree.mapping.__file__), 'test', 'test_mapping.yml')
+    >>> testdir =  join(dirname(anytree.mapping.__file__), 'test')
+    >>> test_file = join(testdir, 'test_mapping.yml')
     >>> mapping = Mapping(['base'], test_file)
 
 After selecting a target table, a mapping is constructed from the different
@@ -107,10 +108,22 @@ This means the 'name' column is unchanged:
     >>> mapping.get_targets('res_partner.name')
     {'res_partner.name': None}
 
-this means: the 'date' column is renamed to login_date:
+this means: the 'date' column is just renamed to login_date:
 
     >>> mapping.get_targets('res_partner.date')
     {'res_partner.login_date': None}
+
+We can use wildcards in the mappings to avoid filling every column:
+
+    >>> wildcard = Mapping(['base'], join(testdir, 'wildcard.yml'))
+    >>> partial_wildcard = Mapping(['base'], join(testdir, 'partial_wildcard.yml'))
+    >>> wildcard.get_targets('foo.bar')
+    {'foo.bar': None}
+    >>> partial_wildcard.get_targets('res_users.password')
+    {'res_users.password': <function mapping_function at ...>}
+    >>> partial_wildcard.get_targets('res_users.plop')
+    {'res_users.plop': None}
+
 
 
 Exporting CSV data
@@ -138,8 +151,20 @@ csv files be generated
     >>> processor.process(directory, ['res_users.csv'], directory,)
     >>> sorted(os.listdir(directory))
     ['res_partner.csv', 'res_partner.out.csv', 'res_users.csv', 'res_users.out.csv']
-    >>> open(join(directory, 'res_users.out.csv')).readline()
-    'name,id\r\n'
+    >>> import csv
+    >>> sorted(csv.DictReader(open(join(directory, 'res_users.out.csv'))).next().keys())
+    ['id', 'name']
+
+We can try more complex scenarios, such as:
+
+- res_users split into res_partner + res_users
+- res_partner merge from res_partner + res_partner_address
+
+    >>> directory2 = mkdtemp()
+    >>> processor.process(testdir, ['res_users.csv', 'res_partner.csv', 'res_partner_address.csv'], directory2)
+    >>> sorted(os.listdir(directory2))
+    ['res_partner.out.csv', 'res_users.out.csv']
+
 
 Importing the CSV files
 =======================
@@ -154,6 +179,8 @@ Now we can import a csv file using the mapping:
     Traceback (most recent call last):
     ...
     IntegrityError: ...
-    >>> import shutil; shutil.rmtree(directory)
+    >>> import shutil
+    >>> shutil.rmtree(directory)
+    >>> shutil.rmtree(directory2)
 
 
