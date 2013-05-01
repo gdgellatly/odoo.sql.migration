@@ -88,19 +88,6 @@ And the target tables and fields from a source field:
      'res_partner.name': <function mapping_function at ...,
      'res_users.name': <function mapping_function at ...}
 
-
-The mapping is explicit: all the target columns is present.
-It also allows to compute the output columns:
-
-    >>> pprint(mapping.target_columns, width=1)
-    {'mail_alias': set(['alias']),
-     'res_partner': set(['id',
-                         'login_date',
-                         'name',
-                         'parent_id']),
-     'res_users': set(['id',
-                       'name'])}
-
     >>> mapping = Mapping(['base'], test_file)
 
 This means the 'name' column is unchanged:
@@ -123,6 +110,10 @@ We can use wildcards in the mappings to avoid filling every column:
     {'res_users.password': <function mapping_function at ...>}
     >>> partial_wildcard.get_targets('res_users.plop')
     {'res_users.plop': None}
+    >>> partial_wildcard.get_targets('res_partner_address.plop')
+    {'res_partner.plop': None}
+    >>> partial_wildcard.get_targets('res_partner_address.name')
+    {'res_partner.name': <function mapping_function at ...>}
 
 
 
@@ -148,6 +139,12 @@ csv files be generated
 
     >>> from anytree.processing import CSVProcessor
     >>> processor = CSVProcessor(mapping)
+    >>> filepaths = [join(directory, 'res_users.csv')]
+    >>> pprint(processor.get_target_columns(filepaths), width=1)
+    {'res_partner': set(['id',
+                         'name']),
+     'res_users': set(['id',
+                       'name'])}
     >>> processor.process(directory, ['res_users.csv'], directory,)
     >>> sorted(os.listdir(directory))
     ['res_partner.csv', 'res_partner.out.csv', 'res_users.csv', 'res_users.out.csv']

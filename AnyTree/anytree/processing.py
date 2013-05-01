@@ -12,13 +12,36 @@ class CSVProcessor(object):
     """
     def __init__(self, mapping):
         self.mapping = mapping
-        self.missing = []
-        self.target_columns = self.mapping.target_columns
+        self.target_columns = {}
         self.writers = {}
+
+    def get_target_columns(self, filepaths):
+        """ Compute target columns with source columns + mapping
+        """
+        target_columns = {}
+        for filepath in filepaths:
+            source_table = basename(filepath).rsplit('.', 1)[0]
+            with open(filepath) as f:
+                source_columns = csv.reader(f).next()
+            for source_column in source_columns:
+                mapping = self.mapping.get_targets('%s.%s' % (source_table, source_column))
+                # no mapping found, we warn the user
+                if mapping is None:
+                    origin = source_table + '.' + source_column
+                    LOG.warn('No mapping definition found for column %s', origin)
+                    continue
+                else:
+                    for target in mapping:
+                        t, c = target.split('.')
+                        target_columns.setdefault(t, set()).add(c)
+        return target_columns
 
     def process(self, source_dir, source_filenames, target_dir):
         """ The main processing method
         """
+        # compute the target columns
+        filepaths = [join(source_dir, source_filename) for source_filename in source_filenames]
+        self.target_columns = self.get_target_columns(filepaths)
         # open target files for writing
         self.target_files = {
             table: open(join(target_dir, table + '.out.csv'), 'ab')
@@ -45,21 +68,17 @@ class CSVProcessor(object):
             reader = csv.DictReader(source_csv, delimiter=',')
             # process each csv line
             for source_row in reader:
-                target_rows = {t: {} for t in self.target_columns}
+                target_rows = {}
                 # process each column
                 for source_column in source_row:
                     mapping = self.mapping.get_targets(source_table + '.' + source_column)
-                    # no mapping found, we warn the user
                     if mapping is None:
-                        origin = source_table + '.' + source_column
-                        if origin not in self.missing:
-                            LOG.warn('No mapping definition found for column %s', origin)
-                            self.missing.append(origin)
                         continue
                     # we found a mapping, use it
                     for target_column, function in mapping.items():
 
                         target_table, target_column = target_column.split('.')
+                        target_rows.setdefault(target_table, {})
                         if function is None:
                             # mapping is empty: use identity
                             target_rows[target_table][target_column] = source_row[source_column]

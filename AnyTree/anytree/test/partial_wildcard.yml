@@ -1,7 +1,7 @@
 base:
     # this means: match every field except 'password'
     # for which we return an empty string
-    res_users._:
+    res_users.*:
     res_users.password:
         res_users.password: return ''
 
@@ -14,10 +14,12 @@ base:
     res_partner.name:
         res_partner.name:
 
-    res_partner_address.id:
-        res_partner.id:
+    # this means: for each res_partner_address column,
+    # return the same column name but for res_partner
+    res_partner_address.*:
+        res_partner.*:
     res_partner_address.name:
-        res_partner.name:
+        res_partner.name: return line['res_partner_address']['name']
     res_partner_address.partner_id:
         res_partner.parent_id:
 mail:

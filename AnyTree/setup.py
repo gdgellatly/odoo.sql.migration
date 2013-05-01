@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='AnyTree',
-    version='0.0.1',
+    version='0.1',
     author='Florent JOUATTE',
     author_email='fjouatte@anybox.fr',
     packages=find_packages(),

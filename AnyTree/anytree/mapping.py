@@ -22,18 +22,6 @@ class Mapping(object):
                 self.mapping.setdefault(source_column, target_columns)
                 self.mapping[source_column].update(target_columns)
 
-        # compute the output columns
-        target_columns = []
-        for values in self.mapping.values():
-            target_columns.extend(values.keys())
-        self.target_columns = {}
-        for column in target_columns:
-            table = column.split('.')[0]
-            column = column.split('.')[1]
-            if table not in self.target_columns:
-                self.target_columns[table] = set()
-            self.target_columns[table].add(column)
-
         # replace function bodies with real functions
         for incolumn in self.mapping:
             for outcolumn in self.mapping[incolumn]:
@@ -50,14 +38,19 @@ class Mapping(object):
         """ Return the target mapping for a column or table
         """
         if '.' in source:  # asked for a column
+            table, column = source.split('.')
             mapping = self.mapping.get(source, None)
             # not found? We look for wildcards
             if mapping is None:
                 # wildcard, we match the source
-                if '_._' in self.mapping.keys():
+                if '.*' in self.mapping:
                     return {source: None}
                 # partial wildcard, we match only for the table
-                if '%s._' % source.split('.')[0] in self.mapping.keys():
+                partial_pattern = '%s.*' % table
+                if partial_pattern in self.mapping:
+                    if self.mapping[partial_pattern]:
+                        return {k.replace('*', column): v
+                                for k, v in self.mapping[partial_pattern].items()}
                     return {source: None}
             return mapping
 
