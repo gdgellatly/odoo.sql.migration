@@ -34,16 +34,19 @@ def main():
         migrate(source_db=input_name,
                 target_dir=output_name)
     if output_type == 'pg':
-        print u"'pg' output is not yet implemented"
-        return
+        migrate(source_db=input_name,
+                target_dir='/tmp/',  # TODO remove
+                target_db=output_name)
 
 
 def migrate(source_db, target_dir=None, target_db=None):
     """ Migrate using importing/mapping/processing modules
     """
     source_connection = psycopg2.connect("dbname=%s" % source_db)
-    if target_db is not None or target_dir is None:
-        raise NotImplementedError
+    if target_db is not None:
+        target_connection = psycopg2.connect("dbname=%s" % target_db)
+        print 'target db importing is not yet implemented. Writing csv in /tmp'
+
     # FIXME automatically determine dependent tables
     source_tables = [
         'res_partner_address',
@@ -57,9 +60,18 @@ def migrate(source_db, target_dir=None, target_db=None):
     mappingfile = os.path.join(HERE, 'mappings', 'openerp6.1-openerp7.0.yml')
     mapping = Mapping(target_modules, mappingfile)
     processor = CSVProcessor(mapping)
-    #target_columns = processor.get_target_columns(filepaths)
-    with source_connection.cursor() as cursor:
+    target_tables = processor.get_target_columns(filepaths).keys()
+    with source_connection.cursor() as c:
         for source_table in source_tables:
-            cursor.execute('select max(id) from %s' % source_table)
-            mapping.last_id[source_table] = cursor.fetchone()[0]
+            # FIXME the key (id) shouldn't be hardcoded below
+            c.execute('select max(id) from %s' % source_table)
+            mapping.last_id[source_table] = c.fetchone()[0]
+    with target_connection.cursor() as c:
+        for target_table in target_tables:
+            # FIXME the key (id) shouldn't be hardcoded below
+            c.execute('select max(id) from %s' % target_table)
+            mapping.last_id[source_table] = max(
+                c.fetchone()[0],
+                mapping.last_id[source_table])
+
     processor.process(target_dir, filepaths, target_dir)
