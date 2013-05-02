@@ -1,6 +1,9 @@
+import time
 import psycopg2
+import shutil
 import argparse
 import os
+from tempfile import mkdtemp
 from .exporting import export_tables
 from .mapping import Mapping
 from .processing import CSVProcessor
@@ -25,11 +28,15 @@ def main():
     args = parser.parse_args()
     source_db, target_db = args.source, args.target
 
-    print "Importing in target db is not yet supported. Use --keepcsv for now"
+    print "Importing into target db is not yet supported. Use --keepcsv for now"
     if args.keepcsv:
         print "Writing CSV files in the current dir"
-    migrate(source_db, target_db,
-            target_dir='.' if args.keepcsv else None)
+
+    tempdir = mkdtemp(prefix=source_db + '-' + str(int(time.time()))[-4:] + '-',
+                      dir=os.path.abspath('.'))
+    migrate(source_db, target_db, target_dir=tempdir)
+    if not args.keepcsv:
+        shutil.rmtree(tempdir)
 
 
 def migrate(source_db, target_db, target_dir=None):
