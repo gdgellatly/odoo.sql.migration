@@ -74,7 +74,6 @@ class CSVProcessor(object):
                 # process each column
                 for source_column in source_row:
                     mapping = self.mapping.get_targets(source_table + '.' + source_column)
-                    if source_table + '.' + source_column == 'res_partner.contact_id':
                     if mapping is None:
                         continue
                     # we found a mapping, use it
