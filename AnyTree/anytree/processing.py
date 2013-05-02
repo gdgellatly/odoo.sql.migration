@@ -18,7 +18,8 @@ class CSVProcessor(object):
     def get_target_columns(self, filepaths):
         """ Compute target columns with source columns + mapping
         """
-        target_columns = {}
+        if self.target_columns:
+            return self.target_columns
         for filepath in filepaths:
             source_table = basename(filepath).rsplit('.', 1)[0]
             with open(filepath) as f:
@@ -35,10 +36,10 @@ class CSVProcessor(object):
                 else:
                     for target in mapping:
                         t, c = target.split('.')
-                        target_columns.setdefault(t, set()).add(c)
+                        self.target_columns.setdefault(t, set()).add(c)
 
-        # prevent headers from being in a random order
-        return {k: sorted(list(v)) for k, v in target_columns.items()}
+        self.target_columns = {k: sorted(list(v)) for k, v in self.target_columns.items()}
+        return self.target_columns
 
     def process(self, source_dir, source_filenames, target_dir):
         """ The main processing method
