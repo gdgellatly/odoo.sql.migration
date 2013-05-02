@@ -75,7 +75,6 @@ class CSVProcessor(object):
                 for source_column in source_row:
                     mapping = self.mapping.get_targets(source_table + '.' + source_column)
                     if source_table + '.' + source_column == 'res_partner.contact_id':
-                        import pdb; pdb.set_trace()
                     if mapping is None:
                         continue
                     # we found a mapping, use it
