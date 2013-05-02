@@ -13,8 +13,12 @@ setup(
         "PyYAML",
         "psycopg2",
     ],
-    test_suite = 'anytree.test.load_tests',
-    entry_points="""[console_scripts]
-migrate=anytree.migrating:main"""
+    test_suite='anytree.test.load_tests',
+    entry_points={
+        'console_scripts': [
+            'migrate=anytree.migrating:main',
+            'order=anytree.anytree:main',
+        ]
+    }
 
 )
