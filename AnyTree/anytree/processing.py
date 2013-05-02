@@ -30,6 +30,8 @@ class CSVProcessor(object):
                     origin = source_table + '.' + source_column
                     LOG.warn('No mapping definition found for column %s', origin)
                     continue
+                elif mapping is False:
+                    continue
                 else:
                     for target in mapping:
                         t, c = target.split('.')
@@ -72,6 +74,8 @@ class CSVProcessor(object):
                 # process each column
                 for source_column in source_row:
                     mapping = self.mapping.get_targets(source_table + '.' + source_column)
+                    if source_table + '.' + source_column == 'res_partner.contact_id':
+                        import pdb; pdb.set_trace()
                     if mapping is None:
                         continue
                     # we found a mapping, use it
@@ -82,6 +86,8 @@ class CSVProcessor(object):
                         if function is None:
                             # mapping is empty: use identity
                             target_rows[target_table][target_column] = source_row[source_column]
+                        elif function is False:
+                            del target_rows[target_table][target_column]
                         else:
                             # mapping is a function
                             result = function(source_row, target_rows)

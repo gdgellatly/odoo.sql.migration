@@ -25,6 +25,9 @@ def main():
     args = parser.parse_args()
     source_db, target_db = args.source, args.target
 
+    print "Importing in target db is not yet supported. Use --keepcsv for now"
+    if args.keepcsv:
+        print "Writing CSV files in the current dir"
     migrate(source_db, target_db,
             target_dir='.' if args.keepcsv else None)
 
@@ -34,7 +37,6 @@ def migrate(source_db, target_db, target_dir=None):
     """
     source_connection = psycopg2.connect("dbname=%s" % source_db)
     target_connection = psycopg2.connect("dbname=%s" % target_db)
-    print 'target db importing is not yet implemented. Writing csv in /tmp'
 
     # FIXME automatically determine dependent tables
     source_tables = [
