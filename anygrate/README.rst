@@ -136,10 +136,11 @@ csv files be generated
     >>> processor = CSVProcessor(mapping)
     >>> filepaths = [join(directory, 'res_users.csv')]
     >>> pprint(processor.get_target_columns(filepaths), width=1)
-    {'res_partner': set(['id',
-                         'name']),
-     'res_users': set(['name',
-                       'partner_id'])}
+    {'res_partner': ['id',
+                     'name'],
+     'res_users': ['name',
+                   'partner_id']}
+
     >>> processor.process(directory, ['res_users.csv'], directory)
     >>> sorted(os.listdir(directory))
     ['res_partner.csv', 'res_partner.out.csv', 'res_users.csv', 'res_users.out.csv']

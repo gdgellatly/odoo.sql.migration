@@ -169,9 +169,9 @@ account:
     account_journal_view.view_id: false
     account_journal_column.*:
  
-account_accountant.*:
+account_accountant:
 
-account_analytic_analysis.*:
+account_analytic_analysis:
 
     account_analytic_account.*:
     account_analytic_account.id:
@@ -180,13 +180,13 @@ account_analytic_analysis.*:
         account_analytic_account.hours_qtt_est:    #new: float
         account_analytic_account.invoice_on_timesheets:    #new: boolean
 
-account_analytic_default.*:
+account_analytic_default:
 
-account_analytic_plans.*:
+account_analytic_plans:
 
-account_anglo_saxon.*:
+account_anglo_saxon:
 
-account_asset.*:
+account_asset:
     account_asset_depreciation_line.*:
     account_asset_depreciation_line.depreciation_date:
     
