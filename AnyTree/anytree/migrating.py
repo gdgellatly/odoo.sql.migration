@@ -12,40 +12,29 @@ def main():
     """ Main console script
     """
     parser = argparse.ArgumentParser(prog=__file__)
-    parser.add_argument('-i', '--input',
+    parser.add_argument('-s', '--source',
                         default='test',
                         required=True,
-                        help='Migration input.\npg:dbname only supported for now')
-    parser.add_argument('-o', '--output',
+                        help='Source db')
+    parser.add_argument('-t', '--target',
                         required=True,
-                        help=('Migration output. Ex:\n'
-                              '  csv:/tmp/ for a csv output\n'
-                              '  or pg:dbname for a postgres db insertion'))
+                        help='Target db')
+    parser.add_argument('-k', '--keepcsv',
+                        action='store_true',
+                        help='Keep csv files in the current directory')
     args = parser.parse_args()
+    source_db, target_db = args.source, args.target
 
-    output_type, output_name = args.output.split(':')
-    input_type, input_name = args.input.split(':')
-
-    if input_type != 'pg':
-        print u"Only 'pg' is currently supported for the migration source"
-        return
-
-    if output_type == 'csv':
-        migrate(source_db=input_name,
-                target_dir=output_name)
-    if output_type == 'pg':
-        migrate(source_db=input_name,
-                target_dir='/tmp/',  # TODO remove
-                target_db=output_name)
+    migrate(source_db, target_db,
+            target_dir='.' if args.keepcsv else None)
 
 
-def migrate(source_db, target_dir=None, target_db=None):
+def migrate(source_db, target_db, target_dir=None):
     """ Migrate using importing/mapping/processing modules
     """
     source_connection = psycopg2.connect("dbname=%s" % source_db)
-    if target_db is not None:
-        target_connection = psycopg2.connect("dbname=%s" % target_db)
-        print 'target db importing is not yet implemented. Writing csv in /tmp'
+    target_connection = psycopg2.connect("dbname=%s" % target_db)
+    print 'target db importing is not yet implemented. Writing csv in /tmp'
 
     # FIXME automatically determine dependent tables
     source_tables = [
@@ -56,7 +45,7 @@ def migrate(source_db, target_dir=None, target_db=None):
     ]
     target_modules = ['base']
     filepaths = export_tables(source_tables, target_dir, source_connection)
-    # TODO autodetect mapping file with input and output db
+    # TODO autodetect mapping file with source and target db
     mappingfile = os.path.join(HERE, 'mappings', 'openerp6.1-openerp7.0.yml')
     mapping = Mapping(target_modules, mappingfile)
     processor = CSVProcessor(mapping)
