@@ -1,55 +1,57 @@
 import xmlrpclib
 import argparse
-import psycopg2
 
-from pprint import pprint
 """ Method to find out the dependencies order to import of an OpenERP model
     Set excluded_models to None if there is no model to exclude.
     If you want to exclude some models, use the following syntax :
     excluded_models = ['res.currency', 'res.country']
 """
-parser = argparse.ArgumentParser(description='Return the dependencies order'
-                                             ' of models give as parameters')
 
-parser.add_argument('-m', '--models', nargs='+', help="One or many models",
-                    required=True)
-parser.add_argument('-df', '--db_name_from',
-                    help="Name of the database to migrate data from",
-                    required=True)
-parser.add_argument('-dt', '--db_name_to',
-                    help="Name of the database to migrate data to",
-                    required=False)  # Temporary, will be required
-parser.add_argument('-ut', '--user_to',
-                    help="Name of the user of the database aimed",
-                    required=False)  # Temporay, will be required
-parser.add_argument('-uf', '--user_from',
-                    help="Name of the user of the database source",
-                    required=True)
-parser.add_argument('-pf', '--pwd_from',
-                    help="Password of the user of the database source",
-                    required=True)
-parser.add_argument('-pt', '--pwd_to',
-                    help="Password of the user of the database aimed",
-                    required=False)  # Temporary, will be required
-parser.add_argument('-x', '--excluded', nargs='+', help="One or many models"
-                    " to exclude", required=False, default=None)
 
-args = parser.parse_args()
-
-username_from = args.user_from
-username_to = args.user_to
-pwd_from = args.pwd_from
-pwd_to = args.pwd_to
-dbname_from = args.db_name_from
-dbname_to = args.db_name_to
-models = args.models
-excluded_models = args.excluded
+def main():
+    """ Main console script
+    """
+    parser = argparse.ArgumentParser(description='Return the dependencies order'
+                                     ' of models give as parameters')
+    parser.add_argument('-m', '--models', nargs='+', help="One or many models",
+                        required=True)
+    parser.add_argument('-df', '--db_name_from',
+                        help="Name of the database to migrate data from",
+                        required=True)
+    parser.add_argument('-dt', '--db_name_to',
+                        help="Name of the database to migrate data to",
+                        required=False)  # Temporary, will be required
+    parser.add_argument('-ut', '--user_to',
+                        help="Name of the user of the database aimed",
+                        required=False)  # Temporay, will be required
+    parser.add_argument('-uf', '--user_from',
+                        help="Name of the user of the database source",
+                        required=True)
+    parser.add_argument('-pf', '--pwd_from',
+                        help="Password of the user of the database source",
+                        required=True)
+    parser.add_argument('-pt', '--pwd_to',
+                        help="Password of the user of the database aimed",
+                        required=False)  # Temporary, will be required
+    parser.add_argument('-x', '--excluded', nargs='+', help="One or many models"
+                        " to exclude", required=False, default=None)
+    args = parser.parse_args()
+    username_from = args.user_from
+    username_to = args.user_to
+    pwd_from = args.pwd_from
+    pwd_to = args.pwd_to
+    dbname_from = args.db_name_from
+    dbname_to = args.db_name_to
+    models = args.models
+    excluded_models = args.excluded
+    get_ordre_importation(username_from, pwd_from, dbname_from, models,
+                          excluded_models)
 
 
 def get_ordre_importation(username, pwd, dbname, models, excluded_models,
                           path=None, seen=None):
     # XML-RPC
-    sock, uid = get_socket(username, pwd, dbname)
+    sock, uid = get_socket(username, pwd, dbname, 8069)
     res = []
     if seen is None:
         seen = set()
@@ -114,6 +116,7 @@ it """
 
 def get_mapping_migration(username_from, username_to, pwd_from, pwd_to,
                           dbname_from, dbname_to, model):
+
     sock_from, uid_from = get_socket(username_from, pwd_from, dbname_from, 8069)
     sock_to, uid_to = get_socket(username_to, pwd_to, dbname_to, 8169)
     mapping_xml_id = {}
@@ -201,6 +204,5 @@ def get_socket(username, pwd, dbname, port):
     sock = xmlrpclib.ServerProxy(str_object)
     return sock, uid
 
-get_mapping_migration(username_from, username_to, pwd_from, pwd_to, dbname_from,
-                      dbname_to, models)
+
 #get_ordre_importation(username, pwd, dbname, models, excluded_models)
