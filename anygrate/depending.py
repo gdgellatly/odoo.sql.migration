@@ -107,6 +107,8 @@ def get_ordre_importation(username, pwd, dbname, models, excluded_models,
                                          excluded_models=excluded_models,
                                          seen=seen)
 
+    if model == 'ir.actions.actions':
+        model = 'ir.actions'
     res.append(model)
     if related_tables:
         for table in related_tables:
