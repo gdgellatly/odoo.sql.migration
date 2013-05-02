@@ -4,6 +4,7 @@ import os
 from .exporting import export_tables
 from .mapping import Mapping
 from .processing import CSVProcessor
+from .depending import get_ordre_importation
 
 HERE = os.path.dirname(__file__)
 
@@ -37,7 +38,8 @@ def migrate(source_db, target_db, target_dir=None):
     """
     source_connection = psycopg2.connect("dbname=%s" % source_db)
     target_connection = psycopg2.connect("dbname=%s" % target_db)
-
+    source_models = []
+    ordered_source_tables = []
     # FIXME automatically determine dependent tables
     source_tables = [
         'res_partner_address',
@@ -45,8 +47,17 @@ def migrate(source_db, target_db, target_dir=None):
         'res_users',
         'res_partner_title'
     ]
+    # From PSQL tables to OERP models ...
+    for table in source_tables:
+        source_models.append(table.replace('_', '.'))
+    ordered_dependencies = get_ordre_importation('admin', 'admin',
+                                                 source_db, source_models, None)
+    # ... and from models to tables
+    for model in ordered_dependencies:
+        ordered_source_tables.append(model.replace('.', '_'))
     target_modules = ['base']
-    filepaths = export_tables(source_tables, target_dir, source_connection)
+    filepaths = export_tables(ordered_source_tables, target_dir,
+                              source_connection)
     # TODO autodetect mapping file with source and target db
     mappingfile = os.path.join(HERE, 'mappings', 'openerp6.1-openerp7.0.yml')
     mapping = Mapping(target_modules, mappingfile)

@@ -1,0 +1,71 @@
+base:
+    res_groups.*:
+    res_partner_title.*:
+
+    # Users
+    res_users.*:
+    res_users.email:
+        res_users.user_email:
+    res_users.name:
+        res_partner.name:
+    res_users.id:
+        res_users.id:
+        res_users.partner_id:
+        res_partner.notification_email_send: return 'comment'
+        res_partner.id: |
+            i = newid('res_partner')
+            target_rows['res_users']['partner_id'] = i
+            target_rows['res_partner']['id'] = i
+            return i
+    res_users.address_id:
+        # foireux
+        res_partner.id: return newid('res_partner')
+    res_users.login_date:
+        res_users.date:
+
+    # Partners
+    res_partner.*:
+    res_partner.id:
+        res_partner.id:
+        res_partner.notification_email_send: return 'comment'
+
+    # Addresses
+    res_partner_address.*:
+        res_partner.*:
+    res_partner_address.id:
+        res_partner.id: return newid('res_partner')
+        res_partner.notification_email_send: return 'comment'
+    res_partner_address.contact_id: False
+    res_partner_address.x_openupgrade_job_id: False
+    res_partner_address.location_id: False
+    res_partner_address.email:
+        res_partner.email:
+    res_partner_address.fax:
+        res_partner.fax:
+    res_partner_address.function:
+        res_partner.function:
+    res_partner_address.mobile:
+        res_partner.mobile:
+    res_partner_address.phone:
+        res_partner.phone:
+    res_partner_address.street:
+        res_partner.street:
+    res_partner_address.street2:
+        res_partner.street2:
+    res_partner_address.type:
+        res_partner.type:
+    res_partner_address.zip:
+        res_partner.zip:
+    res_partner_address.name:
+        res_partner.name: return source_row['name'] or source_row['street'] or source_row['city'] or 'noname'
+    res_partner_address.partner_id:
+        res_partner.parent_id:
+    res_company.logo:
+        res_company.logo_web:
+    res_company.rml_footer1:
+        res_company.rml_footer:
+
+mail:
+    res_users.login:
+        mail_alias.alias: return source_row['login']
+

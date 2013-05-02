@@ -82,26 +82,26 @@ account:
         mail.message_id:
     account_bank_statement.opening_details_ids:
         account_cashbox_line.opening_details_id: #A vérifier
-    account_bank_statement.starting_details_ids:false
-    account_bank_statement.ending_details_ids:false
+    account_bank_statement.starting_details_ids: false
+    account_bank_statement.ending_details_ids: false
        
     account_cashbox_line.*:
     account_cashbox_line.bank_statement_id:
         account_bank_statement.bank_statement_ids: # A vérifier
-    account_cashbox_line.number:false
-    account_cashbox_line.ending_id:false
-    account_cashbox_line.starting_id:false
+    account_cashbox_line.number: false
+    account_cashbox_line.ending_id: false
+    account_cashbox_line.starting_id: false
     account_cashbox_line.id:
         account_cashbox_line.id:
         account_cashbox_line.number_closing:
         account_cashbox_line.number_opening:
     
     account_chart_template.*:
-    account_chart_template.property_reserve_and_surplus_account:false
+    account_chart_template.property_reserve_and_surplus_account: false
     
     account_invoice.*:
-    account_invoice.address_contact_id:false
-    account_invoice.address_invoice_id:false
+    account_invoice.address_contact_id: false
+    account_invoice.address_invoice_id: false
     account_invoice.message_ids:
         mail.message_id:
     account_invoice.id:
@@ -112,13 +112,13 @@ account:
     account_invoice_line.*:
     account_invoice_line.name:
         account_invoice_line.name: #cmt changer le type char en text ??
-    account_invoice_line.note:false
+    account_invoice_line.note: false
     
     account_invoice_report.*:
-    account_invoice_report.address_contact_id:false
-    account_invoice_report.address_invoice_id:false
-    account_invoice_report.delay_to_pay:false
-    account_invoice_report.due_delay:false
+    account_invoice_report.address_contact_id: false
+    account_invoice_report.address_invoice_id: false
+    account_invoice_report.delay_to_pay: false
+    account_invoice_report.due_delay: false
     
     account_invoice_tax.*:
     account_invoice_tax.account_analytic_id:
@@ -163,10 +163,10 @@ account:
     
     account_account_type.*:
     account_account_type.name:
-        account_account_type.report_type:return "receivable"
+        account_account_type.report_type: return "receivable"
         
     account_journal_view.*:
-    account_journal_view.view_id:false
+    account_journal_view.view_id: false
     account_journal_column.*:
  
 account_accountant.*:

@@ -47,6 +47,9 @@ def main():
     get_ordre_importation(username_from, pwd_from, dbname_from, models,
                           excluded_models)
 
+if __name__ == '__main__':
+    main()
+
 
 def get_ordre_importation(username, pwd, dbname, models, excluded_models,
                           path=None, seen=None):
