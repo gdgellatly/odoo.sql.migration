@@ -1,13 +1,6 @@
-=============================================
-OpenERP 7 migration using CSV import / export
-=============================================
-
-The goal of this tool is to export CSV data from another application (OpenERP
-6.1, OpenERP 7, Dolibarr), then to process CSV files in order to import it into
-a freshly installed OpenERP database.  This is a different strategy than the
-in-place migration from OpenERP or OpenUpgrade.
-
-The migration process involves different steps and tools introduced below.
+=======================================
+anybox.migration.openerp design doctest
+=======================================
 
 To run the tests:
 

@@ -3,11 +3,11 @@ from setuptools import setup, find_packages
 setup(
     name='anybox.migration.openerp',
     version='0.1',
-    author='Florent JOUATTE',
-    author_email='fjouatte@anybox.fr',
+    author='Anybox',
+    author_email='contact@anybox.fr',
     packages=find_packages(),
-    license='LICENSE.txt',
-    description='Resolving dependencies tree',
+    license='GPLv3+',
+    description='Quick OpenERP migration tool',
     install_requires=[
         "openobject-library < 2.0",
         "PyYAML",
