@@ -1,3 +1,0 @@
-base:
-    # This means: match every field of every table
-    .*:
