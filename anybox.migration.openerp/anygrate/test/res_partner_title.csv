@@ -1,0 +1,13 @@
+id,create_uid,create_date,write_date,write_uid,domain,name,shortcut
+1,1,2011-02-10 11:36:40.620214,,,partner,Corp.,Corp.
+2,1,2011-02-10 11:36:40.620214,,,partner,Ltd,ltd
+3,1,2011-02-10 11:36:40.620214,,,contact,Madam,Ms.
+4,1,2011-02-10 11:36:40.620214,,,contact,Miss,Mss
+5,1,2011-02-10 11:36:40.620214,,,contact,Sir,M.
+6,1,2011-02-11 22:29:13.481043,,,partner,Société anonyme,SA
+7,1,2011-02-11 22:29:24.048831,,,partner,Société à responsabilité limitée,SARL
+8,1,2011-02-11 22:29:32.0578,,,partner,Société par actions simplifiée,SAS
+9,3,2011-04-20 17:13:28.170959,,,partner,Autoentrepreneur,AE
+10,3,2011-05-02 00:49:25.923989,2011-05-02 00:51:46.590965,3,partner,Société à responsabilité limitée,SARL
+11,1,2011-05-25 11:35:51.941517,,,partner,Entreprise individuelle,E.I.
+12,1,2011-09-05 23:45:09.474129,,,partner,Association,Asso
