@@ -117,6 +117,7 @@ def get_mapping_migration(username_from, username_to, pwd_from, pwd_to,
     sock_from, uid_from = get_socket(username_from, pwd_from, dbname_from, 8069)
     sock_to, uid_to = get_socket(username_to, pwd_to, dbname_to, 8169)
     mapping_xml_id = {}
+    mapping_list = []
     for m in model:
 
         records_source = sock_from.execute(dbname_from, uid_from, pwd_from,
@@ -125,44 +126,22 @@ def get_mapping_migration(username_from, username_to, pwd_from, pwd_to,
         if records_source:
             for r in records_source:
                 xml_id_source = get_xml_id_source(r, username_from, pwd_from,
-                                                 dbname_from, m)['name']
+                                                  dbname_from, m)
 
-                xml_id_destination = get_xml_id_destination(xml_id_source, username_to, pwd_to,
-                                           dbname_to, m)
-                print(xml_id_source)
-                print(xml_id_destination)
-                if xml_id_source == xml_id_destination['name'] :
-                    # TO BE COMPLETED
-        #    xml_ids_source = sock_from.execute(dbname_from, uid_from, pwd_from,
-        #                                       'ir.model.data',
-        #                                       'read', records_source, ['name',
-        #                                       'res_id'])
-        #    if xml_ids_source:
-        #        records_cible = []
-        #        for xml_id in xml_ids_source:
-        #            records_cible += sock_to.execute(dbname_to, uid_to, pwd_to,
-        #                                             'ir.model.data',
-        #                                             'search',
-        #                                             [('name', '=',
-        #                                             xml_id['name'])])
-        #
-        #if records_cible:
-        #    common_records = sock_to.execute(dbname_to, uid_to, pwd_to,
-        #                                     'ir.model.data',
-        #                                     'read', records_cible,
-        #                                     ['name', 'res_id'])
-        #
-        #    for r in common_records:
-        #        for xml_id_source in xml_ids_source:
-        #            if  r['name'] != xml_id_source['name'] and r['res_id'] == xml_id_source['res_id']:
-        #                pprint('RIEN A CHANGER')
-        #            elif  r['name'] == xml_id_source['name'] and r['res_id'] != xml_id_source['res_id']:
-        #                    mapping_xml_id[r['name']] = dict((
-        #                        ('res_id_source', xml_id_source['res_id']),
-        #                        ('res_id_cible', r['res_id']),
-        #                    ))
-
-    pprint(mapping_xml_id)
+                xml_id_destination = get_xml_id_destination(xml_id_source,
+                                                            username_to, pwd_to,
+                                                            dbname_to, m)
+                if xml_id_destination:
+                    if xml_id_source['name'] == xml_id_destination['name'] and xml_id_source['id'] != xml_id_destination['id']:
+                        data = {
+                            'xml_id': xml_id_source['name'],
+                            'res_id_source': xml_id_source['id'],
+                            'res_id_destination': xml_id_destination['id'],
+                        }
+                        mapping_list.append(data)
+                else:
+                    print('XML_ID NOT FOUND')
+        mapping_xml_id[m] = mapping_list
 
 
 def get_destination_id(source_id, username_from, username_to, pwd_from, pwd_to,
@@ -200,6 +179,7 @@ def get_xml_id_destination(xml_id_source, username_to, pwd_to, dbname_to,
                            model):
 
     sock_to, uid_to = get_socket(username_to, pwd_to, dbname_to, 8169)
+    xml_id_source = xml_id_source['name']
     id_model_data = sock_to.execute(dbname_to, uid_to, pwd_to,
                                     'ir.model.data', 'search',
                                     [('name', '=', xml_id_source)])
@@ -208,7 +188,7 @@ def get_xml_id_destination(xml_id_source, username_to, pwd_to, dbname_to,
                                       'ir.model.data',
                                       'read', id_model_data,
                                       ['name'])
-        return xml_id_data
+        return xml_id_data[0]
     return None
 
 
