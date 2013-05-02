@@ -1,5 +1,5 @@
 import unittest
-from anytree import anytree
+from anygrate import depending
 
 
 class TestResolvingTree(unittest.TestCase):
@@ -11,16 +11,16 @@ class TestResolvingTree(unittest.TestCase):
 
     def test_get_ordre_import(self):
 
-        res_country = anytree.get_ordre_importation('admin', 'admin', 'ecox_db', ('res.country',),
+        res_country = depending.get_ordre_importation('admin', 'admin', 'ecox_db', ('res.country',),
                                                     None, None)
-        res_account_account = anytree.get_ordre_importation('admin', 'admin', 'ecox_db',
+        res_account_account = depending.get_ordre_importation('admin', 'admin', 'ecox_db',
                                                             ('account.account',), None, None)
 
-        res_groups_exclusion = anytree.get_ordre_importation('admin', 'admin', 'ecox_db',
+        res_groups_exclusion = depending.get_ordre_importation('admin', 'admin', 'ecox_db',
                                                              ('res.groups',),
                                                              ['ir.module.category'], None)
 
-        res_groups = anytree.get_ordre_importation('admin', 'admin', 'ecox_db', ('res.groups',), None,
+        res_groups = depending.get_ordre_importation('admin', 'admin', 'ecox_db', ('res.groups',), None,
                                                   None)
 
         self.assertEquals(res_country, ['res.country'])

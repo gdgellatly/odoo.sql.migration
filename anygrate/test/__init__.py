@@ -1,11 +1,11 @@
 import doctest
 import unittest
-import anytree
+import anygrate
 from os.path import dirname, join, abspath
 
 doctests = ['README.rst']
 
-HERE = dirname(anytree.__file__)
+HERE = dirname(anygrate.__file__)
 
 DOCTEST_FLAGS = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS | \
     doctest.REPORT_ONLY_FIRST_FAILURE | doctest.IGNORE_EXCEPTION_DETAIL

@@ -50,10 +50,10 @@ Given a source table or csv file, this mapping should be able to return the targ
 
 We read the mapping:
 
-    >>> from anytree.mapping import Mapping
-    >>> import os, anytree
+    >>> from anygrate.mapping import Mapping
+    >>> import os, anygrate
     >>> from os.path import join, dirname
-    >>> testdir =  join(dirname(anytree.mapping.__file__), 'test')
+    >>> testdir =  join(dirname(anygrate.mapping.__file__), 'test')
     >>> test_file = join(testdir, 'test_mapping.yml')
     >>> mapping = Mapping(['base'], test_file)
 
@@ -123,7 +123,7 @@ Exporting CSV data
 We must be able to export the source tables :
 
     >>> source_tables = ['res_users', 'res_partner']
-    >>> from anytree import exporting
+    >>> from anygrate import exporting
     >>> from tempfile import mkdtemp
     >>> directory = mkdtemp()
     >>> import psycopg2
@@ -139,7 +139,7 @@ Processing csv files
 The exported csv files should now be processed with the mapping, so that new
 csv files be generated
 
-    >>> from anytree.processing import CSVProcessor
+    >>> from anygrate.processing import CSVProcessor
     >>> processor = CSVProcessor(mapping)
     >>> filepaths = [join(directory, 'res_users.csv')]
     >>> pprint(processor.get_target_columns(filepaths), width=1)
@@ -173,7 +173,7 @@ or before importing, foreign keys should be applied an offset?
 
 Now we can import a csv file using the mapping:
 
-    >>> from anytree import importing
+    >>> from anygrate import importing
     >>> importing.import_csv(join(directory, 'res_users.csv'), connection)
     Traceback (most recent call last):
     ...
