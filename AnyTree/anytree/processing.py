@@ -36,7 +36,9 @@ class CSVProcessor(object):
                     for target in mapping:
                         t, c = target.split('.')
                         target_columns.setdefault(t, set()).add(c)
-        return target_columns
+
+        # prevent headers from being in a random order
+        return {k: sorted(list(v)) for k, v in target_columns.items()}
 
     def process(self, source_dir, source_filenames, target_dir):
         """ The main processing method
@@ -82,9 +84,10 @@ class CSVProcessor(object):
                         target_table, target_column = target_column.split('.')
                         target_rows.setdefault(target_table, {})
                         if function is None:
-                            # mapping is empty: use identity
+                            # mapping is None: use identity
                             target_rows[target_table][target_column] = source_row[source_column]
                         elif function is False:
+                            # mapping is False: remove the target column
                             del target_rows[target_table][target_column]
                         else:
                             # mapping is a function
