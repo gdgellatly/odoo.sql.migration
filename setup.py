@@ -8,6 +8,8 @@ setup(
     packages=find_packages(),
     license='GPLv3+',
     description='Quick OpenERP migration tool',
+    long_description=open('README.rst').read() + open('CHANGES.rst').read(),
+    url="https://bitbucket.org/anybox/anybox.migration.openerp/overview",
     install_requires=[
         "openobject-library < 2.0",
         "PyYAML",
