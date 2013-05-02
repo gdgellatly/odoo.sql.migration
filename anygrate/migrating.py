@@ -19,13 +19,17 @@ def main():
     parser.add_argument('-s', '--source',
                         default='test',
                         required=True,
-                        help='Source db')
+                        help=u'Source db')
     parser.add_argument('-t', '--target',
                         required=True,
-                        help='Target db')
+                        help=u'Target db')
     parser.add_argument('-k', '--keepcsv',
                         action='store_true',
-                        help='Keep csv files in the current directory')
+                        help=u'Keep csv files in the current directory')
+    parser.add_argument('-m', '--models',
+                        required=True,
+                        help=u'List of coma-separated models to export'
+                        'Example : (res.partner,res.users)'
     args = parser.parse_args()
     source_db, target_db = args.source, args.target
 
