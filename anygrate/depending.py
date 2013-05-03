@@ -1,5 +1,6 @@
 import xmlrpclib
 import argparse
+from pprint import pprint
 
 """ Method to find out the dependencies order to import of an OpenERP model
     Set excluded_models to None if there is no model to exclude.
@@ -7,6 +8,7 @@ import argparse
     excluded_models = ['res.currency', 'res.country']
 """
 
+fields2update = {}
 
 def main():
     """ Main console script
@@ -44,8 +46,16 @@ def main():
     dbname_to = args.db_name_to
     models = args.models
     excluded_models = args.excluded
-    print(get_ordre_importation(username_from, pwd_from, dbname_from, models,
-                          excluded_models))
+    ordered_models = get_ordre_importation(username_from,
+                                                          pwd_from,
+                                                          dbname_from,
+                                                          models,
+                                                          excluded_models)
+    pprint(ordered_models)
+    print
+    pprint(get_cols_to_update(username_from, pwd_from, dbname_from,
+                             ordered_models))
+
 
 if __name__ == '__main__':
     main()
@@ -93,7 +103,10 @@ def get_ordre_importation(username, pwd, dbname, models, excluded_models,
                 if third_table not in seen:
                     related_tables.add(third_table)
                     seen.add(third_table)
-
+                    # Crapy way to get the columns to update when
+                    # the table is not a model
+                    global fields2update
+                    fields2update[third_table] = fields[field]['related_columns']
         for m in m2m:
             res += get_ordre_importation(username, pwd, dbname, (m,),
                                          path=path+(model,),
@@ -104,14 +117,39 @@ def get_ordre_importation(username, pwd, dbname, models, excluded_models,
                                          path=path+(model,),
                                          excluded_models=excluded_models,
                                          seen=seen)
-
     if model == 'ir.actions.actions':
         model = 'ir.actions'
     res.append(model)
     if related_tables:
         for table in related_tables:
+            #table = table.replace('_', '.')
             res.append(table)
+
     return res
+
+
+""" Method to get back all columns referencing another table """
+
+# NOT SURE THAT IS IT WORKING WELL
+
+def get_cols_to_update(username_cible, pwd_cible, dbname_cible,
+                       models):
+    cols = []
+    sock, uid = get_socket(username_cible, pwd_cible, dbname_cible, 8069)
+    global fields2update
+    for model in models:
+        if model not in fields2update:
+            if model == 'ir.actions':
+                model = 'ir.actions.actions'
+            fields = sock.execute(dbname_cible, uid, pwd_cible, model,
+                                  'fields_get')
+            for field in fields:
+                if fields[field]['type'] == 'many2one':
+                    cols.append(field)
+                if fields[field]['type'] == 'many2many':
+                    cols.append(field)
+            fields2update[model.replace('.', '_')] = field
+    return fields2update
 
 """ Method to define which record needs to be update or not before importing
 it """
@@ -171,8 +209,8 @@ def get_destination_id(source_id, username_from, username_to, pwd_from, pwd_to,
 def get_xml_id_source(source_id, username_source, pwd_source,
                       dbname_from, model):
 
-    sock_from, uid_from = get_socket(username_from, pwd_from, dbname_from, 8069)
-    xml_id_source = sock_from.execute(dbname_from, uid_from, pwd_from,
+    sock_from, uid_from = get_socket(username_source, pwd_source, dbname_from, 8069)
+    xml_id_source = sock_from.execute(dbname_from, uid_from, pwd_source,
                                       'ir.model.data', 'read',
                                       source_id, ['name'])
     if xml_id_source:
