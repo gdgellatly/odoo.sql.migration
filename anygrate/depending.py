@@ -44,8 +44,8 @@ def main():
     dbname_to = args.db_name_to
     models = args.models
     excluded_models = args.excluded
-    get_ordre_importation(username_from, pwd_from, dbname_from, models,
-                          excluded_models)
+    print(get_ordre_importation(username_from, pwd_from, dbname_from, models,
+                          excluded_models))
 
 if __name__ == '__main__':
     main()
@@ -83,8 +83,6 @@ def get_ordre_importation(username, pwd, dbname, models, excluded_models,
             if fields[field]['type'] == 'many2many' and 'related_columns' in fields[field]:
                 m = fields[field]['relation']
                 third_table = fields[field]['third_table']
-                print(" M2M vers %r THIRD_TABLE : %r" % (m,
-                      third_table))
                 # Cas des structures arborescentes (reflexives)
                 if m in path:
                     print(' BOUCLE %s a un m2m %r vers %s, qui est un de ses '
