@@ -67,8 +67,150 @@ base:
 
 # Module mail
 mail:
+    mail.*:
+    ir_ui_menu.mail_group_id:
+        ir_ui_menu.mail_group_id:
+        mail_group.mail_group_ids:
+    mail_alias.alias_defaults:
+        mail_alias.alias_defaults: # new (text) required: required, req_default: {}
+    mail_alias.id:
+        mail_alias.id:
+        mail_alias.alias_force_thread_id: #new, interger
+        mail_alias.
+        mail_alias.
+        mail_alias.
+        mail_alias.
+        mail_alias.
+    mail_alias.alias_model_id:
+        mail_alias.alias_model_id:
+        ir_model.alias_model_ids:  # required
+    mail_alias.alias_name:
+        mail_alias.alias_name:     # required
+    mail_alias.alias_user_id:  
+        mail_alias.alias_user_id:
+        res_users.alias_user_ids:
+    mail_followers.partner_id:
+        mail_followers.partner_id:
+        res_partner.partner_ids:
+    mail_followers.id:
+        mail_followers.id:
+        mail_followers.res_id:
+    mail_followers.res_model:
+        mail_followers.res_model:   # required
+    mail_followers.subtype_ids:
+        mail_followers.subtype_ids:
+        mail_message_subtype.subtype_ids
+    mail_group.id:
+        mail_group.id:
+        mail_group._inherits:
+        mail_group.description:     # new, text
+        mail_group.image:           #new, binary
+    mail_group.alias_id:
+        mail_group.alias_id:
+        mail_alias.alias_ids:
+    mail_group.group_ids:
+        mail_group.group_ids:
+        res_groups.group_ids:
+    mail_group.group_public_id:
+        mail_group.group_public_id:
+        res_groups.group_public_id:
+    mail_group.menu_id:
+        mail_group.menu_id:
+        ir_ui_menu.menu_ids:
+    mail_group.message_ids:
+        mail_group.message_ids:
+        mail_message.message_id:
+    mail_group.name:
+        mail_group.name:        # required
+    mail_group.public:
+        mail_group.public: return 'groups'     # new, required, selection_keys: ['groups', 'private', 'public']
+    mail_mail.id:
+        mail_mail.id:
+        mail_mail._inherits: return false      # new, false
+        mail_mail.auto_delete:  # new, boolean
+        mail_mail.body_html:    # new, text
+        mail_mail.email_cc:     # new, char
+        mail_mail.email_from:   # new, char
+        mail_mail.email_to:     # new, char
+        mail_mail.notification: # new, boolean
+        mail_mail.references:   # new, text
+        mail_mail.reply_to:     # new, char
+    mail_mail.mail_message_id:
+        mail_mail.mail_message_id:
+        mail_message.mail_message_id:
+    mail_mail.mail_server_id:
+        mail_mail.mail_server_id:
+        ir_mail_server.mail_server_id:
+    mail_mail.state:
+        mail_mail.state:    # selection_keys: ['cancel', 'exception', 'outgoing', 'received', 'sent']
+    mail_message.attachment_ids:
+        mail_message.attachment_ids:
+        ir_attachment.attachment_ids:
+    mail_message.author_id:
+        mail_message.author_id:
+        res_partner.author_ids:
+    mail_message.id:
+        mail_message.id:
+        mail_message.body:          # new, html
+        mail_message.date:          # new, datetim
+        mail_message.email:         # new, char
+        mail_message.message_id:    # new, char
+        mail_message.model:         # new, char
+        mail_message.res_id:        # new, integer
+        mail_message.subject:       # new, char
+        mail_message.:
+        mail_message.:
+        mail_message.:
+    mail_message.child_ids:
+        mail_message.child_ids:
+        mail.message.child_id:
+    mail_message.notification_ids:
+        mail_message.notification_ids:
+        mail_notification.notification_id:
+    mail_message.notified_partner_ids:
+        mail_message.notified_partner_ids:
+        res_partner.notified_partner_id:
+    mail_message.parent_id:
+        mail_message.parent_id:
+        mail_message.parent_ids:
+    mail_message.partner_ids:
+        mail_message.partner_ids:
+        res_partner.partner_id:
+    mail_message.subtype_id:
+        mail_message.subtype_id:
+        mail_message_subtype.subtype_id: 
+    mail_message.type:
+        mail_message.type:          # new selection_keys: ['comment', 'email', 'notification']
+    mail_message.vote_user_ids:
+        mail_message.vote_user_ids:
+        res_users.vote_user_ids
+    mail_message_subtype.id:
+        mail_message_subtype.id:
+        mail_message_subtype.default:   # new, boolean
+        mail_message_subtype.name:      # new, required
+        mail_message_subtype.res_model: # new, char
+    mail_notification.message_id:
+        mail_notification.message_id:
+        mail_notification.read:         # new, boolean
+        mail_notification.starred:      # new, boolean
+        mail_message.message_ids:
+    mail_notification.partner_id:
+        mail_notification.partner_id:
+        res_partner.partner_ids:
+    res_partner.emails:
+        res_partner.emails:             # DEL relation: mail.message
+    res_partner.message_ids:
+        res_partner.message_ids:
+        mail_message.message_id:
+    res_partner.notification_email_send:
+        res_partner.notification_email_send:    # new required: required, selection_keys: ['all', 'comment', 'email', 'none']
+    res_users._inherits:
+        res_users._inherits:            # new mode: modify   (False) A verifier
+    res_users.alias_id:
+        res_users.alias_id:
+        mail_alais.alias_id: 
     res_users.login:
-        mail_alias.alias: return source_row['login']
+        mail_alias.alias_name: return source_row['login']
 
 # Module account 
 account:
@@ -566,7 +708,6 @@ product:
         mail_message.message_ids:
     product_product.product_image: false
 
-# module 
 
     
         
