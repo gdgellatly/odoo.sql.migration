@@ -54,7 +54,7 @@ def migrate(source_db, target_db, models, target_dir=None):
     source_connection = psycopg2.connect("dbname=%s" % source_db)
     target_connection = psycopg2.connect("dbname=%s" % target_db)
     source_tables = []
-    ordered_models = get_ordre_importation('admin', 'admin',
+    ordered_models = get_ordre_importation('admin', '23rivoli',
                                            source_db, models, None)
     for model in ordered_models:
         source_tables.append(model.replace('.', '_'))

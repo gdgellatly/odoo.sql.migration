@@ -556,15 +556,21 @@ point_of_sale:
     account_journal.auto_cash: false    # DEL
     account_journal.check_dtls: false   # DEL
 
+# module product
+product:
+    product.*:
+    product_product.id:
+        product_product.id:
+        product_product.image:  #new, binary
+    product_product.message_ids:
+        mail_message.message_ids:
+    product_product.product_image: false
+
+# module 
+
+    
         
-        
-        
-        
-        
-        
-        
-        
-        
+
         
         
         
