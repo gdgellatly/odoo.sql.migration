@@ -201,7 +201,7 @@ account_asset:
     account_asset.*:
     account_asset_depreciation_line.*:
     account_asset_depreciation_line.depreciation_date:
-    	account_asset_depreciation_line.depreciation_date: #change type char to date
+        account_asset_depreciation_line.depreciation_date: #change type char to date
 
 # Module account_bank_statement_extensions
 account_bank_statement_extensions:
@@ -340,7 +340,6 @@ sale:
     sale_order_line.address_allotment_id:
         sale_order_line.address_allotment_id:
         res_partner.address_allotment_ids:
-    address_allotment_id
     sale_order_line.delay:
         sale_order_line.delay:
         sale_stock.delay:
@@ -488,8 +487,75 @@ stock:
     stock_picking_in.company_id:
         stock_picking_in.company_id:
         res_company.company_ids:
+
+# module point_of_sale
+point_of_sale:    
+    point_of_sale.*:
+    account_bank_statement.pos_session_id:
+        account_bank_statement.pos_session_id:
+        pos_session.pos_session_ids:
+    account_bank_statement_line.journal_id:
+        account_bank_statement_line.journal_id: # DEL mode: modify
         
-        
+        account_journal.amount_authorized_diff: # new, float
+        account_journal.self_checkout_payment_method:   #new, boolean
+        pos_category.image:     #new, binary
+        pos_config.group_by:    #new, boolean
+        pos_config.iface_cashdrawer:    #new, boolean
+        pos_config.iface_electronic_scale: #new, boolean
+        pos_config.iface_payment_terminal: #new, booolean
+        pos_config.iface_print_via_proxy:  #new, boolean
+        pos_config.iface_self_checkout: #new, boolean
+        pos_config.iface_vkeyboard:     #new, boolean
+        pos_config.journal_id:
+            pos_config.journal_id:
+            account_journal.journal_ids:
+        pos_config.journal_ids:
+            pos_config.journal_ids:
+            account_journal.journal_ids:
+        pos_config.name:
+            pos_config.name:    # new required
+        pos_config.sequence_id:
+            pos_config.sequence_id:
+            ir_sequence.sequence_ids:
+        pos_config.session_ids: 
+            pos_config.session_ids:
+            pos_session.session_id:
+        pos_config.shop_id:
+            pos_config.shop_id:
+            sale_shop.shop_ids:
+        pos_config.state:
+            pos_config.state: return 'active' #NEW required: required, selection_keys: ['active', 'deprecated', 'inactive']
+        pos_order.id:
+            pos_order.id:
+            pos_order.pos_reference:    #new
+        pos_order.session_id:
+            pos_order.session_id:
+            pos_session.session_id:
+        pos_session.config_id:
+            pos_session.config_id:
+            pos_config.config_ids:
+            pos_session.name:       # new required: required, req_default: /
+            pos_session.start_at:   # new, datetime
+            pos_session.stop_at:    # new, datetime
+            pos_session.state:      # new required: required, selection_keys: ['closed', 'closing_control', 'opened', 'opening_control']
+            product_product.available_in_pos: return true   # new, boolean
+            product_product.to_weight: return true  # new, boolean
+            res_users.ean13:        # new, char
+            res_users.pos_config:
+                res_users.pos_config:   # A VERIFIER  
+        pos_session.user_id:
+            pos_session.user_id:
+            res_users.user_ids:     # 
+        pos_session.order_ids:
+            pos_session.order_ids:
+            pos_order.order_id: 
+        pos_session.statement_ids:
+            pos_session.statement_ids:
+            account_bank_statement.statement_id:
+    account_journal.auto_cash: false    # DEL
+    account_journal.check_dtls: false   # DEL
+
         
         
         
