@@ -201,7 +201,7 @@ account_asset:
     account_asset.*:
     account_asset_depreciation_line.*:
     account_asset_depreciation_line.depreciation_date:
-    	account_asset_depreciation_line.depreciation_date: #change type char to date
+        account_asset_depreciation_line.depreciation_date: #change type char to date
 
 # Module account_bank_statement_extensions
 account_bank_statement_extensions:
@@ -215,7 +215,7 @@ account_budget:
     account_budget.*:
     
 # Module account_cancel
- account_cancel:
+account_cancel:
     account_cancel.*:
   
 # Module account_chart
@@ -340,7 +340,7 @@ sale:
     sale_order_line.address_allotment_id:
         sale_order_line.address_allotment_id:
         res_partner.address_allotment_ids:
-    address_allotment_id
+    address_allotment_id:
     sale_order_line.delay:
         sale_order_line.delay:
         sale_stock.delay:
