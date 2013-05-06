@@ -707,16 +707,57 @@ product:
     product_product.message_ids:
         mail_message.message_ids:
     product_product.product_image: false
+    
+
+# module edi
+edi:
+    edi.*:
+    
+# module purchase
+purchase:
+    purchase.*:
+    purchase_order.dest_address_id:
+        purchase_order.dest_address_id:
+        res_partner.dest_address_ids:
+    purchase_order.journal_id:
+        purchase_order.journal_id:
+        account_journal.journal_ids:
+    purchase_order.message_ids:
+        purchase_order.message_ids:
+        mail_message.message_id:
+    purchase_order.partner_address_id:
+        purchase_order.partner_address_id :     # DEL relation: res.partner.address
+    purchase_order.payment_term_id:
+        purchase_order.payment_term_id:
+        account_payment_term.payment_term_ids:
+    purchase_order.picking_ids:
+        purchase_order.picking_ids:
+        stock_picking_in.picking_id:    
+    purchase_order.state:
+        purchase_order.state:  # ['approved', 'cancel', 'confirmed', 'done', 'draft', 'except_invoice', 'except_picking', 'sent']'
+    purchase_order_line.name:
+        purchase_order.name:       # change type to 'text'
+    purchase_order_line.notes: false
+    purchase_report.dest_address_id:
+        purchase_report.dest_address_id:
+    purchase_report.partner_address_id:
+        purchase_report.partner_address_id:
+    purchase_report.state:
+        purchase_report.state:      # '['approved', 'cancel', 'confirmed', 'done', 'draft', 'except_invoice', 'except_picking']'
+    res_partner.purchase_order_ids:
+        res_partner.purchase_order_ids:
+        purchase_order.purchase_order_ids:   
+    stock_picking_in.purchase_id:
+        stock_picking_in.purchase_id: 
+        purchase_order.purchase_id: 
 
 
     
-        
-
-        
-        
-        
-        
-        
-        
-        
-        
+    
+    
+    
+    
+    
+    
+    
+    
