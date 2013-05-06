@@ -34,8 +34,14 @@ def main():
                         required=True,
                         help=u'List of space-separated models to export'
                         'Example : (res.partner res.users)')
+    parser.add_argument('-x', '--excluded_models', nargs='+',
+                        required=True,
+                        help=u'List of space-separated models to exclude'
+                        )
+
     args = parser.parse_args()
     source_db, target_db, models = args.source, args.target, args.models
+    excluded_models = args.excluded_models
 
     print "Importing into target db is not yet supported. Use --keepcsv for now"
     if args.keepcsv:
@@ -43,18 +49,19 @@ def main():
 
     tempdir = mkdtemp(prefix=source_db + '-' + str(int(time.time()))[-4:] + '-',
                       dir=os.path.abspath('.'))
-    migrate(source_db, target_db, models, target_dir=tempdir)
+    migrate(source_db, target_db, models, excluded_models, target_dir=tempdir)
     if not args.keepcsv:
         shutil.rmtree(tempdir)
 
 
-def migrate(source_db, target_db, models, target_dir=None):
+def migrate(source_db, target_db, models, excluded_models=None,
+            target_dir=None):
     """ Migrate using importing/mapping/processing modules
     """
     source_connection = psycopg2.connect("dbname=%s" % source_db)
     target_connection = psycopg2.connect("dbname=%s" % target_db)
     source_tables = []
-    ordered_models = get_ordre_importation('admin', '23rivoli',
+    ordered_models = get_ordre_importation('admin', 'admin',
                                            source_db, models, None)
     for model in ordered_models:
         source_tables.append(model.replace('.', '_'))
@@ -87,7 +94,7 @@ def migrate(source_db, target_db, models, target_dir=None):
             except psycopg2.ProgrammingError:
                 LOG.debug(u'La colonne id n\'existe pas'
                           'pour la table %s ' % source_table)
-                source_connection.rollback()
+                target_connection.rollback()
             except KeyError:
                 LOG.debug(u'Impossible de creer un enregistrement'
                           ' pour cette table')

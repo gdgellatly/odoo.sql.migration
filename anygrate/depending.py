@@ -47,14 +47,12 @@ def main():
     models = args.models
     excluded_models = args.excluded
     ordered_models = get_ordre_importation(username_from,
-                                                          pwd_from,
-                                                          dbname_from,
-                                                          models,
-                                                          excluded_models)
-    pprint(ordered_models)
-    print
-    pprint(get_cols_to_update(username_from, pwd_from, dbname_from,
-                             ordered_models))
+                                           pwd_from,
+                                           dbname_from,
+                                           models,
+                                           excluded_models)
+    get_cols_to_update(username_from, pwd_from, dbname_from,
+                       ordered_models)
 
 
 if __name__ == '__main__':
@@ -131,6 +129,7 @@ def get_ordre_importation(username, pwd, dbname, models, excluded_models,
 """ Method to get back all columns referencing another table """
 
 # NOT SURE THAT IS IT WORKING WELL
+
 
 def get_cols_to_update(username_cible, pwd_cible, dbname_cible,
                        models):

@@ -76,11 +76,6 @@ mail:
     mail_alias.id:
         mail_alias.id:
         mail_alias.alias_force_thread_id: #new, interger
-        mail_alias.
-        mail_alias.
-        mail_alias.
-        mail_alias.
-        mail_alias.
     mail_alias.alias_model_id:
         mail_alias.alias_model_id:
         ir_model.alias_model_ids:  # required
@@ -99,7 +94,7 @@ mail:
         mail_followers.res_model:   # required
     mail_followers.subtype_ids:
         mail_followers.subtype_ids:
-        mail_message_subtype.subtype_ids
+        mail_message_subtype.subtype_ids:
     mail_group.id:
         mail_group.id:
         mail_group._inherits:
@@ -158,9 +153,6 @@ mail:
         mail_message.model:         # new, char
         mail_message.res_id:        # new, integer
         mail_message.subject:       # new, char
-        mail_message.:
-        mail_message.:
-        mail_message.:
     mail_message.child_ids:
         mail_message.child_ids:
         mail.message.child_id:
@@ -183,7 +175,7 @@ mail:
         mail_message.type:          # new selection_keys: ['comment', 'email', 'notification']
     mail_message.vote_user_ids:
         mail_message.vote_user_ids:
-        res_users.vote_user_ids
+        res_users.vote_user_ids:
     mail_message_subtype.id:
         mail_message_subtype.id:
         mail_message_subtype.default:   # new, boolean
@@ -357,7 +349,7 @@ account_budget:
     account_budget.*:
     
 # Module account_cancel
- account_cancel:
+account_cancel:
     account_cancel.*:
   
 # Module account_chart
