@@ -3,6 +3,7 @@ import psycopg2
 import shutil
 import argparse
 import os
+import pdb
 from tempfile import mkdtemp
 from .exporting import export_tables
 from .mapping import Mapping
@@ -38,10 +39,17 @@ def main():
                         required=True,
                         help=u'List of space-separated models to exclude'
                         )
+    parser.add_argument('-p', '--path',
+                        required=False, default='openerp6.1-openerp7.0.yml',
+                        help=u'filemane.yml'
+                        'the file must be stored in the mappings file'
+                        'Exemple: openerp6.1-openerp7.0.yml'
+                        )
 
     args = parser.parse_args()
     source_db, target_db, models = args.source, args.target, args.models
     excluded_models = args.excluded_models
+    mapping_file=args.path
 
     print "Importing into target db is not yet supported. Use --keepcsv for now"
     if args.keepcsv:
@@ -49,12 +57,11 @@ def main():
 
     tempdir = mkdtemp(prefix=source_db + '-' + str(int(time.time()))[-4:] + '-',
                       dir=os.path.abspath('.'))
-    migrate(source_db, target_db, models, excluded_models, target_dir=tempdir)
+    migrate(source_db, target_db, models, mapping_file, excluded_models, target_dir=tempdir)
     if not args.keepcsv:
         shutil.rmtree(tempdir)
 
-
-def migrate(source_db, target_db, models, excluded_models=None,
+def migrate(source_db, target_db, models,  mapping_file, excluded_models=None,
             target_dir=None):
     """ Migrate using importing/mapping/processing modules
     """
@@ -69,7 +76,8 @@ def migrate(source_db, target_db, models, excluded_models=None,
     filepaths = export_tables(source_tables, target_dir,
                               source_connection)
     # TODO autodetect mapping file with source and target db
-    mappingfile = os.path.join(HERE, 'mappings', 'openerp6.1-openerp7.0.yml')
+    mappingfile = os.path.join(HERE, 'mappings', mapping_file)
+
     mapping = Mapping(target_modules, mappingfile)
     processor = CSVProcessor(mapping)
     target_tables = processor.get_target_columns(filepaths).keys()
