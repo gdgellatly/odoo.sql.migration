@@ -28,7 +28,6 @@ base:
     res_partner.id:
         res_partner.id:
         res_partner.notification_email_send: return 'comment'
-
     # Addresses
     res_partner_address.*:
         res_partner.*:

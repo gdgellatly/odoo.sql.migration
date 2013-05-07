@@ -14,7 +14,9 @@ class CSVProcessor(object):
     """ Take a csv file, process it with the mapping
     and output a new csv file
     """
-    def __init__(self, mapping, mapping_file):
+    def __init__(self, mapping, mapping_file, fields2update):
+
+        self.fields2update = fields2update
         self.mapping = mapping
         self.target_columns = {}
         self.writers = {}
@@ -50,7 +52,7 @@ class CSVProcessor(object):
         return self.target_columns
 
     def process(self, source_dir, source_filenames, target_dir,
-                target_connection, fields2update, mapping_file):
+                target_connection, mapping_file, fields2update):
         """ The main processing method
         """
         with open(self.discmappingfile) as stream:
@@ -125,7 +127,19 @@ class CSVProcessor(object):
         if record_cible:
             if record_cible['id'] != target_row['id']:
                 print('WE NEED TO CHANGE THE SRC ID')
+                target_row['id'] = record_cible['id']
             elif record_cible['id'] == target_row['id']:
                 print('JACKPOT ! NO NEED TO CHANGE')
         else:
             print('NO EQUIVALENT ! WE CAN ADD IT BUT WE NEED TO GET THE MAX ID FIRST')
+            # THIS IS MAX ID FROM THE SOURCE BASE ...
+            if table in self.mapping.last_id:
+                target_row['id'] = self.mapping.last_id[table]+1
+            else:
+                print
+                # Il s'agit d'une table de jointure ! Comment gerer ca ?
+
+        """ Maintenant il faut appliquer ces modifications aux cles etrangeres
+        qui referencent l\'id """
+        if table in self.fields2update:
+            print(self.fields2update[table])

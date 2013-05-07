@@ -82,7 +82,7 @@ def migrate(source_db, target_db, models, mapping_file, excluded_models=None,
     mappingfile = os.path.join(HERE, 'mappings', mapping_file)
 
     mapping = Mapping(target_modules, mappingfile)
-    processor = CSVProcessor(mapping, mapping_file)
+    processor = CSVProcessor(mapping, mapping_file, fields2update)
     target_tables = processor.get_target_columns(filepaths).keys()
     for source_table in source_tables:
         with source_connection.cursor() as c:
