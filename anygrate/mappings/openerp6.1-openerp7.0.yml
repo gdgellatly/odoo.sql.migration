@@ -65,6 +65,15 @@ base:
     res_company.rml_footer1:
         res_company.rml_footer:
 
+    # Menu
+    ir_ui_menu.*:
+    
+    # Tables de jointures
+    res_groups_users_rel.*:
+    res_company_users_rel.*:
+    res_partner_category_rel.*:
+    res_groups_implied_rel.*:
+
 # Module mail
 mail:
     mail.*:
