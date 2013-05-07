@@ -36,7 +36,7 @@ def main():
                         help=u'List of space-separated models to export'
                         'Example : (res.partner res.users)')
     parser.add_argument('-x', '--excluded_models', nargs='+',
-                        required=True,
+                        required=False,
                         help=u'List of space-separated models to exclude'
                         )
     parser.add_argument('-p', '--path',
@@ -69,7 +69,7 @@ def migrate(source_db, target_db, models,  mapping_file, excluded_models=None,
     target_connection = psycopg2.connect("dbname=%s" % target_db)
     source_tables = []
     ordered_models = get_ordre_importation('admin', 'admin',
-                                           source_db, models, None)
+                                           source_db, models, excluded_models)
     for model in ordered_models:
         source_tables.append(model.replace('.', '_'))
     target_modules = ['base']

@@ -165,6 +165,18 @@ Importing the CSV files
 Before importing, existing init data should be matched to csv data if possible.
 or before importing, foreign keys should be applied an offset?
 
+It is necessary to know if there is some source data matching target data.
+But how can we know that ? We need to determine a discriminatory criterion for each
+tables to import.
+
+Once we find it, there are two possibilities : 
+
+- First, data are TOTALLY equivalent and then there is nothing to do !
+- Second, data are equivalent but the ID.
+
+For this second case, we need to change the source record id by the targeted one.
+By doing this, we will also need to change all the foreign keys referencing it.      
+
 Now we can import a csv file using the mapping:
 
     >>> from anygrate import importing

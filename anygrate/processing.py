@@ -81,7 +81,6 @@ class CSVProcessor(object):
                         continue
                     # we found a mapping, use it
                     for target_column, function in mapping.items():
-
                         target_table, target_column = target_column.split('.')
                         target_rows.setdefault(target_table, {})
                         if function is None:
