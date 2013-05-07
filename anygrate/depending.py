@@ -1,6 +1,7 @@
 import xmlrpclib
 import argparse
 from pprint import pprint
+import psycopg2
 
 """ Method to find out the dependencies order to import of an OpenERP model
     Set excluded_models to None if there is no model to exclude.
@@ -8,9 +9,9 @@ from pprint import pprint
     excluded_models = ['res.currency', 'res.country']
 """
 
-fields2update = {}
 
 def main():
+
     """ Main console script
     """
     parser = argparse.ArgumentParser(description='Return the dependencies order'
@@ -101,10 +102,6 @@ def get_ordre_importation(username, pwd, dbname, models, excluded_models,
                 if third_table not in seen:
                     related_tables.add(third_table)
                     seen.add(third_table)
-                    # Crapy way to get the columns to update when
-                    # the table is not a model
-                    global fields2update
-                    fields2update[third_table] = fields[field]['related_columns']
         for m in m2m:
             res += get_ordre_importation(username, pwd, dbname, (m,),
                                          path=path+(model,),
@@ -128,26 +125,33 @@ def get_ordre_importation(username, pwd, dbname, models, excluded_models,
 
 """ Method to get back all columns referencing another table """
 
-# NOT SURE THAT IS IT WORKING WELL
-
 
 def get_cols_to_update(username_cible, pwd_cible, dbname_cible,
                        models):
-    cols = []
-    sock, uid = get_socket(username_cible, pwd_cible, dbname_cible, 8069)
-    global fields2update
+
+    target_connection = psycopg2.connect("dbname=%s" % dbname_cible)
+    fields2update = {}
     for model in models:
-        if model not in fields2update:
-            if model == 'ir.actions':
-                model = 'ir.actions.actions'
-            fields = sock.execute(dbname_cible, uid, pwd_cible, model,
-                                  'fields_get')
-            for field in fields:
-                if fields[field]['type'] == 'many2one':
-                    cols.append(field)
-                if fields[field]['type'] == 'many2many':
-                    cols.append(field)
-            fields2update[model.replace('.', '_')] = field
+        with target_connection.cursor() as c:
+            if model not in fields2update:
+                if model == 'ir.actions':
+                    model = 'ir.actions.actions'
+                model = model.replace('.', '_')
+                query = """\
+SELECT tc.table_name, kcu.column_name \
+FROM information_schema.table_constraints AS tc JOIN \
+information_schema.key_column_usage AS kcu ON \
+tc.constraint_name = kcu.constraint_name JOIN \
+information_schema.constraint_column_usage AS \
+ccu ON ccu.constraint_name = tc.constraint_name \
+WHERE constraint_type = 'FOREIGN KEY' AND \
+ccu.table_name='%s';""" % model
+                try:
+                    c.execute(query)
+                except:
+                    print('Exception')
+                results = c.fetchall()
+                fields2update[model] = results
     return fields2update
 
 """ Method to define which record needs to be update or not before importing
