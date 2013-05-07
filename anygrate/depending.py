@@ -52,8 +52,6 @@ def main():
                                            dbname_from,
                                            models,
                                            excluded_models)
-    get_cols_to_update(username_from, pwd_from, dbname_from,
-                       ordered_models)
 
 
 if __name__ == '__main__':
@@ -126,10 +124,8 @@ def get_ordre_importation(username, pwd, dbname, models, excluded_models,
 """ Method to get back all columns referencing another table """
 
 
-def get_cols_to_update(username_cible, pwd_cible, dbname_cible,
-                       models):
+def get_cols_to_update(target_connection, models):
 
-    target_connection = psycopg2.connect("dbname=%s" % dbname_cible)
     fields2update = {}
     for model in models:
         with target_connection.cursor() as c:

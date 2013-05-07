@@ -1,7 +1,11 @@
 import csv
+import psycopg2.extras
 import logging
+import yaml
+import os
 from os.path import basename, join
 
+HERE = os.path.dirname(__file__)
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(basename(__file__))
 
@@ -10,10 +14,14 @@ class CSVProcessor(object):
     """ Take a csv file, process it with the mapping
     and output a new csv file
     """
-    def __init__(self, mapping):
+    def __init__(self, mapping, mapping_file):
         self.mapping = mapping
         self.target_columns = {}
         self.writers = {}
+        mapping_file  = 'disc-'+mapping_file
+        self.discmappingfile = os.path.join(HERE, 'mappings',
+                                            mapping_file)
+        self.discmapping = {}
 
     def get_target_columns(self, filepaths):
         """ Compute target columns with source columns + mapping
@@ -41,9 +49,12 @@ class CSVProcessor(object):
         self.target_columns = {k: sorted(list(v)) for k, v in self.target_columns.items()}
         return self.target_columns
 
-    def process(self, source_dir, source_filenames, target_dir):
+    def process(self, source_dir, source_filenames, target_dir,
+                target_connection, fields2update, mapping_file):
         """ The main processing method
         """
+        with open(self.discmappingfile) as stream:
+            self.discmapping = yaml.load(stream)
         # compute the target columns
         filepaths = [join(source_dir, source_filename) for source_filename in source_filenames]
         self.target_columns = self.get_target_columns(filepaths)
@@ -61,11 +72,11 @@ class CSVProcessor(object):
         # process csv files
         for source_filename in source_filenames:
             source_filepath = join(source_dir, source_filename)
-            self.process_one(source_filepath)
+            self.process_one(source_filepath, target_connection)
         for target_file in self.target_files.values():
             target_file.close()
 
-    def process_one(self, source_filepath):
+    def process_one(self, source_filepath, target_connection):
         """ Process one csv file
         """
         source_table = basename(source_filepath).rsplit('.', 1)[0]
@@ -95,4 +106,26 @@ class CSVProcessor(object):
                             target_rows[target_table][target_column] = result
                 for table, target_row in target_rows.items():
                     if any(target_row.values()):
+                        self.check_record(target_connection, table, target_row)
                         self.writers[table].writerow(target_row)
+
+    def check_record(self, target_connection, table, target_row):
+        """ Method to check if one record has an equivalent in the
+        targeted db"""
+
+        c = target_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        if table in self.discmapping:
+            discriminant = self.discmapping[table]
+        try:
+            query = "SELECT * FROM %s WHERE %s = '%s';" % (table, discriminant, target_row[discriminant])
+            c.execute(query)
+            record_cible = c.fetchone()
+        except:
+            record_cible = None
+        if record_cible:
+            if record_cible['id'] != target_row['id']:
+                print('WE NEED TO CHANGE THE SRC ID')
+            elif record_cible['id'] == target_row['id']:
+                print('JACKPOT ! NO NEED TO CHANGE')
+        else:
+            print('NO EQUIVALENT ! WE CAN ADD IT BUT WE NEED TO GET THE MAX ID FIRST')

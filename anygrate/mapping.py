@@ -23,7 +23,6 @@ class Mapping(object):
                 target_columns = target_columns or {}
                 self.mapping.setdefault(source_column, target_columns)
                 self.mapping[source_column].update(target_columns)
-
         # replace function bodies with real functions
         for incolumn in self.mapping:
             for outcolumn in self.mapping[incolumn]:
@@ -36,7 +35,6 @@ class Mapping(object):
                          globals().update({'newid': self.newid}))
                     self.mapping[incolumn][outcolumn] = mapping_function
                     del mapping_function
-
     def newid(self, table):
         """ increment the global stored last_id
         """

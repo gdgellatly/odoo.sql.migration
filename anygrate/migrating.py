@@ -3,12 +3,12 @@ import psycopg2
 import shutil
 import argparse
 import os
-import pdb
 from tempfile import mkdtemp
 from .exporting import export_tables
 from .mapping import Mapping
 from .processing import CSVProcessor
 from .depending import get_ordre_importation
+from .depending import get_cols_to_update
 import logging
 from os.path import basename
 
@@ -49,7 +49,7 @@ def main():
     args = parser.parse_args()
     source_db, target_db, models = args.source, args.target, args.models
     excluded_models = args.excluded_models
-    mapping_file=args.path
+    mapping_file = args.path
 
     print "Importing into target db is not yet supported. Use --keepcsv for now"
     if args.keepcsv:
@@ -57,11 +57,13 @@ def main():
 
     tempdir = mkdtemp(prefix=source_db + '-' + str(int(time.time()))[-4:] + '-',
                       dir=os.path.abspath('.'))
-    migrate(source_db, target_db, models, mapping_file, excluded_models, target_dir=tempdir)
+    migrate(source_db, target_db, models, mapping_file,
+            excluded_models, target_dir=tempdir)
     if not args.keepcsv:
         shutil.rmtree(tempdir)
 
-def migrate(source_db, target_db, models,  mapping_file, excluded_models=None,
+
+def migrate(source_db, target_db, models, mapping_file, excluded_models=None,
             target_dir=None):
     """ Migrate using importing/mapping/processing modules
     """
@@ -70,6 +72,7 @@ def migrate(source_db, target_db, models,  mapping_file, excluded_models=None,
     source_tables = []
     ordered_models = get_ordre_importation('admin', 'admin',
                                            source_db, models, excluded_models)
+    fields2update = get_cols_to_update(target_connection, models)
     for model in ordered_models:
         source_tables.append(model.replace('.', '_'))
     target_modules = ['base']
@@ -79,7 +82,7 @@ def migrate(source_db, target_db, models,  mapping_file, excluded_models=None,
     mappingfile = os.path.join(HERE, 'mappings', mapping_file)
 
     mapping = Mapping(target_modules, mappingfile)
-    processor = CSVProcessor(mapping)
+    processor = CSVProcessor(mapping, mapping_file)
     target_tables = processor.get_target_columns(filepaths).keys()
     for source_table in source_tables:
         with source_connection.cursor() as c:
@@ -106,4 +109,5 @@ def migrate(source_db, target_db, models,  mapping_file, excluded_models=None,
             except KeyError:
                 LOG.debug(u'Impossible de creer un enregistrement'
                           ' pour cette table')
-    processor.process(target_dir, filepaths, target_dir)
+    processor.process(target_dir, filepaths, target_dir, target_connection,
+                      fields2update, mappingfile)
