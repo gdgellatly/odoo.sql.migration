@@ -175,7 +175,18 @@ Once we find it, there are two possibilities :
 - Second, data are equivalent but the ID.
 
 For this second case, we need to change the source record id by the targeted one.
-By doing this, we will also need to change all the foreign keys referencing it.      
+
+By doing this, we will also need to change all the foreign keys referencing it. 
+
+So we have to find out which columns need to be updated if the referenced id changed.
+How can we that ? Simply by querying the database for each ordered models given
+sooner :
+
+SELECT tc.table_name, kcu.column_name FROM information_schema.table_constraints AS
+tc JOIN information_schema.key_column_usage AS kcu ON
+tc.constraint_name = kcu.constraint_name JOIN information_schema.constraint_column_usage AS
+ccu ON ccu.constraint_name = tc.constraint_name
+WHERE constraint_type = 'FOREIGN KEY' AND ccu.table_name='one_model';    
 
 Now we can import a csv file using the mapping:
 
