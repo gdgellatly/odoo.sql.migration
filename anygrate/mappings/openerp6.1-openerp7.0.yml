@@ -1,13 +1,40 @@
 base:
     res_groups.*:
     res_partner_title.*:
+    res_users.*:
+    res_partner.*:
+    res_country.*:
 
     # Users
-    res_users.*:
-    res_users.email:
-        res_users.user_email:
+    res_users.id:
+        res_users.id:
+    res_users.context_lang:
+        res_users.lang:
+        res_users.company_id: return 1
+        res_users.ean13: return ' '
+        res_users.pos_config: return ' '
+        res_users.default_section_id: return ' '
+        res_users.share: return ' '
+        res_users.alias_id: return ' '
+        res_users.login_date: return ' '
+        res_users.lang: return ' '
+        res_users.active: return 't'
+        res_partner.lang:
+    res_users.date: false
+    res_users.email: false
+    res_users.menu_tips: false
+    res_users.term_id: false
+    
+    res_users.user_email:
+        res_partner.email:
     res_users.name:
         res_partner.name:
+    res_users.active:
+        res_partner.active:
+
+    res_users.company_id:
+        res_partner.company_id:
+
     res_users.id:
         res_users.id:
         res_users.partner_id:
@@ -24,21 +51,49 @@ base:
         res_users.date:
 
     # Partners
-    res_partner.*:
+    res_partner.allow_refund: false
+    res_partner.producer: false
+    res_partner_address.email:
+        res_partner.email:
+        res_partner.state_id:
+        res_partner.birthdate:
+        res_partner.mobile:
+        res_partner.phone:
+        res_partner.street2:
+        res_partner.fax:
+        res_partner.type:
+        res_partner.country_id:
+        res_partner.function:
+        res_partner.zip:
+        res_partner.city:
+        res_partner.street:
+        
     res_partner.id:
         res_partner.id:
+        #adding the new fields with default value
         res_partner.notification_email_send: return 'comment'
-    # Addresses
-    res_partner_address.*:
-        res_partner.*:
+        res_partner.section_id: return ' ' 
+        res_partner.is_company: return 'f' # make a function which finds the value in the target database
+        #res_partner.tz: return ' '    # Example of value: Europe/Paris, not required
+        res_partner.use_parent_address: return 't' # make a function which finds the value in the target database
+        res_partner.image_small: return ' '
+        res_partner.image: return ' '
+        res_partner.image_medium: return ' '
+    res_users.context_tz:
+        res_partner.tz:
+
+
+    # address
+
+    res_partner_address.*: false
     res_partner_address.id:
         res_partner.id: return newid('res_partner')
         res_partner.notification_email_send: return 'comment'
     res_partner_address.contact_id: False
     res_partner_address.x_openupgrade_job_id: False
-    res_partner_address.location_id: False
-    res_partner_address.email:
-        res_partner.email:
+    res_partner_address.location_id: False    
+    res_partner_address.country_id:
+        res_partner.country_id:
     res_partner_address.fax:
         res_partner.fax:
     res_partner_address.function:
@@ -387,7 +442,7 @@ account_followup:
     account_followup_followup_line.manual_action_responsible_id:
         res_users.manual_action_responsible_ids:
     
-    res_compny.follow_up_msg: false
+    res_company.follow_up_msg: false
     res_partner.payment_next_action:    #new, text
     res_partner.payment_next_action_date:   #new, date
     res_partner.payment_note:   #new, text
