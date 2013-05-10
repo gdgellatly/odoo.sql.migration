@@ -55,18 +55,6 @@ base:
     res_partner.producer: false
     res_partner_address.email:
         res_partner.email:
-        res_partner.state_id:
-        res_partner.birthdate:
-        res_partner.mobile:
-        res_partner.phone:
-        res_partner.street2:
-        res_partner.fax:
-        res_partner.type:
-        res_partner.country_id:
-        res_partner.function:
-        res_partner.zip:
-        res_partner.city:
-        res_partner.street:
         
     res_partner.id:
         res_partner.id:
@@ -92,6 +80,7 @@ base:
     res_partner_address.contact_id: False
     res_partner_address.x_openupgrade_job_id: False
     res_partner_address.location_id: False    
+    
     res_partner_address.country_id:
         res_partner.country_id:
     res_partner_address.fax:
@@ -110,8 +99,10 @@ base:
         res_partner.type:
     res_partner_address.zip:
         res_partner.zip:
+        
     res_partner_address.name:
         res_partner.name: return source_row['name'] or source_row['street'] or source_row['city'] or 'noname'
+        
     res_partner_address.partner_id:
         res_partner.parent_id:
     res_company.logo:
