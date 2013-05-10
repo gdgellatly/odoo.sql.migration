@@ -111,3 +111,4 @@ def migrate(source_db, target_db, models, mapping_file, excluded_models=None,
                           ' pour cette table')
     processor.process(target_dir, filepaths, target_dir, target_connection,
                       fields2update, mappingfile)
+
