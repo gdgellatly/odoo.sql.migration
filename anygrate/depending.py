@@ -9,7 +9,6 @@ import psycopg2
     excluded_models = ['res.currency', 'res.country']
 """
 
-
 def main():
 
     """ Main console script

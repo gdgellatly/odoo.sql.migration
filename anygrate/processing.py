@@ -20,6 +20,7 @@ class CSVProcessor(object):
         self.mapping = mapping
         self.target_columns = {}
         self.writers = {}
+	self.updated_values = {}
         mapping_file  = 'disc-'+mapping_file
         self.discmappingfile = os.path.join(HERE, 'mappings',
                                             mapping_file)
@@ -108,7 +109,7 @@ class CSVProcessor(object):
                             target_rows[target_table][target_column] = result
                 for table, target_row in target_rows.items():
                     if any(target_row.values()):
-                        self.check_record(target_connection, table, target_row)
+			self.check_record(target_connection, table, target_row)
                         self.writers[table].writerow(target_row)
 
     def check_record(self, target_connection, table, target_row):
@@ -126,20 +127,18 @@ class CSVProcessor(object):
             record_cible = None
         if record_cible:
             if record_cible['id'] != target_row['id']:
-                print('WE NEED TO CHANGE THE SRC ID')
                 target_row['id'] = record_cible['id']
             elif record_cible['id'] == target_row['id']:
-                print('JACKPOT ! NO NEED TO CHANGE')
+	    	pass
         else:
-            print('NO EQUIVALENT ! WE CAN ADD IT BUT WE NEED TO GET THE MAX ID FIRST')
-            # THIS IS MAX ID FROM THE SOURCE BASE ...
             if table in self.mapping.last_id:
-                target_row['id'] = self.mapping.last_id[table]+1
-            else:
-                print
+                if 'id' in target_row:	
+			target_row['id'] = str(int(str(self.mapping.last_id[table]) + target_row['id']))
+            	if table in self.fields2update:
+		    for tbl, field in self.fields2update[table]:
+		        self.updated_values[tbl] = {}
+			self.updated_values[tbl][field] = target_row['id']
+	    else:
+		pass
                 # Il s'agit d'une table de jointure ! Comment gerer ca ?
 
-        """ Maintenant il faut appliquer ces modifications aux cles etrangeres
-        qui referencent l\'id """
-        if table in self.fields2update:
-            print(self.fields2update[table])
