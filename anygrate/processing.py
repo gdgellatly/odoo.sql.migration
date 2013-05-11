@@ -134,12 +134,18 @@ class CSVProcessor(object):
         else:
             if table in self.mapping.last_id:
                 if 'id' in target_row:	
-			target_row['id'] = str(int(str(self.mapping.last_id[table]) + target_row['id']))
+			target_row['id'] = str(self.mapping.last_id[table] + int(target_row['id']))
             	if table in self.fields2update:
 		    for tbl, field in self.fields2update[table]:
 		        self.updated_values[tbl] = {}
 			self.updated_values[tbl][field] = target_row['id']
+		if table in self.updated_values:
+		   import pdb
+		   pdb.set_trace()
 	    else:
-		pass
                 # Il s'agit d'une table de jointure ! Comment gerer ca ?
-
+		if table in self.updated_values:
+		    # La, on update 
+		    pass
+		else:
+		    pass
