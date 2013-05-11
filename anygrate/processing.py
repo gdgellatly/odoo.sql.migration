@@ -111,6 +111,7 @@ class CSVProcessor(object):
                     if any(target_row.values()):
 			self.check_record(target_connection, table, target_row)
                         self.writers[table].writerow(target_row)
+		print(self.updated_values)
 
     def check_record(self, target_connection, table, target_row):
         """ Method to check if one record has an equivalent in the

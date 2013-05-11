@@ -2,3 +2,13 @@ res_users:
     login
 res_partner:
     name
+res_groups:
+    name
+account_account:
+    name
+res_country:
+    name
+res_partner_title:
+    name
+res_company:
+    name
