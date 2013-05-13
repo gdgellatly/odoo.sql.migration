@@ -2,6 +2,7 @@ sandbox/
 .*\.swp$
 .*\.pyc$
 .*\#$
+test-.*/
 anygrate/PyYAML
 anygrate/anygrate.egg-info/
 anygrate/psycopg2

@@ -42,6 +42,9 @@ class Mapping(object):
                 mapping = self.mapping[incolumn][outcolumn]
                 if mapping not in (None, '__copy__'):
                     function_body = "def mapping_function(source_row, target_rows):\n"
+                    if type(mapping) is not str:
+                        raise ValueError('Error in the mapping file: "%s" is invalid in %s'
+                                         % (repr(mapping), outcolumn))
                     function_body += '\n'.join([4*' ' + line for line in mapping.split('\n')])
                     mapping_function = None
                     exec(compile(function_body, '<' + incolumn + ' → ' + outcolumn + '>', 'exec'),

@@ -49,7 +49,7 @@ def main():
     args = parser.parse_args()
     source_db, target_db, models = args.source, args.target, args.models
     excluded_models = args.excluded_models
-    mapping_file = args.path
+    mapping_name = args.path
 
     print "Importing into target db is not yet supported. Use --keepcsv for now"
     if args.keepcsv:
@@ -57,13 +57,13 @@ def main():
 
     tempdir = mkdtemp(prefix=source_db + '-' + str(int(time.time()))[-4:] + '-',
                       dir=os.path.abspath('.'))
-    migrate(source_db, target_db, models, mapping_file,
+    migrate(source_db, target_db, models, mapping_name,
             excluded_models, target_dir=tempdir)
     if not args.keepcsv:
         shutil.rmtree(tempdir)
 
 
-def migrate(source_db, target_db, source_models, mapping_file, excluded_models=None,
+def migrate(source_db, target_db, source_models, mapping_name, excluded_models=None,
             target_dir=None):
     """ The main migration function
     """
@@ -89,9 +89,9 @@ def migrate(source_db, target_db, source_models, mapping_file, excluded_models=N
     print('Exporting tables as CSV files...')
     source_tables = [model.replace('.', '_') for model in source_models]
     filepaths = export_to_csv(source_tables, target_dir, source_connection)
-    mappingfile = os.path.join(HERE, 'mappings', mapping_file)
+    mappingfile = os.path.join(HERE, 'mappings', mapping_name)
     mapping = Mapping(target_modules, mappingfile)
-    processor = CSVProcessor(mapping, mapping_file, fields2update)
+    processor = CSVProcessor(mapping, fields2update)
     target_tables = processor.get_target_columns(filepaths).keys()
 
     # Get the max id of source and target dbs
@@ -109,15 +109,13 @@ def migrate(source_db, target_db, source_models, mapping_file, excluded_models=N
             # FIXME the key (id) shouldn't be hardcoded below
             try:
                 c.execute('select max(id) from %s' % target_table)
+                maxid = c.fetchone()
                 mapping.last_id[source_table] = max(
-                    c.fetchone()[0],
-                    mapping.last_id[source_table])
+                    maxid and maxid[0] or 1,
+                    mapping.last_id.get(source_table, 1))
             except psycopg2.ProgrammingError:
                 LOG.debug(u'"id" column does not exist in table "%s"', source_table)
                 target_connection.rollback()
-            except KeyError:
-                LOG.debug(u'Cannot create a record for this table')
 
     # create migrated csv files from exported csv
-    processor.process(target_dir, filepaths, target_dir, target_connection,
-                      fields2update, mappingfile)
+    processor.process(target_dir, filepaths, target_dir, target_connection)

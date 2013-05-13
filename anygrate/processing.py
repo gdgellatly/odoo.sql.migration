@@ -107,7 +107,8 @@ class CSVProcessor(object):
                 for table, target_row in target_rows.items():
                     if any(target_row.values()):
                         if target_connection is not None:
-                            self.check_record(target_connection, table, target_row)
+                            #self.check_record(target_connection, table, target_row)
+                            pass
                         self.writers[table].writerow(target_row)
 
     def check_record(self, target_connection, table, target_row):
@@ -115,10 +116,10 @@ class CSVProcessor(object):
         targeted db"""
 
         c = target_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        if table in self.discriminators:
-            if len(self.discriminators[table]) > 1:
+        if table in self.mapping.discriminators:
+            if len(self.mapping.discriminators[table]) > 1:
                 raise NotImplementedError('multiple discriminators are not yet supported')
-            discriminator = self.discriminators[table][0]
+            discriminator = self.mapping.discriminators[table][0]
         try:
             query = ("SELECT * FROM %s WHERE %s = '%s';"
                      % (table, discriminator, target_row[discriminator]))
