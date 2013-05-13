@@ -373,6 +373,9 @@ account:
     account_journal_view.view_id: False
     account_journal_column.*:
 
+    account_move.*:
+    account_move_line.*:
+
 
 # Module account_accountant
 account_accountant:
