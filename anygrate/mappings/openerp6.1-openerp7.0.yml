@@ -55,19 +55,7 @@ base:
     res_partner.producer: false
     res_partner_address.email:
         res_partner.email:
-        res_partner.state_id:
-        res_partner.birthdate:
-        res_partner.mobile:
-        res_partner.phone:
-        res_partner.street2:
-        res_partner.fax:
-        res_partner.type:
-        res_partner.country_id:
-        res_partner.function:
-        res_partner.zip:
-        res_partner.city:
-        res_partner.street:
-        
+
     res_partner.id:
         res_partner.id:
         #adding the new fields with default value
@@ -85,7 +73,6 @@ base:
 
     # address
 
-    res_partner_address.*: false
     res_partner_address.id:
         res_partner.id: return newid('res_partner')
         res_partner.notification_email_send: return 'comment'
