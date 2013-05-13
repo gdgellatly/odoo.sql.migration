@@ -35,6 +35,9 @@ import, and this list should be ordered so we get the child tables first.
 Building a mapping
 ==================
 
+column mapping
+--------------
+
 a source table can correspond to several ones on the target database,
 or several source tables can correspond to a single one on the target.
 Same applies for the fields.
@@ -86,12 +89,19 @@ And the target tables and fields from a source field:
 This means the 'name' column is unchanged:
 
     >>> mapping.get_targets('res_partner.name')
-    {'res_partner.name': None}
+    {'res_partner.name': '__copy__'}
 
-this means: the 'date' column is just renamed to login_date:
+this means: the 'date' column is just renamed to login_date, and data is just copied:
 
     >>> mapping.get_targets('res_partner.date')
-    {'res_partner.login_date': None}
+    {'res_partner.login_date': '__copy__'}
+
+We can add a target column without specifying a source column:
+
+    >>> mapping.get_targets('res_partner._')
+    >>> mapping.get_targets('res_users._')
+    {'res_users.foobar': <function mapping_function at ...>}
+    
 
 We can use wildcards in the mappings to avoid filling every column:
 
@@ -108,6 +118,24 @@ We can use wildcards in the mappings to avoid filling every column:
     >>> partial_wildcard.get_targets('res_partner_address.name')
     {'res_partner.name': <function mapping_function at ...>}
 
+Discriminator mapping
+---------------------
+
+The mapping is also used to define the discriminator columns. The discriminator
+columns are the columns used to recognize a similar record between the source
+and target tables, even if they don't have the same id, which will be the most
+common situation. Ex: We already have a res_users record named "admin" in the
+target table, and we are importing an "admin" record from the source database.
+These record may have different ids, but we must be able to recognize they are
+the same record, so that the target "admin" be updated instead of imported. In
+this case, the discriminator column is "login". The discriminator is a set,
+because it can take several columns
+
+The discriminator mapping is already built after reading the yml file:
+
+    >>> pprint(mapping.discriminators, width=1)
+    {'res_partner': ['name'],
+     'res_users': ['login']}
 
 
 Exporting CSV data
@@ -121,7 +149,7 @@ We must be able to export the source tables :
     >>> directory = mkdtemp()
     >>> import psycopg2
     >>> connection = psycopg2.connect("dbname=test")
-    >>> exporting.export_tables(source_tables, directory, connection)
+    >>> exporting.export_to_csv(source_tables, directory, connection)
     ['/tmp/.../res_users.csv', '/tmp/.../res_partner.csv']
     >>> sorted(os.listdir(directory))
     ['res_partner.csv', 'res_users.csv']
@@ -138,7 +166,8 @@ csv files be generated
     >>> pprint(processor.get_target_columns(filepaths), width=1)
     {'res_partner': ['id',
                      'name'],
-     'res_users': ['name',
+     'res_users': ['foobar',
+                   'name',
                    'partner_id']}
 
     >>> processor.process(directory, ['res_users.csv'], directory)
@@ -146,7 +175,7 @@ csv files be generated
     ['res_partner.csv', 'res_partner.out.csv', 'res_users.csv', 'res_users.out.csv']
     >>> import csv
     >>> sorted(csv.DictReader(open(join(directory, 'res_users.out.csv'))).next().keys())
-    ['name', 'partner_id']
+    ['foobar', 'name', 'partner_id']
 
 We can try more complex scenarios, such as:
 
@@ -154,6 +183,7 @@ We can try more complex scenarios, such as:
 - res_partner merge from res_partner + res_partner_address
 
     >>> directory2 = mkdtemp()
+    >>> processor = CSVProcessor(mapping)
     >>> processor.process(testdir, ['res_users.csv', 'res_partner.csv', 'res_partner_address.csv'], directory2)
     >>> sorted(os.listdir(directory2))
     ['res_partner.out.csv', 'res_users.out.csv']
@@ -169,14 +199,14 @@ It is necessary to know if there is some source data matching target data.
 But how can we know that ? We need to determine a discriminatory criterion for each
 tables to import.
 
-Once we find it, there are two possibilities : 
+Once we find it, there are two possibilities :
 
 - First, data are TOTALLY equivalent and then there is nothing to do !
 - Second, data are equivalent but the ID.
 
 For this second case, we need to change the source record id by the targeted one.
 
-By doing this, we will also need to change all the foreign keys referencing it. 
+By doing this, we will also need to change all the foreign keys referencing it.
 
 So we have to find out which columns need to be updated if the referenced id changed.
 How can we that ? Simply by querying the database for each ordered models given
@@ -186,12 +216,12 @@ SELECT tc.table_name, kcu.column_name FROM information_schema.table_constraints 
 tc JOIN information_schema.key_column_usage AS kcu ON
 tc.constraint_name = kcu.constraint_name JOIN information_schema.constraint_column_usage AS
 ccu ON ccu.constraint_name = tc.constraint_name
-WHERE constraint_type = 'FOREIGN KEY' AND ccu.table_name='one_model';    
+WHERE constraint_type = 'FOREIGN KEY' AND ccu.table_name='one_model';
 
 Now we can import a csv file using the mapping:
 
     >>> from anygrate import importing
-    >>> importing.import_csv(join(directory, 'res_users.csv'), connection)
+    >>> importing.import_from_csv(join(directory, 'res_users.csv'), connection)
     Traceback (most recent call last):
     ...
     IntegrityError: ...

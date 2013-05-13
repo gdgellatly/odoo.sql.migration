@@ -1,13 +1,16 @@
 import xmlrpclib
 import argparse
-from pprint import pprint
-import psycopg2
+import logging
+from os.path import basename
+logging.basicConfig(level=logging.DEBUG)
+LOG = logging.getLogger(basename(__file__))
 
 """ Method to find out the dependencies order to import of an OpenERP model
     Set excluded_models to None if there is no model to exclude.
     If you want to exclude some models, use the following syntax :
     excluded_models = ['res.currency', 'res.country']
 """
+
 
 def main():
 
@@ -37,28 +40,31 @@ def main():
                         required=False)  # Temporary, will be required
     parser.add_argument('-x', '--excluded', nargs='+', help="One or many models"
                         " to exclude", required=False, default=None)
-    args = parser.parse_args()
-    username_from = args.user_from
-    username_to = args.user_to
-    pwd_from = args.pwd_from
-    pwd_to = args.pwd_to
-    dbname_from = args.db_name_from
-    dbname_to = args.db_name_to
-    models = args.models
-    excluded_models = args.excluded
-    ordered_models = get_ordre_importation(username_from,
-                                           pwd_from,
-                                           dbname_from,
-                                           models,
-                                           excluded_models)
+    #args = parser.parse_args()
+    #username_from = args.user_from
+    #username_to = args.user_to
+    #pwd_from = args.pwd_from
+    #pwd_to = args.pwd_to
+    #dbname_from = args.db_name_from
+    #dbname_to = args.db_name_to
+    #models = args.models
+    #excluded_models = args.excluded
+    #ordered_models = get_dependencies(username_from,
+    #                                       pwd_from,
+    #                                       dbname_from,
+    #                                       models,
+    #                                       excluded_models)
 
 
 if __name__ == '__main__':
     main()
 
 
-def get_ordre_importation(username, pwd, dbname, models, excluded_models,
-                          path=None, seen=None):
+def get_dependencies(username, pwd, dbname, models, excluded_models,
+                     path=None, seen=None):
+    """ Given a list of OpenERP models, return the full list of dependant models,
+    ordered by dependencies. Warning are displayed if there are dependency loops
+    """
     # XML-RPC
     sock, uid = get_socket(username, pwd, dbname, 8069)
     res = []
@@ -81,8 +87,9 @@ def get_ordre_importation(username, pwd, dbname, models, excluded_models,
                 m = fields[field]['relation']
                 # Cas des structures arborescentes (reflexives)
                 if m in path:
-                    print(' BOUCLE %s a un m2o %r vers %s, qui est un de ses '
-                          'ancetres (path=%r)' % (model, field, m, path))
+                    LOG.warn('Dependency LOOP: '
+                             '%s has a m2o %r to %s which is one of its ancestors (path=%r)',
+                             model, field, m, path)
                 if m not in seen:
                     m2o.add(m)
                     seen.add(m)
@@ -91,8 +98,9 @@ def get_ordre_importation(username, pwd, dbname, models, excluded_models,
                 third_table = fields[field]['third_table']
                 # Cas des structures arborescentes (reflexives)
                 if m in path:
-                    print(' BOUCLE %s a un m2m %r vers %s, qui est un de ses '
-                          'ancetres (path=%r)' % (model, field, m, path))
+                    LOG.warn('Dependency LOOP: '
+                             '%s has a m2m %r to %s which is one of its ancestors (path=%r)',
+                             model, field, m, path)
                 if m not in seen:
                     m2m.add(m)
                     seen.add(m)
@@ -100,15 +108,15 @@ def get_ordre_importation(username, pwd, dbname, models, excluded_models,
                     related_tables.add(third_table)
                     seen.add(third_table)
         for m in m2m:
-            res += get_ordre_importation(username, pwd, dbname, (m,),
-                                         path=path+(model,),
-                                         excluded_models=excluded_models,
-                                         seen=seen)
+            res += get_dependencies(username, pwd, dbname, (m,),
+                                    path=path+(model,),
+                                    excluded_models=excluded_models,
+                                    seen=seen)
         for m in m2o:
-            res += get_ordre_importation(username, pwd, dbname, (m,),
-                                         path=path+(model,),
-                                         excluded_models=excluded_models,
-                                         seen=seen)
+            res += get_dependencies(username, pwd, dbname, (m,),
+                                    path=path+(model,),
+                                    excluded_models=excluded_models,
+                                    seen=seen)
     if model == 'ir.actions.actions':
         model = 'ir.actions'
     res.append(model)
@@ -123,7 +131,7 @@ def get_ordre_importation(username, pwd, dbname, models, excluded_models,
 """ Method to get back all columns referencing another table """
 
 
-def get_cols_to_update(target_connection, models):
+def get_fk_to_update(target_connection, models):
 
     fields2update = {}
     for model in models:
@@ -132,14 +140,14 @@ def get_cols_to_update(target_connection, models):
                 if model == 'ir.actions':
                     model = 'ir.actions.actions'
                 model = model.replace('.', '_')
-                query = """\
-SELECT tc.table_name, kcu.column_name \
-FROM information_schema.table_constraints AS tc JOIN \
-information_schema.key_column_usage AS kcu ON \
-tc.constraint_name = kcu.constraint_name JOIN \
-information_schema.constraint_column_usage AS \
-ccu ON ccu.constraint_name = tc.constraint_name \
-WHERE constraint_type = 'FOREIGN KEY' AND \
+                query = """
+SELECT tc.table_name, kcu.column_name
+FROM information_schema.table_constraints AS tc JOIN
+information_schema.key_column_usage AS kcu ON
+tc.constraint_name = kcu.constraint_name JOIN
+information_schema.constraint_column_usage AS
+ccu ON ccu.constraint_name = tc.constraint_name
+WHERE constraint_type = 'FOREIGN KEY' AND
 ccu.table_name='%s';""" % model
                 try:
                     c.execute(query)
@@ -174,7 +182,8 @@ def get_mapping_migration(username_from, username_to, pwd_from, pwd_to,
                                                             username_to, pwd_to,
                                                             dbname_to, m)
                 if xml_id_destination:
-                    if xml_id_source['name'] == xml_id_destination['name'] and xml_id_source['id'] != xml_id_destination['id']:
+                    if (xml_id_source['name'] == xml_id_destination['name']
+                            and xml_id_source['id'] != xml_id_destination['id']):
                         data = {
                             'xml_id': xml_id_source['name'],
                             'res_id_source': xml_id_source['id'],
@@ -244,4 +253,4 @@ def get_socket(username, pwd, dbname, port):
     return sock, uid
 
 
-#get_ordre_importation(username, pwd, dbname, models, excluded_models)
+#get_dependencies(username, pwd, dbname, models, excluded_models)

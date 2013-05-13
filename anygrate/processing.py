@@ -1,7 +1,6 @@
 import csv
 import psycopg2.extras
 import logging
-import yaml
 import os
 from os.path import basename, join
 
@@ -14,17 +13,13 @@ class CSVProcessor(object):
     """ Take a csv file, process it with the mapping
     and output a new csv file
     """
-    def __init__(self, mapping, mapping_file, fields2update):
+    def __init__(self, mapping, fields2update=None):
 
         self.fields2update = fields2update
         self.mapping = mapping
         self.target_columns = {}
         self.writers = {}
-	self.updated_values = {}
-        mapping_file  = 'disc-'+mapping_file
-        self.discmappingfile = os.path.join(HERE, 'mappings',
-                                            mapping_file)
-        self.discmapping = {}
+        self.updated_values = {}
 
     def get_target_columns(self, filepaths):
         """ Compute target columns with source columns + mapping
@@ -35,14 +30,15 @@ class CSVProcessor(object):
             source_table = basename(filepath).rsplit('.', 1)[0]
             with open(filepath) as f:
                 source_columns = csv.reader(f).next()
-            for source_column in source_columns:
+            for source_column in source_columns + ['_']:
                 mapping = self.mapping.get_targets('%s.%s' % (source_table, source_column))
                 # no mapping found, we warn the user
-                if mapping is None:
+                if mapping in (None, '__copy__'):
                     origin = source_table + '.' + source_column
-                    LOG.warn('No mapping definition found for column %s', origin)
+                    if source_column != '_':
+                        LOG.warn('No mapping definition found for column %s', origin)
                     continue
-                elif mapping is False:
+                elif mapping in (False, '__forget__'):
                     continue
                 else:
                     for target in mapping:
@@ -52,15 +48,14 @@ class CSVProcessor(object):
         self.target_columns = {k: sorted(list(v)) for k, v in self.target_columns.items()}
         return self.target_columns
 
-    def process(self, source_dir, source_filenames, target_dir,
-                target_connection, mapping_file, fields2update):
+    def process(self, source_dir, source_filenames, target_dir, target_connection=None):
         """ The main processing method
         """
-        with open(self.discmappingfile) as stream:
-            self.discmapping = yaml.load(stream)
         # compute the target columns
         filepaths = [join(source_dir, source_filename) for source_filename in source_filenames]
         self.target_columns = self.get_target_columns(filepaths)
+        # load discriminator values for target tables
+        # TODO
         # open target files for writing
         self.target_files = {
             table: open(join(target_dir, table + '.out.csv'), 'ab')
@@ -79,7 +74,7 @@ class CSVProcessor(object):
         for target_file in self.target_files.values():
             target_file.close()
 
-    def process_one(self, source_filepath, target_connection):
+    def process_one(self, source_filepath, target_connection=None):
         """ Process one csv file
         """
         source_table = basename(source_filepath).rsplit('.', 1)[0]
@@ -88,7 +83,8 @@ class CSVProcessor(object):
             # process each csv line
             for source_row in reader:
                 target_rows = {}
-                # process each column
+                # process each column (also handle '_' as a possible new column)
+                source_row.update({'_': None})
                 for source_column in source_row:
                     mapping = self.mapping.get_targets(source_table + '.' + source_column)
                     if mapping is None:
@@ -97,31 +93,35 @@ class CSVProcessor(object):
                     for target_column, function in mapping.items():
                         target_table, target_column = target_column.split('.')
                         target_rows.setdefault(target_table, {})
-                        if function is None:
+                        if function in (None, '__copy__'):
                             # mapping is None: use identity
                             target_rows[target_table][target_column] = source_row[source_column]
-                        elif function is False:
+                        elif function in (False, '__forget__'):
                             # mapping is False: remove the target column
                             del target_rows[target_table][target_column]
                         else:
                             # mapping is a function
                             result = function(source_row, target_rows)
                             target_rows[target_table][target_column] = result
+                # write the target lines in the output csv
                 for table, target_row in target_rows.items():
                     if any(target_row.values()):
-			self.check_record(target_connection, table, target_row)
+                        if target_connection is not None:
+                            self.check_record(target_connection, table, target_row)
                         self.writers[table].writerow(target_row)
-		print(self.updated_values)
 
     def check_record(self, target_connection, table, target_row):
         """ Method to check if one record has an equivalent in the
         targeted db"""
 
         c = target_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        if table in self.discmapping:
-            discriminant = self.discmapping[table]
+        if table in self.discriminators:
+            if len(self.discriminators[table]) > 1:
+                raise NotImplementedError('multiple discriminators are not yet supported')
+            discriminator = self.discriminators[table][0]
         try:
-            query = "SELECT * FROM %s WHERE %s = '%s';" % (table, discriminant, target_row[discriminant])
+            query = ("SELECT * FROM %s WHERE %s = '%s';"
+                     % (table, discriminator, target_row[discriminator]))
             c.execute(query)
             record_cible = c.fetchone()
         except:
@@ -130,22 +130,22 @@ class CSVProcessor(object):
             if record_cible['id'] != target_row['id']:
                 target_row['id'] = record_cible['id']
             elif record_cible['id'] == target_row['id']:
-	    	pass
+                pass
         else:
             if table in self.mapping.last_id:
-                if 'id' in target_row:	
-			target_row['id'] = str(self.mapping.last_id[table] + int(target_row['id']))
-            	if table in self.fields2update:
-		    for tbl, field in self.fields2update[table]:
-		        self.updated_values[tbl] = {}
-			self.updated_values[tbl][field] = target_row['id']
-		if table in self.updated_values:
-		   import pdb
-		   pdb.set_trace()
-	    else:
-                # Il s'agit d'une table de jointure ! Comment gerer ca ?
-		if table in self.updated_values:
-		    # La, on update 
-		    pass
-		else:
-		    pass
+                if 'id' in target_row:
+                    target_row['id'] = str(self.mapping.last_id[table] + int(target_row['id']))
+                if self.fields2update and table in self.fields2update:
+                    for tbl, field in self.fields2update[table]:
+                        self.updated_values[tbl] = {}
+            self.updated_values[tbl][field] = target_row['id']
+        if table in self.updated_values:
+            raise NotImplementedError
+        else:
+            # Il s'agit d'une table de jointure ! Comment gerer ca ?
+            raise NotImplementedError
+        if table in self.updated_values:
+            # La, on update
+            raise NotImplementedError
+        else:
+            raise NotImplementedError

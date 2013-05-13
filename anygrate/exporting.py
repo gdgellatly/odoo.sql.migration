@@ -1,7 +1,7 @@
 from os.path import join
 
 
-def export_tables(source_tables, dest_dir, connection):
+def export_to_csv(source_tables, dest_dir, connection):
     """ Export the list of tables using postgresql COPY
     """
     csv_filenames = []

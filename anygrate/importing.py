@@ -1,7 +1,7 @@
 from os.path import basename
 
 
-def import_csv(filepath, connection):
+def import_from_csv(filepath, connection):
     """ Import the csv file using postgresql COPY
     """
     with connection.cursor() as cursor, open(filepath) as f:

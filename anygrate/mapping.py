@@ -1,5 +1,9 @@
 # coding: utf-8
 import yaml
+import logging
+from os.path import basename
+logging.basicConfig(level=logging.DEBUG)
+LOG = logging.getLogger(basename(__file__))
 
 
 class Mapping(object):
@@ -9,7 +13,7 @@ class Mapping(object):
     last_id = {}
 
     def __init__(self, modules, filename):
-        """ Open the file and store the mapping
+        """ Open the file and compute the mapping
         """
         # load the full mapping file
         with open(filename) as stream:
@@ -18,16 +22,25 @@ class Mapping(object):
         self.mapping = {}
         for module in modules:
             if module not in full_mapping:
-                raise ValueError('The %s module is not in the mapping' % module)
+                LOG.warn('Mapping is not complete: module "%s" is missing!', module)
+                continue
             for source_column, target_columns in full_mapping[module].items():
+                if ('__' in source_column
+                        or (type(target_columns) is str and '__' in target_columns)):
+                    # skip special markers
+                    continue
                 target_columns = target_columns or {}
-                self.mapping.setdefault(source_column, target_columns)
-                self.mapping[source_column].update(target_columns)
+                try:
+                    self.mapping.setdefault(source_column, target_columns)
+                    self.mapping[source_column].update(target_columns)
+                except:
+                    raise ValueError('Error in the mapping file: "%s" is invalid here'
+                                     % repr(target_columns))
         # replace function bodies with real functions
         for incolumn in self.mapping:
             for outcolumn in self.mapping[incolumn]:
                 mapping = self.mapping[incolumn][outcolumn]
-                if mapping is not None:
+                if mapping not in (None, '__copy__'):
                     function_body = "def mapping_function(source_row, target_rows):\n"
                     function_body += '\n'.join([4*' ' + line for line in mapping.split('\n')])
                     mapping_function = None
@@ -35,6 +48,15 @@ class Mapping(object):
                          globals().update({'newid': self.newid}))
                     self.mapping[incolumn][outcolumn] = mapping_function
                     del mapping_function
+
+        # build the discriminator mapping
+        self.discriminators = {}
+        for mapping in full_mapping.values():
+            self.discriminators.update({
+                key.split('.')[0]: value
+                for key, value in mapping.items()
+                if '__discriminator__' in key})
+
     def newid(self, table):
         """ increment the global stored last_id
         """

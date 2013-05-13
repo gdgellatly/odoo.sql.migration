@@ -20,10 +20,10 @@ base:
         res_users.lang: return ' '
         res_users.active: return 't'
         res_partner.lang:
-    res_users.date: false
-    res_users.email: false
-    res_users.menu_tips: false
-    res_users.term_id: false
+    res_users.date: False
+    res_users.email: False
+    res_users.menu_tips: False
+    res_users.term_id: False
     
     res_users.user_email:
         res_partner.email:
@@ -51,8 +51,8 @@ base:
         res_users.date:
 
     # Partners
-    res_partner.allow_refund: false
-    res_partner.producer: false
+    res_partner.allow_refund: False
+    res_partner.producer: False
     res_partner_address.email:
         res_partner.email:
 
@@ -267,26 +267,26 @@ account:
         mail.message_id:
     account_bank_statement.opening_details_ids:
         account_cashbox_line.opening_details_id: #A vérifier
-    account_bank_statement.starting_details_ids: false
-    account_bank_statement.ending_details_ids: false
+    account_bank_statement.starting_details_ids: False
+    account_bank_statement.ending_details_ids: False
        
     account_cashbox_line.*:
     account_cashbox_line.bank_statement_id:
         account_bank_statement.bank_statement_ids: # A vérifier
-    account_cashbox_line.number: false
-    account_cashbox_line.ending_id: false
-    account_cashbox_line.starting_id: false
+    account_cashbox_line.number: False
+    account_cashbox_line.ending_id: False
+    account_cashbox_line.starting_id: False
     account_cashbox_line.id:
         account_cashbox_line.id:
         account_cashbox_line.number_closing:
         account_cashbox_line.number_opening:
     
     account_chart_template.*:
-    account_chart_template.property_reserve_and_surplus_account: false
+    account_chart_template.property_reserve_and_surplus_account: False
     
     account_invoice.*:
-    account_invoice.address_contact_id: false
-    account_invoice.address_invoice_id: false
+    account_invoice.address_contact_id: False
+    account_invoice.address_invoice_id: False
     account_invoice.message_ids:
         mail.message_id:
     account_invoice.id:
@@ -297,13 +297,13 @@ account:
     account_invoice_line.*:
     account_invoice_line.name:
         account_invoice_line.name: #cmt changer le type char en text ??
-    account_invoice_line.note: false
+    account_invoice_line.note: False
     
     account_invoice_report.*:
-    account_invoice_report.address_contact_id: false
-    account_invoice_report.address_invoice_id: false
-    account_invoice_report.delay_to_pay: false
-    account_invoice_report.due_delay: false
+    account_invoice_report.address_contact_id: False
+    account_invoice_report.address_invoice_id: False
+    account_invoice_report.delay_to_pay: False
+    account_invoice_report.due_delay: False
     
     account_invoice_tax.*:
     account_invoice_tax.account_analytic_id:
@@ -343,15 +343,15 @@ account:
     account_tax.account_analytic_paid_id:
         account_analytic_account.account_analytic_paid_ids:
         
-    res_company.expects_chart_of_accounts: true #car on suppose que le plan comptable est déjà installé
-    res_company.tax_calculation_rounding_method: return 'round_globally' #NEW selection_keys: ['round_globally', 'round_per_line']
+    res_company.expects_chart_of_accounts: True # car on suppose que le plan comptable est déjà installé
+    res_company.tax_calculation_rounding_method: return 'round_per_line'
     
     account_account_type.*:
     account_account_type.name:
         account_account_type.report_type: return "receivable"
         
     account_journal_view.*:
-    account_journal_view.view_id: false
+    account_journal_view.view_id: False
     account_journal_column.*:
 
 # Module account_accountant
@@ -414,7 +414,7 @@ account_check_writing:
 account_followup:
     account_followup.*:
     account_followup_followup.*:
-    account_followup_followup.description: false
+    account_followup_followup.description: False
     account_followup_followup.name:
         account_followup_followup.name:     # Change type char to float
     account_followup_followup_line.*:
@@ -429,7 +429,7 @@ account_followup:
     account_followup_followup_line.manual_action_responsible_id:
         res_users.manual_action_responsible_ids:
     
-    res_company.follow_up_msg: false
+    res_company.follow_up_msg: False
     res_partner.payment_next_action:    #new, text
     res_partner.payment_next_action_date:   #new, date
     res_partner.payment_note:   #new, text
@@ -532,7 +532,7 @@ sale:
         sale_stock.move_id:
     sale_order_line.name:
         sale_order_line.name:   # change type char to text
-    sale_order_line.notes: false
+    sale_order_line.notes: False
     sale_order_line.number_packages:
         sale_order_line.number_packages:
         sale_stock.number_packages:
@@ -737,8 +737,8 @@ point_of_sale:
         pos_session.statement_ids:
             pos_session.statement_ids:
             account_bank_statement.statement_id:
-    account_journal.auto_cash: false    # DEL
-    account_journal.check_dtls: false   # DEL
+    account_journal.auto_cash: False    # DEL
+    account_journal.check_dtls: False   # DEL
 
 # module product
 product:
@@ -748,7 +748,7 @@ product:
         product_product.image:  #new, binary
     product_product.message_ids:
         mail_message.message_ids:
-    product_product.product_image: false
+    product_product.product_image: False
     
 
 # module edi
@@ -779,7 +779,7 @@ purchase:
         purchase_order.state:  # ['approved', 'cancel', 'confirmed', 'done', 'draft', 'except_invoice', 'except_picking', 'sent']'
     purchase_order_line.name:
         purchase_order.name:       # change type to 'text'
-    purchase_order_line.notes: false
+    purchase_order_line.notes: False
     purchase_report.dest_address_id:
         purchase_report.dest_address_id:
     purchase_report.partner_address_id:
