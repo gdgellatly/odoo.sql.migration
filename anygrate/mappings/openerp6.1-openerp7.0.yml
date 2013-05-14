@@ -26,7 +26,7 @@ base:
         res_users.alias_id: return ' '
         res_users.login_date: return ' '
         res_users.lang: return ' '
-        res_users.active: return 't'
+        res_users.active: return True
         res_partner.lang:
     res_users.date: False
     res_users.email: False
@@ -63,19 +63,10 @@ base:
     res_partner.producer: False
     res_partner_address.email:
         res_partner.email:
-    res_partner.id:
-        res_partner.id:
-        #adding the new fields with default value
-        res_partner.notification_email_send: return 'comment'
-        res_partner.section_id: return ' '
-        res_partner.is_company: return 'f' # make a function which finds the value in the target database
-        #res_partner.tz: return ' '    # Example of value: Europe/Paris, not required
-        res_partner.use_parent_address: return 't' # make a function which finds the value in the target database
-        res_partner.image_small: return ' '
-        res_partner.image: return ' '
-        res_partner.image_medium: return ' '
     res_users.context_tz:
         res_partner.tz:
+    res_partner._:
+        res_partner.is_company: return False
 
     # address
     res_partner_address.id:
@@ -86,6 +77,11 @@ base:
     res_partner_address.location_id: False
     res_partner_address.country_id:
         res_partner.country_id:
+        #adding the new fields with default value
+        res_partner.notification_email_send: return 'comment'
+        res_partner.section_id: return ' ' 
+        res_partner.is_company: return False
+        res_partner.use_parent_address: return True # make a function which finds the value in the target database
     res_partner_address.fax:
         res_partner.fax:
     res_partner_address.function:
@@ -127,139 +123,15 @@ base:
 # Module mail
 mail:
     mail.*:
-
-    mail_alias.alias_defaults:
-        mail_alias.alias_defaults: # new (text) required: required, req_default: {}
-    mail_alias.id:
-        mail_alias.id:
-        mail_alias.alias_force_thread_id: #new, interger
-    mail_alias.alias_model_id:
-        mail_alias.alias_model_id:
-        ir_model.alias_model_ids:  # required
-    mail_alias.alias_name:
-        mail_alias.alias_name:     # required
-    mail_alias.alias_user_id:
-        mail_alias.alias_user_id:
-        res_users.alias_user_ids:
-
-    mail_followers.partner_id:
-        mail_followers.partner_id:
-        res_partner.partner_ids:
-    mail_followers.id:
-        mail_followers.id:
-        mail_followers.res_id:
-    mail_followers.res_model:
-        mail_followers.res_model:   # required
-    mail_followers.subtype_ids:
-        mail_followers.subtype_ids:
-        mail_message_subtype.subtype_ids:
-
-    mail_group.id:
-        mail_group.id:
-        mail_group._inherits:
-        mail_group.description:     # new, text
-        mail_group.image:           #new, binary
-    mail_group.alias_id:
-        mail_group.alias_id:
-        mail_alias.alias_ids:
-    mail_group.group_ids:
-        mail_group.group_ids:
-        res_groups.group_ids:
-    mail_group.group_public_id:
-        mail_group.group_public_id:
-        res_groups.group_public_id:
-    mail_group.menu_id:
-        mail_group.menu_id:
-        ir_ui_menu.menu_ids:
-    mail_group.message_ids:
-        mail_group.message_ids:
-        mail_message.message_id:
-    mail_group.name:
-        mail_group.name:        # required
-    mail_group.public:
-        mail_group.public: return 'groups'     # new, required, selection_keys: ['groups', 'private', 'public']
-
-    mail_mail.id:
-        mail_mail.id:
-        mail_mail._inherits: return false      # new, false
-        mail_mail.auto_delete:  # new, boolean
-        mail_mail.body_html:    # new, text
-        mail_mail.email_cc:     # new, char
-        mail_mail.email_from:   # new, char
-        mail_mail.email_to:     # new, char
-        mail_mail.notification: # new, boolean
-        mail_mail.references:   # new, text
-        mail_mail.reply_to:     # new, char
-    mail_mail.mail_message_id:
-        mail_mail.mail_message_id:
-        mail_message.mail_message_id:
-    mail_mail.mail_server_id:
-        mail_mail.mail_server_id:
-        ir_mail_server.mail_server_id:
-    mail_mail.state:
-        mail_mail.state:    # selection_keys: ['cancel', 'exception', 'outgoing', 'received', 'sent']
-    mail_message.attachment_ids:
-        mail_message.attachment_ids:
-        ir_attachment.attachment_ids:
-    mail_message.author_id:
-        mail_message.author_id:
-        res_partner.author_ids:
-    mail_message.id:
-        mail_message.id:
-        mail_message.body:          # new, html
-        mail_message.date:          # new, datetim
-        mail_message.email:         # new, char
-        mail_message.message_id:    # new, char
-        mail_message.model:         # new, char
-        mail_message.res_id:        # new, integer
-        mail_message.subject:       # new, char
-    mail_message.child_ids:
-        mail_message.child_ids:
-        mail.message.child_id:
-    mail_message.notification_ids:
-        mail_message.notification_ids:
-        mail_notification.notification_id:
-    mail_message.notified_partner_ids:
-        mail_message.notified_partner_ids:
-        res_partner.notified_partner_id:
-    mail_message.parent_id:
-        mail_message.parent_id:
-        mail_message.parent_ids:
-    mail_message.partner_ids:
-        mail_message.partner_ids:
-        res_partner.partner_id:
-    mail_message.subtype_id:
-        mail_message.subtype_id:
-        mail_message_subtype.subtype_id:
+        
+    mail_message.*:
+ 
     mail_message.type:
-        mail_message.type:          # new selection_keys: ['comment', 'email', 'notification']
-    mail_message.vote_user_ids:
-        mail_message.vote_user_ids:
-        res_users.vote_user_ids:
-    mail_message_subtype.id:
-        mail_message_subtype.id:
-        mail_message_subtype.default:   # new, boolean
-        mail_message_subtype.name:      # new, required
-        mail_message_subtype.res_model: # new, char
+        mail_message.type: return 'email'
 
-    mail_notification.message_id:
-        mail_notification.message_id:
-        mail_notification.read:         # new, boolean
-        mail_notification.starred:      # new, boolean
-        mail_message.message_ids:
-    mail_notification.partner_id:
-        mail_notification.partner_id:
-        res_partner.partner_ids:
-    res_partner.emails:
-        res_partner.emails:             # DEL relation: mail.message
-    res_partner.message_ids:
-        res_partner.message_ids:
-        mail_message.message_id:
     res_partner.notification_email_send:
-        res_partner.notification_email_send:    # new required: required, selection_keys: ['all', 'comment', 'email', 'none']
+        res_partner.notification_email_send: return 'comment'
 
-    res_users._inherits:
-        res_users._inherits:            # new mode: modify   (False) A verifier
     res_users.alias_id:
         res_users.alias_id:
         mail_alais.alias_id:
@@ -272,15 +144,6 @@ account:
     account_account.__discriminator__:
         - name
     account_bank_statement.*:
-
-    account_cashbox_line.*:
-    account_cashbox_line.bank_statement_id:
-        account_bank_statement.bank_statement_ids: # A vérifier
-    account_cashbox_line.number: False
-    account_cashbox_line.ending_id: False
-    account_cashbox_line.starting_id: False
-    account_cashbox_line.id:
-        account_cashbox_line.id:
 
     account_chart_template.*:
     account_chart_template.property_reserve_and_surplus_account: False
@@ -305,31 +168,14 @@ account:
     account_invoice_report.due_delay: False
 
     account_invoice_tax.*:
-    account_invoice_tax.account_analytic_id:
-        account_analytic_account.account_analytic_ids: # A verifier
-
+    
     account_journal.*:
     account_journal.__discriminator__:
         - code
-
-    account_journal_cashbox_line.*:
-    account_journal_cashbox_line.id:
-        account_journal_cashbox_line.id:
-        account_journal_cashbox_line.pieces: #new : float
-    account_journal_cashbox_line.journal_id:
-        account_journal_cashbox_line.journal_id:
-        account_journal.journal_id:
-
+    
     account_move_reconcile.*:
-    account_move_reconcile.id:
-        account_move_reconcile.id:
-        account_move_reconcile.opening_reconciliation: #new
 
     account_tax.*:
-    account_tax.account_analytic_collected_id:
-        account_analytic_account.account_analytic_collected_ids:
-    account_tax.account_analytic_paid_id:
-        account_analytic_account.account_analytic_paid_ids:
 
     res_company._:
         res_company.expects_chart_of_accounts: return True # car on suppose que le plan comptable est déjà installé
@@ -510,213 +356,32 @@ analytic_user_function:
 # Module sale
 sale:
     sale.*:
-    res_company.security_lead:
-        res_company.security_lead:
-        sale_stock.security_lead:
-    res_partner.sale_order_ids:
-        sale_order.sale_order_id:
-    sale_order.incoterm:
-        sale_order.incoterm:
-    sale_order.message_ids:
-        mail_message.message_ids:   #selection_keys is now '['manual']' ('['manual', 'picking', 'postpaid', 'prepaid']')
-    sale_order.invoice_quantity:
-        sale_order.invoice_quantity: # selection_keys is now '['order']' ('['order', 'procurement']')
-    sale_order.partner_invoice_id:
-        res_partner.partner_invoice_ids:
-    sale_order.partner_order_id:
-        sale_order.partner_order_id:
-    sale_order.partner_shipping_id:
-        sale_order.partner_shipping_id:
-        res_partner.partner_shipping_id:
-    sale_order.picked_rate:
-        sale_stock.picked_rate:
-    sale_order.picking_ids:
-        sale_order.picking_ids:
-        sale_stock.picking_ids:     # pas tres sur
-        stock_picking.picking_ids:  # pas tres sur
-    sale_order.picking_policy:
-        sale_order.picking_policy:
-        sale_stock.picking_policy:
-    sale_order.shipped:
-        sale_order.shipped:
-        sale_stock.shipped:
-    sale_order.state:
-        sale_order.state:   #  selection_keys is now '['cancel', 'done', 'draft', 'invoice_except', 'manual', 'progress', 'sent', 'waiting_date']'
-    sale_order_line.address_allotment_id:
-        sale_order_line.address_allotment_id:
-        res_partner.address_allotment_ids:
-    sale_order_line.delay:
-        sale_order_line.delay:
-        sale_stock.delay:
-    sale_order_line.move_ids:
-        sale_order_line.move_ids:
-        sale_stock.move_id:
-    sale_order_line.name:
-        sale_order_line.name:   # change type char to text
+    sale_order.*:
     sale_order_line.notes: False
-    sale_order_line.number_packages:
-        sale_order_line.number_packages:
-        sale_stock.number_packages:
-    sale_order_line.procurement_id:
-        sale_order_line.procurement_id:
-        sale_stock.procurement_ids:
-    sale_order_line.product_packaging:
-        sale_order_line.product_packaging:
-        sale_stock.product_packaging:
-    sale_order_line.property_ids:
-        sale_order_line.property_ids:
-        sale_order.property_ids:
-    sale_report.shipped_qty_1:
-        sale_report.shipped_qty_1:
-        sale_stock.shipped_qty_1:
-    sale_report.shipped:
-        sale_report.shipped:
-        sale_stock.shipped:
-    sale_report.state:
-        sale_report.state:      #selection_keys is now '['cancel', 'done', 'draft', 'invoice_except', 'manual', 'progress', 'waiting_date']
-    sale_shop.warehouse_id:
-        sale_shop.warehouse_id:
-        sale_stock.warehouse_ids:
-    stock_move.sale_line_id:
-        stock_move.sale_line_id:
-        sale_stock.sale_line_ids:
-    stock_picking.sale_id:
-        stock_picking.sale_id:
-        sale_stock.sale_ids:
-
 
 # Module stock
 stock:
     stock.*:
-    report_stock_inventory.*:
-    report_stock_inventory.month:
-        report_stock_inventory.month:   #selection_keys is now '['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']'
-    report_stock_inventory.partner_id:
-        report_stock_inventory.partner_id:
-        res_partner.partner_id:
-        report_stock_inventory.scrap_location:  #new, not required
-    report_stock_move.partner_id:
-        report_stock_move.partner_id:
-        res_partner.partner_ids:
-    stock_location.address_id:
-        stock_location.address_id:
-    stock_location.partner_id:
-        stock_location.partner_id:
-        res_partner.partner_ids:
-    stock_move.address_id:
-        stock_move.address_id:
-    stock_picking.address_id:
-        stock_picking.address_id:
-    stock_picking.message_ids:
-        stock_picking.message_ids:
-        mail_messade.message_ids:
-    stock_picking_in.id:
-        stock_picking_in.id:
-        stock_picking_in.auto_picking:      #new, boolean
-        stock_picking_in.date:      #new, datetime
-        stock_picking_in.date_done:      #new, datetime
-        stock_picking_in.invoice_state:     # NEW required: required, selection_keys: ['2binvoiced', 'invoiced', 'none']
-        stock_picking_in.move_type: return 'direct' # new required: required, selection_keys: ['direct', 'one'], req_default: direct
-        stock_picking_in.name:      # new, char
-        stock_picking_in.note:      # new, text
-        stock_picking_in.origin:    # new, char
-        stock_picking_in.state:     #new selection_keys: ['assigned', 'auto', 'cancel', 'confirmed', 'done', 'draft']
-    stock_picking_in.location_dest_id:
-        stock_picking_in.location_dest_id:
-        stock_location.location_dest_ids:
-    stock_picking_in.location_id:
-        stock_picking_in.location_id:
-        stock_location.location_ids:
-    stock_picking_in.location_id:
-        stock_picking_in.location_id:
-        stock_location.location_ids:
-    stock_picking_in.message_ids:
-        stock_picking_in.message_ids:
-        mail_message.message_id:
-    stock_picking_in.move_lines:
-        stock_picking_in.move_lines:
-        stock_move.move_line:
-    stock_picking_in.partner_id:
-        stock_picking_in.partner_id:
-        res_partner.partner_id:
-    stock_picking_in.stock_journal_id:
-        stock_picking_in.stock_journal_id:
-        stock_journal.stock_journal_id:
-        stock_picking_in.type: return 'in' # required: required, selection_keys: ['in', 'internal', 'out'], req_default: in
-        stock_picking_out.auto_picking:      # new, boolean
-        stock_picking_out.date:     #new, datetime
-        stock_picking_out.date_done:    #new, datetime
-        stock_picking_out.name:      # new, char
-        stock_picking_out.note:      # new, text
-        stock_picking_out.origin:    # new, char
-    stock_picking_out.backorder_id:
-        stock_picking_out.backorder_id:
-        stock_picking_out.backorder_ids:    # pas tres sur
-    stock_picking_out.company_id:
-        stock_picking_out.company_id:
-        res_company.company_id:
-    stock_picking_out.invoice_state:
-        stock_picking_out.invoice_state:    # new required: required, selection_keys: ['2binvoiced', 'invoiced', 'none']
-    stock_picking_out.location_dest_id:
-        stock_picking_out.location_dest_id:
-        stock_location.location_dest_ids:
-    stock_picking_out.location_id:
-        stock_picking_out.location_id:
-        stock_location.location_ids:
-    stock_picking_out.location_id:
-        stock_picking_out.location_id:
-        stock_location.location_ids:
-    stock_picking_out.message_ids:
-        stock_picking_out.message_ids:
-        mail_message.message_id:
-    stock_picking_out.move_lines:
-        stock_picking_out.move_lines:
-        stock_move.move_line:
-    stock_picking_out.partner_id:
-        stock_picking_out.partner_id:
-        res_partner.partner_id:
-    stock_picking_out.stock_journal_id:
-        stock_picking_out.stock_journal_id:
-        stock_journal.stock_journal_id:
-        stock_picking_out.type: return 'out' # required: required, selection_keys: ['in', 'internal', 'out'], req_default: out
-    stock_picking_out.state:
-        stock_picking_out.state:        #new selection_keys: ['assigned', 'auto', 'cancel', 'confirmed', 'done', 'draft']
-    stock_warehouse.partner_address_id:
-        stock_warehouse.partner_address_id:
-    stock_warehouse.partner_id:
-        stock_warehouse.partner_id:
-        res_partner.partner_ids:
-
-    stock_picking_in.backorder_id:
-        stock_picking_in.backorder_id:
-        stock_picking_in.backorder_ids:     # pas tres sur
-    stock_picking_in.company_id:
-        stock_picking_in.company_id:
-        res_company.company_ids:
-
 
 # module point_of_sale
 point_of_sale:
     point_of_sale.*:
     account_bank_statement.pos_session_id:
         account_bank_statement.pos_session_id:
-    account_bank_statement_line.journal_id:
-    account_bank_statement_line.journal_id: # DEL mode: modify
 
-    account_journal.amount_authorized_diff: # new, float
-    account_journal.self_checkout_payment_method:   #new, boolean
     pos_order.id:
         pos_order.id:
         pos_order.pos_reference:    #new
     product_product._:
         product_product.available_in_pos: return True
-    account_journal.auto_cash: False    # DEL
-    account_journal.check_dtls: False   # DEL
+    account_journal.auto_cash: __forget__
+    account_journal.check_dtls: __forget__
 
 
 # module product
 product:
-    product.*:
+    product_product.*:
+    product_template.*:
     product_product.id:
         product_product.id:
         product_product.image:  #new, binary
@@ -732,39 +397,6 @@ edi:
 
 # module purchase
 purchase:
-    purchase.*:
-    purchase_order.dest_address_id:
-        purchase_order.dest_address_id:
-        res_partner.dest_address_ids:
-    purchase_order.journal_id:
-        purchase_order.journal_id:
-        account_journal.journal_ids:
-    purchase_order.message_ids:
-        purchase_order.message_ids:
-        mail_message.message_id:
-    purchase_order.partner_address_id:
-        purchase_order.partner_address_id :     # DEL relation: res.partner.address
-    purchase_order.payment_term_id:
-        purchase_order.payment_term_id:
-        account_payment_term.payment_term_ids:
-    purchase_order.picking_ids:
-        purchase_order.picking_ids:
-        stock_picking_in.picking_id:
-    purchase_order.state:
-        purchase_order.state:  # ['approved', 'cancel', 'confirmed', 'done', 'draft', 'except_invoice', 'except_picking', 'sent']'
-    purchase_order_line.name:
-        purchase_order.name:       # change type to 'text'
-    purchase_order_line.notes: False
-    purchase_report.dest_address_id:
-        purchase_report.dest_address_id:
-    purchase_report.partner_address_id:
-        purchase_report.partner_address_id:
-    purchase_report.state:
-        purchase_report.state:      # '['approved', 'cancel', 'confirmed', 'done', 'draft', 'except_invoice', 'except_picking']'
-    res_partner.purchase_order_ids:
-        res_partner.purchase_order_ids:
-        purchase_order.purchase_order_ids:
-    stock_picking_in.purchase_id:
-        stock_picking_in.purchase_id:
-        purchase_order.purchase_id:
-
+    purchase_order.*:
+    purchase_order_line.*:
+    purchase_order_line.notes: __forget__
