@@ -107,11 +107,12 @@ class CSVProcessor(object):
                             target_rows[target_table][target_column] = result
                 # postprocess the target lines and write them to csv
                 for table, target_row in target_rows.items():
+                    last_id = self.mapping.last_id[table]
                     if any(target_row.values()):
                         # offset the foreign keys of the line
                         for key, value in target_row.items():
                             if table + '.' + key in fields2update and target_row.get(key, False):
-                                target_row[key] = int(target_row[key]) + self.mapping.last_id[table]
+                                target_row[key] = int(target_row[key]) + last_id
                         # offset the id of the line
                         if 'id' in target_row and table in fields2update:
                             target_row['id'] = int(target_row['id']) + self.mapping.last_id[table]
