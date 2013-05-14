@@ -48,7 +48,8 @@ class CSVProcessor(object):
         self.target_columns = {k: sorted(list(v)) for k, v in self.target_columns.items()}
         return self.target_columns
 
-    def process(self, source_dir, source_filenames, target_dir, target_connection=None):
+    def process(self, source_dir, source_filenames, target_dir,
+                target_connection=None, existing_records=None, fields2update=None):
         """ The main processing method
         """
         # compute the target columns
@@ -70,11 +71,12 @@ class CSVProcessor(object):
         # process csv files
         for source_filename in source_filenames:
             source_filepath = join(source_dir, source_filename)
-            self.process_one(source_filepath, target_connection)
+            self.process_one(source_filepath, target_connection, existing_records, fields2update)
         for target_file in self.target_files.values():
             target_file.close()
 
-    def process_one(self, source_filepath, target_connection=None):
+    def process_one(self, source_filepath,
+                    target_connection=None, existing_records=None, fields2update=None):
         """ Process one csv file
         """
         source_table = basename(source_filepath).rsplit('.', 1)[0]
@@ -103,12 +105,19 @@ class CSVProcessor(object):
                             # mapping is a function
                             result = function(source_row, target_rows)
                             target_rows[target_table][target_column] = result
-                # write the target lines in the output csv
+                # postprocess the target lines and write them to csv
                 for table, target_row in target_rows.items():
                     if any(target_row.values()):
-                        if target_connection is not None:
-                            #self.check_record(target_connection, table, target_row)
-                            pass
+                        # offset the foreign keys of the line
+                        for key, value in target_row.items():
+                            if table + '.' + key in fields2update and target_row.get(key, False):
+                                target_row[key] = int(target_row[key]) + self.mapping.last_id[table]
+                        # offset the id of the line
+                        if 'id' in target_row and table in fields2update:
+                            target_row['id'] = int(target_row['id']) + self.mapping.last_id[table]
+                        # update existing data in the target
+
+                        # write the csv line
                         self.writers[table].writerow(target_row)
 
     def check_record(self, target_connection, table, target_row):

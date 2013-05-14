@@ -5,15 +5,8 @@ from os.path import basename
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(basename(__file__))
 
-""" Method to find out the dependencies order to import of an OpenERP model
-    Set excluded_models to None if there is no model to exclude.
-    If you want to exclude some models, use the following syntax :
-    excluded_models = ['res.currency', 'res.country']
-"""
-
 
 def main():
-
     """ Main console script
     """
     parser = argparse.ArgumentParser(description='Return the dependencies order'
@@ -64,6 +57,9 @@ def get_dependencies(username, pwd, dbname, models, excluded_models,
                      path=None, seen=None):
     """ Given a list of OpenERP models, return the full list of dependant models,
     ordered by dependencies. Warning are displayed if there are dependency loops
+    Set excluded_models to None if there is no model to exclude.
+    If you want to exclude some models, use the following syntax :
+    excluded_models = ['res.currency', 'res.country']
     """
     # XML-RPC
     sock, uid = get_socket(username, pwd, dbname, 8069)
@@ -128,11 +124,9 @@ def get_dependencies(username, pwd, dbname, models, excluded_models,
     return res
 
 
-""" Method to get back all columns referencing another table """
-
-
 def get_fk_to_update(target_connection, models):
-
+    """ Method to get back all columns referencing another table
+    """
     fields2update = {}
     for model in models:
         with target_connection.cursor() as c:
@@ -149,21 +143,23 @@ information_schema.constraint_column_usage AS
 ccu ON ccu.constraint_name = tc.constraint_name
 WHERE constraint_type = 'FOREIGN KEY' AND
 ccu.table_name='%s';""" % model
-                try:
-                    c.execute(query)
-                except:
-                    print('Exception')
+                c.execute(query)
                 results = c.fetchall()
                 fields2update[model] = results
-    return fields2update
-
-""" Method to define which record needs to be update or not before importing
-it """
+    # transpose the result to obtain:
+    # {'table.fkname': 'pointed_table', ...}
+    # so that processing each input line is easier
+    result = {}
+    for pointed_table, fknames in fields2update.iteritems():
+        for fkname in fknames:
+            result['.'.join(fkname)] = pointed_table
+    return result
 
 
 def get_mapping_migration(username_from, username_to, pwd_from, pwd_to,
                           dbname_from, dbname_to, model):
-
+    """ Method to define which record needs to be update or not before importing it
+    """
     sock_from, uid_from = get_socket(username_from, pwd_from, dbname_from, 8069)
     sock_to, uid_to = get_socket(username_to, pwd_to, dbname_to, 8169)
     mapping_xml_id = {}

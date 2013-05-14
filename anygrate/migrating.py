@@ -4,7 +4,7 @@ import shutil
 import argparse
 import os
 from tempfile import mkdtemp
-from .exporting import export_to_csv
+from .exporting import export_to_csv, extract_existing
 from .mapping import Mapping
 from .processing import CSVProcessor
 from .depending import get_dependencies
@@ -81,10 +81,10 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
                                      source_db, source_models, excluded_models)
 
     # compute the foreign keys to modify in the csv
-    print('Computing the Foreign Keys to update in the exported csv files...')
+    print('Computing the list of Foreign Keys to update in the exported csv files...')
     fields2update = get_fk_to_update(target_connection, source_models)
 
-    # construct the mapping and the processor
+    # construct the mapping and the csv processor
     # (TODO? autodetect mapping file with source and target db)
     print('Exporting tables as CSV files...')
     source_tables = [model.replace('.', '_') for model in source_models]
@@ -94,7 +94,11 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
     processor = CSVProcessor(mapping, fields2update)
     target_tables = processor.get_target_columns(filepaths).keys()
 
+    # extract the existing records from the target database
+    existing_records = extract_existing(source_tables, mapping.discriminators, target_connection)
+
     # Get the max id of source and target dbs
+    # TODO move in a function somewhere
     for source_table in source_tables:
         with source_connection.cursor() as c:
             # FIXME the key (id) shouldn't be hardcoded below
@@ -118,4 +122,13 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
                 target_connection.rollback()
 
     # create migrated csv files from exported csv
-    processor.process(target_dir, filepaths, target_dir, target_connection)
+    print(u'Migrating CSV files...')
+    # FIXME refactor the process() arguments, there are too many of them
+    processor.process(target_dir, filepaths, target_dir,
+                      target_connection, existing_records, fields2update)
+
+    # import data in the target
+    print(u'Importing data in the target database...')
+
+    # \o/
+    print(u'Finished ! \o/')

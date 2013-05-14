@@ -8,7 +8,7 @@ base:
         - name
     res_country.*:
     res_country.__discriminator__:
-        - name
+        - code
 
     # Users
     res_users.*:
@@ -67,7 +67,7 @@ base:
         res_partner.id:
         #adding the new fields with default value
         res_partner.notification_email_send: return 'comment'
-        res_partner.section_id: return ' ' 
+        res_partner.section_id: return ' '
         res_partner.is_company: return 'f' # make a function which finds the value in the target database
         #res_partner.tz: return ' '    # Example of value: Europe/Paris, not required
         res_partner.use_parent_address: return 't' # make a function which finds the value in the target database
@@ -83,7 +83,7 @@ base:
         res_partner.notification_email_send: return 'comment'
     res_partner_address.contact_id: False
     res_partner_address.x_openupgrade_job_id: False
-    res_partner_address.location_id: False    
+    res_partner_address.location_id: False
     res_partner_address.country_id:
         res_partner.country_id:
     res_partner_address.fax:
@@ -116,7 +116,7 @@ base:
 
     # Menu
     ir_ui_menu.*:
-    
+
     # Tables de jointures
     res_groups_users_rel.*:
     res_company_users_rel.*:
@@ -128,10 +128,6 @@ base:
 mail:
     mail.*:
 
-    ir_ui_menu.mail_group_id:
-        ir_ui_menu.mail_group_id:
-        mail_group.mail_group_ids:
-
     mail_alias.alias_defaults:
         mail_alias.alias_defaults: # new (text) required: required, req_default: {}
     mail_alias.id:
@@ -142,7 +138,7 @@ mail:
         ir_model.alias_model_ids:  # required
     mail_alias.alias_name:
         mail_alias.alias_name:     # required
-    mail_alias.alias_user_id:  
+    mail_alias.alias_user_id:
         mail_alias.alias_user_id:
         res_users.alias_user_ids:
 
@@ -234,7 +230,7 @@ mail:
         res_partner.partner_id:
     mail_message.subtype_id:
         mail_message.subtype_id:
-        mail_message_subtype.subtype_id: 
+        mail_message_subtype.subtype_id:
     mail_message.type:
         mail_message.type:          # new selection_keys: ['comment', 'email', 'notification']
     mail_message.vote_user_ids:
@@ -266,28 +262,17 @@ mail:
         res_users._inherits:            # new mode: modify   (False) A verifier
     res_users.alias_id:
         res_users.alias_id:
-        mail_alais.alias_id: 
+        mail_alais.alias_id:
     res_users._:
         mail_alias.alias_name: return source_row['login']
 
-# Module account 
+# Module account
 account:
     account_account.*:
     account_account.__discriminator__:
         - name
     account_bank_statement.*:
-    account_bank_statement.closing_details_ids:
-        #account_bank_statement.closing_details_ids:
-        account_cashbox_line.bank_statement_id:
-    account_bank_statement.details_ids:
-        account_cashbox_line.details_id:
-    account_bank_statement.message_ids:
-        mail.message_id:
-    account_bank_statement.opening_details_ids:
-        account_cashbox_line.opening_details_id: #A vérifier
-    account_bank_statement.starting_details_ids: False
-    account_bank_statement.ending_details_ids: False
-       
+
     account_cashbox_line.*:
     account_cashbox_line.bank_statement_id:
         account_bank_statement.bank_statement_ids: # A vérifier
@@ -296,52 +281,37 @@ account:
     account_cashbox_line.starting_id: False
     account_cashbox_line.id:
         account_cashbox_line.id:
-        #account_cashbox_line.number_closing:
-        #account_cashbox_line.number_opening:
-    
+
     account_chart_template.*:
     account_chart_template.property_reserve_and_surplus_account: False
-    
+
     account_invoice.*:
     account_invoice.address_contact_id: False
     account_invoice.address_invoice_id: False
-    account_invoice.message_ids:
-        mail.message_id:
     account_invoice.id:
         account_invoice.id:
         account_invoice.send: #new:true or false
         account_invoice.supplier_invoice_number: #new
-    
+
     account_invoice_line.*:
     account_invoice_line.name:
         account_invoice_line.name: #cmt changer le type char en text ??
     account_invoice_line.note: False
-    
+
     account_invoice_report.*:
     account_invoice_report.address_contact_id: False
     account_invoice_report.address_invoice_id: False
     account_invoice_report.delay_to_pay: False
     account_invoice_report.due_delay: False
-    
+
     account_invoice_tax.*:
     account_invoice_tax.account_analytic_id:
         account_analytic_account.account_analytic_ids: # A verifier
 
     account_journal.*:
-    account_journal.auto_cash:
-        account_journal.auto_cash:
-    account_journal.id:
-        account_journal.cash_control: #new : boolean
-        account_journal.with_last_closing_balance: #new: boolean
-    account_journal.cashbox_line_ids:
-        account_journal_cashbox_line.cashbox_line_id:
-    account_journal.internal_account_id:
-        account_account.internal_account_ids: # Pas tres sur
-    account_journal.loss_account_id:
-        account_account.loss_account_ids:   # Pas tres sur
-    account_journal.profit_account_id:
-        account_account.profit_account_ids: # Pas tres sur
-        
+    account_journal.__discriminator__:
+        - code
+
     account_journal_cashbox_line.*:
     account_journal_cashbox_line.id:
         account_journal_cashbox_line.id:
@@ -349,32 +319,40 @@ account:
     account_journal_cashbox_line.journal_id:
         account_journal_cashbox_line.journal_id:
         account_journal.journal_id:
-    
+
     account_move_reconcile.*:
     account_move_reconcile.id:
         account_move_reconcile.id:
         account_move_reconcile.opening_reconciliation: #new
-    
+
     account_tax.*:
     account_tax.account_analytic_collected_id:
         account_analytic_account.account_analytic_collected_ids:
     account_tax.account_analytic_paid_id:
         account_analytic_account.account_analytic_paid_ids:
-        
+
     res_company._:
         res_company.expects_chart_of_accounts: return True # car on suppose que le plan comptable est déjà installé
         res_company.tax_calculation_rounding_method: return 'round_per_line'
-    
+
     account_account_type.*:
     account_account_type.name:
         account_account_type.report_type: return "receivable"
-        
+
     account_journal_view.*:
     account_journal_view.view_id: False
     account_journal_column.*:
 
     account_move.*:
+    account_move.__discriminator__:
+        - name
+        - ref
+        - date
     account_move_line.*:
+    account_move_line.__discriminator__:
+        - name
+        - ref
+        - date
 
 
 # Module account_accountant
@@ -423,27 +401,27 @@ account_bank_statement_extensions:
     account_bank_statement_line.journal_id:
         account.account_bank_statement_extensions:
 
-        
+
 # Module account_budget
 account_budget:
     account_budget.*:
 
-    
+
 # Module account_cancel
 account_cancel:
     account_cancel.*:
 
-  
+
 # Module account_chart
 account_chart:
     account_chart.*:
 
-  
+
 # Module account_check_writing
 account_check_writing:
     account_check_writing.*:
 
- 
+
 # Module account_followup
 account_followup:
     account_followup.*:
@@ -462,7 +440,7 @@ account_followup:
         account_followup_followup_line.send_letter:    # new, boolean
     account_followup_followup_line.manual_action_responsible_id:
         res_users.manual_action_responsible_ids:
-    
+
     res_company.follow_up_msg: False
     res_partner.payment_next_action:    #new, text
     res_partner.payment_next_action_date:   #new, date
@@ -471,22 +449,22 @@ account_followup:
         res_users.payment_responsible_ids:
     res_partner.unreconciled_aml_ids:
         account_move_line.unreconciled_aml_id:
-    
+
 
 # Module account_payment
 account_payment:
-    account_payment.*: 
-  
+    account_payment.*:
+
 
 # Module account_sequence
 account_sequence:
-    account_sequence.*: 
-  
+    account_sequence.*:
+
 
 # Module account_test
 account_test:
     account_test.*:
-  
+
 
 # Module account_voucher
 account_voucher:
@@ -494,7 +472,7 @@ account_voucher:
     account_voucher.active:     #new, boolean
     account_voucher.message_ids:
         mail_message.message_id:
- 
+
 
 # Module analytic
 analytic:
@@ -504,13 +482,13 @@ analytic:
         account_analytic_account.contact_id:    #DEL relation: res.partner.address
     account_analytic_account.manager_id:
         res_users.manager_ids:
-    account_analytic_account.message_ids: 
-        mail_message.message_id:   
+    account_analytic_account.message_ids:
+        mail_message.message_id:
     account_analytic_account.template_id:
         account_analytic_account.template_ids:
     account_analytic_account._:
         account_analytic_account.type: return 'normal' #now required, default = normal
-  
+
 
 # Module analytic_contract_hr_expense
 analytic_contract_hr_expense:
@@ -520,7 +498,7 @@ analytic_contract_hr_expense:
         account_analytic_account.charge_expenses:   # new, boolean
         account_analytic_account.est_expenses:    # new, float
 
-  
+
 # Module analytic_user_function
 analytic_user_function:
     analytic_user_function.*:
@@ -528,13 +506,13 @@ analytic_user_function:
         analytic_user_funct_grid.id:
         analytic_user_funct_grid.price:     #NEW required: required (float)
 
-  
+
 # Module sale
 sale:
     sale.*:
     res_company.security_lead:
         res_company.security_lead:
-        sale_stock.security_lead:  
+        sale_stock.security_lead:
     res_partner.sale_order_ids:
         sale_order.sale_order_id:
     sale_order.incoterm:
@@ -605,7 +583,7 @@ sale:
     stock_picking.sale_id:
         stock_picking.sale_id:
         sale_stock.sale_ids:
-        
+
 
 # Module stock
 stock:
@@ -641,11 +619,11 @@ stock:
         stock_picking_in.move_type: return 'direct' # new required: required, selection_keys: ['direct', 'one'], req_default: direct
         stock_picking_in.name:      # new, char
         stock_picking_in.note:      # new, text
-        stock_picking_in.origin:    # new, char 
+        stock_picking_in.origin:    # new, char
         stock_picking_in.state:     #new selection_keys: ['assigned', 'auto', 'cancel', 'confirmed', 'done', 'draft']
     stock_picking_in.location_dest_id:
         stock_picking_in.location_dest_id:
-        stock_location.location_dest_ids:       
+        stock_location.location_dest_ids:
     stock_picking_in.location_id:
         stock_picking_in.location_id:
         stock_location.location_ids:
@@ -670,7 +648,7 @@ stock:
         stock_picking_out.date_done:    #new, datetime
         stock_picking_out.name:      # new, char
         stock_picking_out.note:      # new, text
-        stock_picking_out.origin:    # new, char 
+        stock_picking_out.origin:    # new, char
     stock_picking_out.backorder_id:
         stock_picking_out.backorder_id:
         stock_picking_out.backorder_ids:    # pas tres sur
@@ -681,7 +659,7 @@ stock:
         stock_picking_out.invoice_state:    # new required: required, selection_keys: ['2binvoiced', 'invoiced', 'none']
     stock_picking_out.location_dest_id:
         stock_picking_out.location_dest_id:
-        stock_location.location_dest_ids:       
+        stock_location.location_dest_ids:
     stock_picking_out.location_id:
         stock_picking_out.location_id:
         stock_location.location_ids:
@@ -700,7 +678,7 @@ stock:
     stock_picking_out.stock_journal_id:
         stock_picking_out.stock_journal_id:
         stock_journal.stock_journal_id:
-        stock_picking_out.type: return 'out' # required: required, selection_keys: ['in', 'internal', 'out'], req_default: out  
+        stock_picking_out.type: return 'out' # required: required, selection_keys: ['in', 'internal', 'out'], req_default: out
     stock_picking_out.state:
         stock_picking_out.state:        #new selection_keys: ['assigned', 'auto', 'cancel', 'confirmed', 'done', 'draft']
     stock_warehouse.partner_address_id:
@@ -718,70 +696,20 @@ stock:
 
 
 # module point_of_sale
-point_of_sale:    
+point_of_sale:
     point_of_sale.*:
     account_bank_statement.pos_session_id:
         account_bank_statement.pos_session_id:
-        pos_session.pos_session_ids:
     account_bank_statement_line.journal_id:
-        account_bank_statement_line.journal_id: # DEL mode: modify
-        
-        account_journal.amount_authorized_diff: # new, float
-        account_journal.self_checkout_payment_method:   #new, boolean
-        pos_category.image:     #new, binary
-        pos_config.group_by:    #new, boolean
-        pos_config.iface_cashdrawer:    #new, boolean
-        pos_config.iface_electronic_scale: #new, boolean
-        pos_config.iface_payment_terminal: #new, booolean
-        pos_config.iface_print_via_proxy:  #new, boolean
-        pos_config.iface_self_checkout: #new, boolean
-        pos_config.iface_vkeyboard:     #new, boolean
-        pos_config.journal_id:
-            pos_config.journal_id:
-            account_journal.journal_ids:
-        pos_config.journal_ids:
-            pos_config.journal_ids:
-            account_journal.journal_ids:
-        pos_config.name:
-            pos_config.name:    # new required
-        pos_config.sequence_id:
-            pos_config.sequence_id:
-            ir_sequence.sequence_ids:
-        pos_config.session_ids: 
-            pos_config.session_ids:
-            pos_session.session_id:
-        pos_config.shop_id:
-            pos_config.shop_id:
-            sale_shop.shop_ids:
-        pos_config.state:
-            pos_config.state: return 'active' #NEW required: required, selection_keys: ['active', 'deprecated', 'inactive']
+    account_bank_statement_line.journal_id: # DEL mode: modify
+
+    account_journal.amount_authorized_diff: # new, float
+    account_journal.self_checkout_payment_method:   #new, boolean
+    pos_order.id:
         pos_order.id:
-            pos_order.id:
-            pos_order.pos_reference:    #new
-        pos_order.session_id:
-            pos_order.session_id:
-            pos_session.session_id:
-        pos_session.config_id:
-            pos_session.config_id:
-            pos_config.config_ids:
-            pos_session.name:       # new required: required, req_default: /
-            pos_session.start_at:   # new, datetime
-            pos_session.stop_at:    # new, datetime
-            pos_session.state:      # new required: required, selection_keys: ['closed', 'closing_control', 'opened', 'opening_control']
-            product_product.available_in_pos: return true   # new, boolean
-            product_product.to_weight: return true  # new, boolean
-            res_users.ean13:        # new, char
-            res_users.pos_config:
-                res_users.pos_config:   # A VERIFIER  
-        pos_session.user_id:
-            pos_session.user_id:
-            res_users.user_ids:     # 
-        pos_session.order_ids:
-            pos_session.order_ids:
-            pos_order.order_id: 
-        pos_session.statement_ids:
-            pos_session.statement_ids:
-            account_bank_statement.statement_id:
+        pos_order.pos_reference:    #new
+    product_product._:
+        product_product.available_in_pos: return True
     account_journal.auto_cash: False    # DEL
     account_journal.check_dtls: False   # DEL
 
@@ -795,13 +723,13 @@ product:
     product_product.message_ids:
         mail_message.message_ids:
     product_product.product_image: False
-    
+
 
 # module edi
 edi:
     edi.*:
 
-    
+
 # module purchase
 purchase:
     purchase.*:
@@ -821,7 +749,7 @@ purchase:
         account_payment_term.payment_term_ids:
     purchase_order.picking_ids:
         purchase_order.picking_ids:
-        stock_picking_in.picking_id:    
+        stock_picking_in.picking_id:
     purchase_order.state:
         purchase_order.state:  # ['approved', 'cancel', 'confirmed', 'done', 'draft', 'except_invoice', 'except_picking', 'sent']'
     purchase_order_line.name:
@@ -835,8 +763,8 @@ purchase:
         purchase_report.state:      # '['approved', 'cancel', 'confirmed', 'done', 'draft', 'except_invoice', 'except_picking']'
     res_partner.purchase_order_ids:
         res_partner.purchase_order_ids:
-        purchase_order.purchase_order_ids:   
+        purchase_order.purchase_order_ids:
     stock_picking_in.purchase_id:
-        stock_picking_in.purchase_id: 
-        purchase_order.purchase_id: 
+        stock_picking_in.purchase_id:
+        purchase_order.purchase_id:
 

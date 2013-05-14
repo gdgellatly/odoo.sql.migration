@@ -101,7 +101,7 @@ We can add a target column without specifying a source column:
     >>> mapping.get_targets('res_partner._')
     >>> mapping.get_targets('res_users._')
     {'res_users.foobar': <function mapping_function at ...>}
-    
+
 
 We can use wildcards in the mappings to avoid filling every column:
 
@@ -134,7 +134,9 @@ because it can take several columns
 The discriminator mapping is already built after reading the yml file:
 
     >>> pprint(mapping.discriminators, width=1)
-    {'res_partner': ['name'],
+    {'account_move': ['name',
+                      'ref'],
+     'res_partner': ['name'],
      'res_users': ['login']}
 
 
@@ -188,6 +190,19 @@ We can try more complex scenarios, such as:
     >>> sorted(os.listdir(directory2))
     ['res_partner.out.csv', 'res_users.out.csv']
 
+Extracting existing data from the target db
+===========================================
+
+Before importing into the target db, we need to take care of data existing in
+it : we may want to import records that already exist in the target db. So we
+must update these existing records in the target db with data coming from the
+csv files, then remove the lines from the csv.
+
+    >>> from anygrate.exporting import extract_existing
+    >>> source_tables = ['res_users', 'res_partner', 'account_move']
+    >>> result = extract_existing(source_tables, mapping.discriminators, connection)
+    >>> result['res_users'][0]['login']
+    'admin'
 
 Importing the CSV files
 =======================

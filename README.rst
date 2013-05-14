@@ -47,10 +47,10 @@ directory.
 Internals
 =========
 
-This tool was inspired from:
+This tool was loosely inspired from:
 
- - external_referential
- - OpenUpgrade
+ - the external_referential OpenERP module
+ - the OpenUpgrade project
  - Talend Open Studio
 
 The different internal steps are:

@@ -47,3 +47,10 @@ base:
 mail:
     res_users.login:
         mail_alias.alias: return source_row['login']
+
+    account_move.*:
+    # a discriminator with 2 columns
+    account_move.__discriminator__:
+        - name
+        - ref
+
