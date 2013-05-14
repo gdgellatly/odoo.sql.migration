@@ -18,20 +18,9 @@ base:
         res_users.id:
     res_users.context_lang:
         res_users.lang:
-        res_users.company_id: return 1
-        res_users.ean13: return ' '
-        res_users.pos_config: return ' '
-        res_users.default_section_id: return ' '
-        res_users.share: return ' '
-        res_users.alias_id: return ' '
-        res_users.login_date: return ' '
-        res_users.lang: return ' '
-        res_users.active: return True
-        res_partner.lang:
     res_users.date: False
     res_users.email: False
     res_users.menu_tips: False
-    res_users.term_id: False
     res_users.user_email:
         res_partner.email:
     res_users.name:
@@ -66,7 +55,7 @@ base:
     res_users.context_tz:
         res_partner.tz:
     res_partner._:
-        res_partner.is_company: return False
+        res_partner.is_company: return True
 
     # address
     res_partner_address.id:
@@ -105,6 +94,7 @@ base:
 
     res_company.__discriminator__:
         - name
+    res_company.*:
     res_company.logo:
         res_company.logo_web:
     res_company.rml_footer1:
@@ -273,29 +263,19 @@ account_followup:
     account_followup.*:
     account_followup_followup.*:
     account_followup_followup.description: False
-    account_followup_followup.name:
-        account_followup_followup.name:     # Change type char to float
     account_followup_followup_line.*:
     account_followup_followup_line.delay:
-        account_followup_followup_line.delay: return 0 # now required
-    account_followup_followup_line.email_template_id:
-        email_template.email_template_ids:
-        account_followup_followup_line.manual_action:  # new, boolean
-        account_followup_followup_line.manual_action_note:  # new, text
-        account_followup_followup_line.send_email:     # new, boolean
-        account_followup_followup_line.send_letter:    # new, boolean
-    account_followup_followup_line.manual_action_responsible_id:
-        res_users.manual_action_responsible_ids:
-
-    res_company.follow_up_msg: False
-    res_partner.payment_next_action:    #new, text
-    res_partner.payment_next_action_date:   #new, date
-    res_partner.payment_note:   #new, text
-    res_partner.payment_responsible_id:
-        res_users.payment_responsible_ids:
-    res_partner.unreconciled_aml_ids:
-        account_move_line.unreconciled_aml_id:
-
+        account_followup_followup_line.delay: source_row['delay'] or 0
+    res_company.follow_up_msg:
+        account_followup_followup.id: |
+            followup_id = newid('account_followup_followup')
+            line_id = newid('account_followup_followup_line')
+            target_rows['account_followup_followup_line']['followup_id'] = followup_id
+            return followup_id
+        account_followup_followup_line.id: |
+            target_rows['account_followup_followup_line']['name'] = u'migrated followup'
+            target_rows['account_followup_followup_line']['description'] = source_row['follow_up_msg']
+            return line_id
 
 # Module account_payment
 account_payment:
@@ -315,9 +295,6 @@ account_test:
 # Module account_voucher
 account_voucher:
     account_voucher.*:
-    account_voucher.active:     #new, boolean
-    account_voucher.message_ids:
-        mail_message.message_id:
 
 
 # Module analytic
@@ -326,12 +303,6 @@ analytic:
     account_analytic_account.*:
     account_analytic_account.contact_id:
         account_analytic_account.contact_id:    #DEL relation: res.partner.address
-    account_analytic_account.manager_id:
-        res_users.manager_ids:
-    account_analytic_account.message_ids:
-        mail_message.message_id:
-    account_analytic_account.template_id:
-        account_analytic_account.template_ids:
     account_analytic_account._:
         account_analytic_account.type: return 'normal' #now required, default = normal
 

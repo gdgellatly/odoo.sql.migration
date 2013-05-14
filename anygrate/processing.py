@@ -45,7 +45,8 @@ class CSVProcessor(object):
                         t, c = target.split('.')
                         self.target_columns.setdefault(t, set()).add(c)
 
-        self.target_columns = {k: sorted(list(v)) for k, v in self.target_columns.items()}
+        self.target_columns = {k: sorted([c for c in v if c != '_'])
+                               for k, v in self.target_columns.items()}
         return self.target_columns
 
     def process(self, source_dir, source_filenames, target_dir,
@@ -95,6 +96,8 @@ class CSVProcessor(object):
                     for target_column, function in mapping.items():
                         target_table, target_column = target_column.split('.')
                         target_rows.setdefault(target_table, {})
+                        if target_column == '_':
+                            continue
                         if function in (None, '__copy__'):
                             # mapping is None: use identity
                             target_rows[target_table][target_column] = source_row[source_column]
@@ -102,20 +105,26 @@ class CSVProcessor(object):
                             # mapping is False: remove the target column
                             del target_rows[target_table][target_column]
                         else:
-                            # mapping is a function
+                            # mapping is supposed to be a function
                             result = function(source_row, target_rows)
                             target_rows[target_table][target_column] = result
                 # postprocess the target lines and write them to csv
                 for table, target_row in target_rows.items():
-                    last_id = self.mapping.last_id[table]
                     if any(target_row.values()):
                         # offset the foreign keys of the line
                         for key, value in target_row.items():
-                            if table + '.' + key in fields2update and target_row.get(key, False):
+                            if (fields2update
+                                    and table + '.' + key in fields2update
+                                    and target_row.get(key, False)):
+                                last_id = self.mapping.last_id.get(
+                                    fields2update[table + '.' + key], 0)
                                 target_row[key] = int(target_row[key]) + last_id
                         # offset the id of the line
-                        if 'id' in target_row and table in fields2update:
-                            target_row['id'] = int(target_row['id']) + self.mapping.last_id[table]
+                        if (fields2update
+                                and 'id' in target_row
+                                and table in fields2update.itervalues()):
+                            last_id = self.mapping.last_id.get(table, 0)
+                            target_row['id'] = int(target_row['id']) + last_id
                         # update existing data in the target
 
                         # write the csv line

@@ -93,33 +93,11 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
     mapping = Mapping(target_modules, mappingfile)
     processor = CSVProcessor(mapping, fields2update)
     target_tables = processor.get_target_columns(filepaths).keys()
+    processor.mapping.update_last_id(source_tables, source_connection,
+                                     target_tables, target_connection)
 
     # extract the existing records from the target database
     existing_records = extract_existing(source_tables, mapping.discriminators, target_connection)
-
-    # Get the max id of source and target dbs
-    # TODO move in a function somewhere
-    for source_table in source_tables:
-        with source_connection.cursor() as c:
-            # FIXME the key (id) shouldn't be hardcoded below
-            try:
-                c.execute('select max(id) from %s' % source_table)
-                mapping.last_id[source_table] = c.fetchone()[0]
-            except psycopg2.ProgrammingError:
-                LOG.debug(u'"id" column does not exist in table "%s"', source_table)
-                source_connection.rollback()
-    for target_table in target_tables:
-        with target_connection.cursor() as c:
-            # FIXME the key (id) shouldn't be hardcoded below
-            try:
-                c.execute('select max(id) from %s' % target_table)
-                maxid = c.fetchone()
-                mapping.last_id[source_table] = max(
-                    maxid and maxid[0] or 1,
-                    mapping.last_id.get(source_table, 1))
-            except psycopg2.ProgrammingError:
-                LOG.debug(u'"id" column does not exist in table "%s"', source_table)
-                target_connection.rollback()
 
     # create migrated csv files from exported csv
     print(u'Migrating CSV files...')

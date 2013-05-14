@@ -1,4 +1,5 @@
 # coding: utf-8
+import psycopg2
 import yaml
 import logging
 from os.path import basename
@@ -100,3 +101,31 @@ class Mapping(object):
         """
         return sorted(list({t[0].split('.')[0] for t in self.mapping.items()
                             if target in [c.split('.')[0] for c in t[1].keys()]}))
+
+    def update_last_id(self, source_tables, source_connection, target_tables, target_connection):
+        """ update the last_id with max of source and target dbs
+        """
+        for source_table in source_tables:
+            with source_connection.cursor() as c:
+                # FIXME the key (id) shouldn't be hardcoded below
+                try:
+                    c.execute('select max(id) from %s' % source_table)
+                    maxid = c.fetchone()
+                    self.last_id[source_table] = max(
+                        maxid and maxid[0] or 1,
+                        self.last_id.get(source_table, 1))
+                except psycopg2.ProgrammingError:
+                    LOG.debug(u'"id" column does not exist in table "%s"', source_table)
+                    source_connection.rollback()
+        for target_table in target_tables:
+            with target_connection.cursor() as c:
+                # FIXME the key (id) shouldn't be hardcoded below
+                try:
+                    c.execute('select max(id) from %s' % target_table)
+                    maxid = c.fetchone()
+                    self.last_id[target_table] = max(
+                        maxid and maxid[0] or 1,
+                        self.last_id.get(target_table, 1))
+                except psycopg2.ProgrammingError:
+                    LOG.debug(u'"id" column does not exist in table "%s"', target_table)
+                    target_connection.rollback()

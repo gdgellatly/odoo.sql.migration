@@ -179,15 +179,36 @@ csv files be generated
     >>> sorted(csv.DictReader(open(join(directory, 'res_users.out.csv'))).next().keys())
     ['foobar', 'name', 'partner_id']
 
+Process with partial_wildcard:
+
+    >>> directory2 = mkdtemp()
+    >>> exporting.export_to_csv(source_tables, directory2, connection)
+    ['/tmp/.../res_users.csv', '/tmp/.../res_partner.csv']
+    >>> processor = CSVProcessor(partial_wildcard)
+    >>> filepaths2 = [join(directory2, 'res_users.csv')]
+    >>> pprint(processor.get_target_columns(filepaths2), width=1)
+    {'res_users': ['action_id',
+                   'active',
+                   ...
+                   'write_uid']}
+
+    >>> processor.process(directory2, ['res_users.csv'], directory2)
+    >>> sorted(os.listdir(directory2))
+    ['res_partner.csv', 'res_users.csv', 'res_users.out.csv']
+    >>> import csv
+    >>> sorted(csv.DictReader(open(join(directory2, 'res_users.out.csv'))).next().keys())
+    ['action_id', 'active', ...]
+
+
 We can try more complex scenarios, such as:
 
 - res_users split into res_partner + res_users
 - res_partner merge from res_partner + res_partner_address
 
-    >>> directory2 = mkdtemp()
+    >>> directory3 = mkdtemp()
     >>> processor = CSVProcessor(mapping)
-    >>> processor.process(testdir, ['res_users.csv', 'res_partner.csv', 'res_partner_address.csv'], directory2)
-    >>> sorted(os.listdir(directory2))
+    >>> processor.process(testdir, ['res_users.csv', 'res_partner.csv', 'res_partner_address.csv'], directory3)
+    >>> sorted(os.listdir(directory3))
     ['res_partner.out.csv', 'res_users.out.csv']
 
 Extracting existing data from the target db
@@ -243,5 +264,6 @@ Now we can import a csv file using the mapping:
     >>> import shutil
     >>> shutil.rmtree(directory)
     >>> shutil.rmtree(directory2)
+    >>> shutil.rmtree(directory3)
 
 
