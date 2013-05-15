@@ -2,7 +2,6 @@ import time
 import psycopg2
 import shutil
 import argparse
-import os
 from tempfile import mkdtemp
 from .exporting import export_to_csv, extract_existing
 from .importing import import_from_csv
@@ -11,9 +10,9 @@ from .processing import CSVProcessor
 from .depending import get_dependencies
 from .depending import get_fk_to_update
 import logging
-from os.path import basename
+from os.path import basename, join, abspath, dirname
 
-HERE = os.path.dirname(__file__)
+HERE = dirname(__file__)
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(basename(__file__))
 
@@ -57,7 +56,7 @@ def main():
         print "Writing CSV files in the current dir"
 
     tempdir = mkdtemp(prefix=source_db + '-' + str(int(time.time()))[-4:] + '-',
-                      dir=os.path.abspath('.'))
+                      dir=abspath('.'))
     migrate(source_db, target_db, models, mapping_name,
             excluded_models, target_dir=tempdir)
     if not args.keepcsv:
@@ -77,9 +76,10 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
         target_modules = [m[0] for m in c.fetchall()]
 
     # we turn the list of wanted models into the full list of required models
-    print('Computing the real list of models to export...')
+    print(u'Computing the real list of models to export...')
     source_models = get_dependencies('admin', 'admin',
                                      source_db, source_models, excluded_models)
+    print(u'The real list of models to export is: %s' % ', '.join(source_models))
 
     # compute the foreign keys to modify in the csv
     print('Computing the list of Foreign Keys to update in the exported csv files...')
@@ -90,10 +90,11 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
     print('Exporting tables as CSV files...')
     source_tables = [model.replace('.', '_') for model in source_models]
     filepaths = export_to_csv(source_tables, target_dir, source_connection)
-    mappingfile = os.path.join(HERE, 'mappings', mapping_name)
+    mappingfile = join(HERE, 'mappings', mapping_name)
     mapping = Mapping(target_modules, mappingfile)
     processor = CSVProcessor(mapping, fields2update)
     target_tables = processor.get_target_columns(filepaths).keys()
+    print(u'The real list of tables to import is: %s' % ', '.join(target_tables))
     processor.mapping.update_last_id(source_tables, source_connection,
                                      target_tables, target_connection)
 
@@ -108,11 +109,7 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
 
     # import data in the target
     print(u'Trying to import data in the target database...')
-    # FIXME below not reliable. We should only manage tables, not models.
-    target_models = [c.replace('_', '.') for c in target_tables]
-    target_models = get_dependencies('admin', 'admin',
-                                     source_db, target_models, excluded_models)
-    target_files = ['%s.out.csv' % c for c in target_tables]
+    target_files = [join(target_dir, '%s.out.csv' % c) for c in target_tables]
     import_from_csv(target_files, target_connection)
 
     # \o/

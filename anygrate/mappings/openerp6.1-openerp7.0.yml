@@ -12,12 +12,13 @@ base:
 
     # Users
     res_users.*:
+    res_users.term_id: False
     res_users.__discriminator__:
         - login
     res_users.id:
         res_users.id:
     res_users.context_lang:
-        res_users.lang:
+        res_partner.lang:
     res_users.date: False
     res_users.email: False
     res_users.menu_tips: False
@@ -28,6 +29,7 @@ base:
     res_users.active:
         res_partner.active:
     res_users.company_id:
+        res_users.company_id:
         res_partner.company_id:
     res_users.id:
         res_users.id:
@@ -122,11 +124,12 @@ mail:
     res_partner.notification_email_send:
         res_partner.notification_email_send: return 'comment'
 
-    res_users.alias_id:
-        res_users.alias_id:
-        mail_alais.alias_id:
     res_users._:
+        res_users.alias_id:
+        mail_alias.id: return newid('mail_alias')
+        mail_alias.alias_model_id: return sql("select id from ir_model where model='res.users'")[0][0]
         mail_alias.alias_name: return source_row['login']
+        mail_alias.alias_defaults: return {}
 
 # Module account
 account:

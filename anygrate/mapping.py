@@ -12,6 +12,7 @@ class Mapping(object):
     """
 
     last_id = {}
+    target_connection = None
 
     def __init__(self, modules, filename):
         """ Open the file and compute the mapping
@@ -49,7 +50,9 @@ class Mapping(object):
                     function_body += '\n'.join([4*' ' + line for line in mapping.split('\n')])
                     mapping_function = None
                     exec(compile(function_body, '<' + incolumn + ' → ' + outcolumn + '>', 'exec'),
-                         globals().update({'newid': self.newid}))
+                         globals().update({
+                             'newid': self.newid,
+                             'sql': self.sql}))
                     self.mapping[incolumn][outcolumn] = mapping_function
                     del mapping_function
 
@@ -63,10 +66,19 @@ class Mapping(object):
 
     def newid(self, table):
         """ increment the global stored last_id
+        This method is available as a function in the mapping
         """
         self.last_id.setdefault(table, 0)
         self.last_id[table] += 1
         return self.last_id[table]
+
+    def sql(self, sql):
+        """ execute an sql statement in the target db and return the value
+        This method is available as a function in the mapping
+        """
+        with self.target_connection.cursor() as cursor:
+            cursor.execute(sql)
+            return cursor.fetchall()
 
     def get_targets(self, source):
         """ Return the target mapping for a column or table
@@ -105,6 +117,7 @@ class Mapping(object):
     def update_last_id(self, source_tables, source_connection, target_tables, target_connection):
         """ update the last_id with max of source and target dbs
         """
+        self.target_connection = target_connection
         for source_table in source_tables:
             with source_connection.cursor() as c:
                 # FIXME the key (id) shouldn't be hardcoded below
