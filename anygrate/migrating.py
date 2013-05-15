@@ -5,6 +5,7 @@ import argparse
 import os
 from tempfile import mkdtemp
 from .exporting import export_to_csv, extract_existing
+from .importing import import_from_csv
 from .mapping import Mapping
 from .processing import CSVProcessor
 from .depending import get_dependencies
@@ -106,7 +107,13 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
                       target_connection, existing_records, fields2update)
 
     # import data in the target
-    print(u'Importing data in the target database...')
+    print(u'Trying to import data in the target database...')
+    # FIXME below not reliable. We should only manage tables, not models.
+    target_models = [c.replace('_', '.') for c in target_tables]
+    target_models = get_dependencies('admin', 'admin',
+                                     source_db, target_models, excluded_models)
+    target_files = ['%s.out.csv' % c for c in target_tables]
+    import_from_csv(target_files, target_connection)
 
     # \o/
     print(u'Finished ! \o/')

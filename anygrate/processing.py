@@ -126,6 +126,7 @@ class CSVProcessor(object):
                             last_id = self.mapping.last_id.get(table, 0)
                             target_row['id'] = int(target_row['id']) + last_id
                         # update existing data in the target
+                        raise NotImplementedError
 
                         # write the csv line
                         self.writers[table].writerow(target_row)
