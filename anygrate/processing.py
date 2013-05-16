@@ -20,7 +20,7 @@ class CSVProcessor(object):
         self.target_columns = {}
         self.writers = {}
         self.updated_values = {}
-        self.deferred_updates = []
+        self.fk_mapping = {}
 
     def get_target_columns(self, filepaths):
         """ Compute target columns with source columns + mapping
@@ -59,23 +59,81 @@ class CSVProcessor(object):
         self.target_columns = self.get_target_columns(filepaths)
         # load discriminator values for target tables
         # TODO
-        # open target files for writing
-        self.target_files = {
-            table: open(join(target_dir, table + '.out.csv'), 'ab')
+
+        # filenames and files
+        target_filenames = {
+            table: join(target_dir, table + '.target.csv')
             for table in self.target_columns
         }
-        # create csv writers
+        self.target_files = {
+            table: open(filename, 'ab')
+            for table, filename in target_filenames.items()
+        }
         self.writers = {t: csv.DictWriter(f, self.target_columns[t], delimiter=',')
                         for t, f in self.target_files.items()}
-        # write csv headers once
         for writer in self.writers.values():
             writer.writeheader()
-        # process csv files
+
+        # update filenames and files
+        self.update_filenames = {
+            table: join(target_dir, table + '.update.csv')
+            for table in self.target_columns
+        }
+        self.update_files = {
+            table: open(filename, 'ab')
+            for table, filename in self.update_filenames.items()
+        }
+        self.updatewriters = {t: csv.DictWriter(f, self.target_columns[t], delimiter=',')
+                              for t, f in self.update_files.items()}
+        for writer in self.updatewriters.values():
+            writer.writeheader()
         for source_filename in source_filenames:
             source_filepath = join(source_dir, source_filename)
             self.process_one(source_filepath, target_connection, existing_records, fields2update)
+        # close files
         for target_file in self.target_files.values():
             target_file.close()
+        for update_file in self.update_files.values():
+            update_file.close()
+
+        # POSTPROCESS target filenames and files
+        target2_filenames = {
+            table: join(target_dir, table + '.target2.csv')
+            for table in self.target_columns
+        }
+        self.target2_files = {
+            table: open(filename, 'ab')
+            for table, filename in target2_filenames.items()
+        }
+        self.writers = {t: csv.DictWriter(f, self.target_columns[t], delimiter=',')
+                        for t, f in self.target2_files.items()}
+        for writer in self.writers.values():
+            writer.writeheader()
+        for target2_filename in target2_filenames.values():
+            filepath = join(target_dir, target2_filename)
+            self.postprocess_one(filepath, existing_records, fields2update)
+
+        # POSTPROCESS update filenames and files
+        update2_filenames = {
+            table: join(target_dir, table + '.update2.csv')
+            for table in self.target_columns
+        }
+        self.update2_files = {
+            table: open(filename, 'ab')
+            for table, filename in update2_filenames.items()
+        }
+        self.writers = {t: csv.DictWriter(f, self.target_columns[t], delimiter=',')
+                        for t, f in self.update2_files.items()}
+        for writer in self.writers.values():
+            writer.writeheader()
+        for update2_filename in update2_filenames.values():
+            update2_filepath = join(target_dir, update2_filename)
+            self.postprocess_one(update2_filepath, existing_records, fields2update)
+        # close files
+        for target2_file in self.target2_files.values():
+            target2_file.close()
+        for update2_file in self.update2_files.values():
+            update2_file.close()
 
     def process_one(self, source_filepath,
                     target_connection=None, existing_records=None, fields2update=None):
@@ -109,43 +167,77 @@ class CSVProcessor(object):
                             # mapping is supposed to be a function
                             result = function(source_row, target_rows)
                             target_rows[target_table][target_column] = result
-                # postprocess the target lines and write them to csv
-                for table, target_row in target_rows.items():
-                    if any(target_row.values()):
-                        # offset the foreign keys of the line, except for those in existing target records
-                        for key, value in target_row.items():
-                            existing = existing_records.get(fields2update.get(table + '.' + key, 'x'), [])
-                            if (fields2update and (table + '.' + key) in fields2update
-                                    and target_row.get(key, '')):
-                                if value and int(value) not in [v['id'] for v in existing]:
-                                    last_id = self.mapping.last_id.get( fields2update[table + '.' + key], 0)
-                                    target_row[key] = int(target_row[key]) + last_id
-                                # if the foreign key points to an existing records, replace with the target id
-                                if value and int(value) in [v['id'] for v in existing]:
-                                    for i, nt in enumerate(existing):
-                                        if value in {nt[k] for k in nt.keys() if k != 'id'}:
-                                            target_row[key] = existing[i]['id']
-                                            break
 
-                        # offset the id of the line
-                        if (fields2update and 'id' in target_row and table in fields2update.itervalues()):
+                # offset everything and choose to write now or update later
+                for table, target_row in target_rows.items():
+                    if not any(target_row.values()):
+                        continue
+                    discriminators = self.mapping.discriminators.get(table)
+                    # if the line exists in the target db, we don't offset and write to update file
+                    # (we recognize by matching the set of discriminator values against existing)
+                    existing = existing_records[table]
+                    existing_without_id = ({v for k, v in nt.iteritems() if k != 'id'}
+                                           for nt in existing)
+                    discriminator_values = {target_row[d] for d in (discriminators or [])}
+                    if discriminators and discriminator_values in existing_without_id:
+                        # find the id of the existing record in the target
+                        for i, nt in enumerate(existing):
+                            if discriminator_values == {v for k, v in nt.items() if k != 'id'}:
+                                real_target_id = existing[i]['id']
+                        self.fk_mapping.setdefault(table, {})
+                        # we save the match between source and target for existing id
+                        # to be able to update the fks in the 2nd pass
+                        self.fk_mapping[table][target_row['id']] = real_target_id
+                        self.updatewriters[table].writerow(target_row)
+                    else:
+                        # offset the id of the line, except for m2m
+                        if (fields2update and 'id' in target_row
+                                and table in fields2update.itervalues()):
                             last_id = self.mapping.last_id.get(table, 0)
                             target_row['id'] = int(target_row['id']) + last_id
-                        # create a deferred update for existing data in the target
-                        discriminators = self.mapping.discriminators.get(table)
-                        if discriminators:
-                            values = {target_row[d] for d in discriminators}
-                            if values in [{nt[k] for k in nt.keys() if k != 'id'} for nt in existing_records[table]]:
-                                columns = ', '.join(target_row.keys())  # FIXME sauf id
-                                values = ', '.join(['%s' for i in target_row])
-                                args = tuple( (i if i != '' else None for i in target_row.values() + [target_row[k] for k in discriminators]))
-                                AND = 'AND '.join(
-                                    ['='.join((k, '%s')) for k in discriminators])
-                                update = ('UPDATE %s SET (%s)=(%s) WHERE %s' % (table, columns, values, AND), args)
-                                self.deferred_updates.append(update)
-                                continue
-                        # write the csv line
+                            # otherwise write the target csv line
                         self.writers[table].writerow(target_row)
+
+    def postprocess_one(self, target_filepath, existing_records=None, fields2update=None):
+        """ Postprocess one target csv file
+        """
+        table = basename(target_filepath).rsplit('.', 1)[0]
+        with open(target_filepath, 'rb') as target_csv:
+            reader = csv.DictReader(target_csv, delimiter=',')
+            for target_row in reader:
+                postprocessed_row = {}
+                # fix the foreign keys of the line
+                for key, value in target_row.items():
+                    postprocessed_row[key] = value
+                    fk_table = fields2update[table + '.' + key]
+                    # if this is a fk, fix it
+                    if (fields2update and value and (table + '.' + key) in fields2update):
+                        last_id = self.mapping.last_id.get(fk_table, 0)
+                        # if the target record is an existing record it should be in the fk_mapping
+                        # so we restore the real target id, or offset it if not found
+                        value = int(value)
+                        offset_id = value + last_id
+                        postprocessed_row[key] = self.fk_mapping[fk_table].get(value, offset_id)
+                self.writers[table].writerow(postprocessed_row)
+
+    def update_one(self, filepath, target_connection):
+        """ Apply updates in the target db with update file
+        """
+        table = basename(filepath).rsplit('.', 2)[0]
+        discriminators = self.mapping.discriminators.get(table)
+        # create a deferred update for existing data in the target
+        if not discriminators:
+            LOG.warn(u'Cannot update table %s, no discriminators found', table)
+            return
+        with open(filepath, 'rb') as update_csv, target_connection.cursor() as cursor:
+            reader = csv.DictReader(update_csv, delimiter=',')
+            for update_row in reader:
+                columns = ', '.join(update_row.keys())
+                values = ', '.join(['%s' for i in update_row])
+                args = [(i if i != '' else None)
+                        for i in update_row.values() + [update_row[k] for k in discriminators]]
+                cursor.execute('UPDATE %s SET (%s)=(%s) WHERE id=%s'
+                               % (table, columns, values, update_row['id']), tuple(args))
 
     def check_record(self, target_connection, table, target_row):
         """ Method to check if one record has an equivalent in the

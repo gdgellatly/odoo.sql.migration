@@ -48,7 +48,7 @@ def main():
 
     args = parser.parse_args()
     source_db, target_db, models = args.source, args.target, args.models
-    excluded_models = args.excluded_models + [
+    excluded_models = args.excluded_models or [] + [
         'ir.model'
     ]
     mapping_name = args.path
@@ -108,20 +108,21 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
     # FIXME refactor the process() arguments, there are too many of them
     processor.process(target_dir, filepaths, target_dir,
                       target_connection, existing_records, fields2update)
-    print(u'Postprocessing CSV files...')
-    processor.postprocess(target_dir, filepaths, target_dir,
-                          target_connection, existing_records, fields2update)
 
     # import data in the target
     print(u'Trying to import data in the target database...')
-    target_files = [join(target_dir, '%s.out.csv' % c) for c in target_tables]
+    target_files = [join(target_dir, '%s.target2.csv' % c) for c in target_tables]
     import_from_csv(target_files, target_connection)
 
     # execute deferred updates for preexisting data
     print(u'Updating pre-existing data...')
-    with target_connection.cursor() as cursor:
-        for update in processor.deferred_updates:
-            cursor.execute(update)
+    update_filenames = [
+        join(target_dir, table + '.update2.csv')
+        for table in target_tables
+    ]
+    for update_filename in update_filenames:
+        filepath = join(target_dir, update_filename)
+        processor.update_one(filepath, target_connection)
 
     # \o/
     print(u'Finished ! \o/')
