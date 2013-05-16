@@ -20,6 +20,7 @@ class CSVProcessor(object):
         self.target_columns = {}
         self.writers = {}
         self.updated_values = {}
+        self.deferred_updates = []
 
     def get_target_columns(self, filepaths):
         """ Compute target columns with source columns + mapping
@@ -111,23 +112,38 @@ class CSVProcessor(object):
                 # postprocess the target lines and write them to csv
                 for table, target_row in target_rows.items():
                     if any(target_row.values()):
-                        # offset the foreign keys of the line
+                        # offset the foreign keys of the line, except for those in existing target records
                         for key, value in target_row.items():
-                            if (fields2update
-                                    and table + '.' + key in fields2update
-                                    and target_row.get(key, False)):
-                                last_id = self.mapping.last_id.get(
-                                    fields2update[table + '.' + key], 0)
-                                target_row[key] = int(target_row[key]) + last_id
+                            existing = existing_records.get(fields2update.get(table + '.' + key, 'x'), [])
+                            if (fields2update and (table + '.' + key) in fields2update
+                                    and target_row.get(key, '')):
+                                if value and int(value) not in [v['id'] for v in existing]:
+                                    last_id = self.mapping.last_id.get( fields2update[table + '.' + key], 0)
+                                    target_row[key] = int(target_row[key]) + last_id
+                                # if the foreign key points to an existing records, replace with the target id
+                                if value and int(value) in [v['id'] for v in existing]:
+                                    for i, nt in enumerate(existing):
+                                        if value in {nt[k] for k in nt.keys() if k != 'id'}:
+                                            target_row[key] = existing[i]['id']
+                                            break
+
                         # offset the id of the line
-                        if (fields2update
-                                and 'id' in target_row
-                                and table in fields2update.itervalues()):
+                        if (fields2update and 'id' in target_row and table in fields2update.itervalues()):
                             last_id = self.mapping.last_id.get(table, 0)
                             target_row['id'] = int(target_row['id']) + last_id
-                        # update existing data in the target
-                        #raise NotImplementedError
-
+                        # create a deferred update for existing data in the target
+                        discriminators = self.mapping.discriminators.get(table)
+                        if discriminators:
+                            values = {target_row[d] for d in discriminators}
+                            if values in [{nt[k] for k in nt.keys() if k != 'id'} for nt in existing_records[table]]:
+                                columns = ', '.join(target_row.keys())  # FIXME sauf id
+                                values = ', '.join(['%s' for i in target_row])
+                                args = tuple( (i if i != '' else None for i in target_row.values() + [target_row[k] for k in discriminators]))
+                                AND = 'AND '.join(
+                                    ['='.join((k, '%s')) for k in discriminators])
+                                update = ('UPDATE %s SET (%s)=(%s) WHERE %s' % (table, columns, values, AND), args)
+                                self.deferred_updates.append(update)
+                                continue
                         # write the csv line
                         self.writers[table].writerow(target_row)
 

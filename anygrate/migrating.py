@@ -48,7 +48,9 @@ def main():
 
     args = parser.parse_args()
     source_db, target_db, models = args.source, args.target, args.models
-    excluded_models = args.excluded_models
+    excluded_models = args.excluded_models + [
+        'ir.model'
+    ]
     mapping_name = args.path
 
     print "Importing into target db is not yet supported. Use --keepcsv for now"
@@ -83,7 +85,7 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
 
     # compute the foreign keys to modify in the csv
     print('Computing the list of Foreign Keys to update in the exported csv files...')
-    fields2update = get_fk_to_update(target_connection, source_models)
+    fields2update = get_fk_to_update(source_connection, source_models)
 
     # construct the mapping and the csv processor
     # (TODO? autodetect mapping file with source and target db)
@@ -99,18 +101,27 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
                                      target_tables, target_connection)
 
     # extract the existing records from the target database
-    existing_records = extract_existing(source_tables, mapping.discriminators, target_connection)
+    existing_records = extract_existing(target_tables, mapping.discriminators, target_connection)
 
     # create migrated csv files from exported csv
     print(u'Migrating CSV files...')
     # FIXME refactor the process() arguments, there are too many of them
     processor.process(target_dir, filepaths, target_dir,
                       target_connection, existing_records, fields2update)
+    print(u'Postprocessing CSV files...')
+    processor.postprocess(target_dir, filepaths, target_dir,
+                          target_connection, existing_records, fields2update)
 
     # import data in the target
     print(u'Trying to import data in the target database...')
     target_files = [join(target_dir, '%s.out.csv' % c) for c in target_tables]
     import_from_csv(target_files, target_connection)
+
+    # execute deferred updates for preexisting data
+    print(u'Updating pre-existing data...')
+    with target_connection.cursor() as cursor:
+        for update in processor.deferred_updates:
+            cursor.execute(update)
 
     # \o/
     print(u'Finished ! \o/')

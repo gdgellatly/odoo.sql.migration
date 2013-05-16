@@ -13,7 +13,7 @@ def export_to_csv(source_tables, dest_dir, connection):
     for table in source_tables:
         filename = join(dest_dir, table + '.csv')
         with connection.cursor() as cursor, open(filename, 'w') as f:
-            cursor.copy_expert("COPY %s TO STDOUT WITH CSV HEADER" % table, f)
+            cursor.copy_expert("COPY %s TO STDOUT WITH CSV HEADER NULL ''" % table, f)
             csv_filenames.append(filename)
     return csv_filenames
 
@@ -27,14 +27,13 @@ def extract_existing(source_tables, discriminators, connection):
     This function is used to get the list of data to update in the target db
     """
     result = {}
-    key = 'id'
     for table in source_tables:
         result[table] = []
         with connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
             if table not in discriminators:
                 LOG.warn(u'No discriminator defined for table %s', table)
                 continue
-            columns = discriminators[table] + [key]
-            cursor.execute('select %s from %s order by %s' % (', '.join(columns), table, key))
+            columns = discriminators[table]
+            cursor.execute('select %s from %s' % (', '.join(columns + ['id']), table))
             result[table] = cursor.fetchall()
     return result

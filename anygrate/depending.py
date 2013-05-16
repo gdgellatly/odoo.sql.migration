@@ -124,12 +124,12 @@ def get_dependencies(username, pwd, dbname, models, excluded_models,
     return res
 
 
-def get_fk_to_update(target_connection, models):
+def get_fk_to_update(connection, models):
     """ Method to get back all columns referencing another table
     """
     fields2update = {}
     for model in models:
-        with target_connection.cursor() as c:
+        with connection.cursor() as c:
             if model not in fields2update:
                 if model == 'ir.actions':
                     model = 'ir.actions.actions'

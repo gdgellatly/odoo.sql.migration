@@ -12,6 +12,7 @@ def import_from_csv(filepaths, connection):
     # waiting for a pure sql implementation of get_dependencies
     remaining = len(filepaths)
     while remaining:
+        LOG.info(u'BRUTE FORCE LOOP')
         for filepath in filepaths:
             if not exists(filepath):
                 LOG.warn(u'Missing CSV for table %s', filepath.rsplit('.', 2)[0])
@@ -19,7 +20,7 @@ def import_from_csv(filepaths, connection):
             with connection.cursor() as cursor, open(filepath) as f:
                 columns = ','.join(csv.reader(f).next())
                 f.seek(0)
-                copy = ("COPY %s (%s) FROM STDOUT WITH CSV HEADER"
+                copy = ("COPY %s (%s) FROM STDOUT WITH CSV HEADER NULL ''"
                         % (basename(filepath).rsplit('.', 2)[0], columns))
                 try:
                     cursor.copy_expert(copy, f)
@@ -29,8 +30,10 @@ def import_from_csv(filepaths, connection):
                     connection.rollback()
                 else:
                     LOG.info('Succesfully imported %s' % basename(filepath))
-                    remaining.remove(filepath)
+                    filepaths.remove(filepath)
         if len(filepaths) == remaining:
             LOG.error('Could not import remaining files : %s :-('
                       % ', '.join([basename(f) for f in filepaths]))
             break
+        else:
+            remaining = len(filepaths)

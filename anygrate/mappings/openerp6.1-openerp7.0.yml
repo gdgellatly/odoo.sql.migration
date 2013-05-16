@@ -125,11 +125,16 @@ mail:
         res_partner.notification_email_send: return 'comment'
 
     res_users._:
-        res_users.alias_id:
-        mail_alias.id: return newid('mail_alias')
+        res_users.alias_id: return target_rows['res_users'].get('alias_id') or None
+        mail_alias.id: |
+            i = newid('mail_alias')
+            target_rows['res_users']['alias_id'] = i
+            return i
         mail_alias.alias_model_id: return sql("select id from ir_model where model='res.users'")[0][0]
         mail_alias.alias_name: return source_row['login']
         mail_alias.alias_defaults: return {}
+    mail_alias.__discriminator__:
+        - alias_name
 
 # Module account
 account:
