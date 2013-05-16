@@ -1,6 +1,5 @@
 import unittest
 from anygrate import depending
-import psycopg2
 
 
 class TestDepending(unittest.TestCase):
@@ -12,19 +11,23 @@ class TestDepending(unittest.TestCase):
 
     def test_get_dependencies(self):
         """ Method to verify that the dependency order is right """
-        target_db = 'test'
-        connection = psycopg2.connect("dbname=%s" % target_db)
 
-        res_country = depending.get_dependencies(connection, ('res_country',),
+        res_country = depending.get_dependencies('admin', 'admin', 'test',
+                                                 ('res.country',),
                                                  None, None)
-        res_account = depending.get_dependencies(connection, ('account_account',),
+        res_account = depending.get_dependencies('admin', 'admin',
+                                                 'test',
+                                                 ('account.account',),
                                                  None, None)
 
-        res_groups_ex = depending.get_dependencies(connection, ('res_groups',),
-                                                   ['ir_module_category'],
+        res_groups_ex = depending.get_dependencies('admin', 'admin',
+                                                   'test',
+                                                   ('res.groups',),
+                                                   ['ir.module.category'],
                                                    None)
 
-        res_groups = depending.get_dependencies(connection, ('res_groups',), None,
+        res_groups = depending.get_dependencies('admin', 'admin', 'test',
+                                                ('res.groups',), None,
                                                 None)
 
         self.assertEquals(res_country, ['res.country'])
