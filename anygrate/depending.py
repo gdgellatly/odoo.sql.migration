@@ -158,7 +158,7 @@ def get_fk_to_update(target_connection, tables):
     """
     fields2update = {}
     for table in tables:
-        with connection.cursor() as c:
+        with target_connection.cursor() as c:
             if table not in fields2update:
                 query = """
 SELECT tc.table_name, kcu.column_name
