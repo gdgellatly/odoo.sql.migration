@@ -53,8 +53,18 @@ if __name__ == '__main__':
     main()
 
 
+def encapsulation_get_dep(username, pwd, dbname, models, excluded_models,
+                          path=None, seen=None, related_tables=None):
+
+    res, related_tables = get_dependencies(username, pwd, dbname, models,
+                                           excluded_models)
+    for tbl in related_tables:
+        res.append(tbl)
+    return res
+
+
 def get_dependencies(username, pwd, dbname, models, excluded_models,
-                     path=None, seen=None):
+                     path=None, seen=None, related_tables=None):
     """ Given a list of OpenERP models, return the full list of dependant models,
     ordered by dependencies. Warning are displayed if there are dependency loops
     Set excluded_models to None if there is no model to exclude.
@@ -72,10 +82,11 @@ def get_dependencies(username, pwd, dbname, models, excluded_models,
         for excl_model in excluded_models:
             seen.add(excl_model)
         excluded_models = None
-    m2o = set()
-    m2m = set()
-    related_tables = set()
+    if related_tables is None:
+        related_tables = set()
     for model in models:
+        m2o = set()
+        m2m = set()
         seen.add(model)
         fields = sock.execute(dbname, uid, pwd, model, 'fields_get')
         for field in fields:
@@ -101,27 +112,26 @@ def get_dependencies(username, pwd, dbname, models, excluded_models,
                     m2m.add(m)
                     seen.add(m)
                 if third_table not in seen:
-                    related_tables.add(third_table)
                     seen.add(third_table)
+                if third_table not in related_tables:
+                    related_tables.add(third_table)
         for m in m2m:
-            res += get_dependencies(username, pwd, dbname, (m,),
+            result, related_tables = get_dependencies(username, pwd, dbname, (m,),
                                     path=path+(model,),
                                     excluded_models=excluded_models,
-                                    seen=seen)
+                                    seen=seen, related_tables=related_tables)
+            res += result
         for m in m2o:
-            res += get_dependencies(username, pwd, dbname, (m,),
+            result, related_tables = get_dependencies(username, pwd, dbname, (m,),
                                     path=path+(model,),
                                     excluded_models=excluded_models,
-                                    seen=seen)
-    if model == 'ir.actions.actions':
-        model = 'ir.actions'
-    res.append(model)
-    if related_tables:
-        for table in related_tables:
-            #table = table.replace('_', '.')
-            res.append(table)
-
-    return res
+                                    seen=seen, related_tables=related_tables)
+            res += result
+        if model == 'ir.actions.actions':
+            model = 'ir.actions'
+        if model not in res:
+            res.append(model)
+    return res, related_tables
 
 
 def get_fk_to_update(connection, models):
