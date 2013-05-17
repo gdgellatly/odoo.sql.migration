@@ -80,12 +80,8 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
 
     # we turn the list of wanted models into the full list of required models
     print(u'Computing the real list of models to export...')
-    res = encapsulation_get_dep('admin', 'admin',
-                     source_db, source_models, excluded_models)
-    from pprint import pprint
-    pprint(res)
-    source_models = set(get_dependencies('admin', 'admin',
-                                         source_db, source_models, excluded_models))
+    source_models = set(encapsulation_get_dep('admin', 'admin',
+                        source_db, source_models, excluded_models)
     print(u'The real list of models to export is: %s' % ', '.join(source_models))
 
     # compute the foreign keys to modify in the csv
