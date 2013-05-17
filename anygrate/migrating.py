@@ -65,7 +65,7 @@ def main():
         shutil.rmtree(tempdir)
 
 
-def migrate(source_db, target_db, source_models, mapping_name, excluded_models=None,
+def migrate(source_db, target_db, source_tables, mapping_name, excluded_tables=None,
             target_dir=None):
     """ The main migration function
     """
@@ -79,13 +79,12 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
 
     # we turn the list of wanted models into the full list of required models
     print(u'Computing the real list of models to export...')
-    source_models = set(get_dependencies('admin', 'admin',
-                                         source_db, source_models, excluded_models))
-    print(u'The real list of models to export is: %s' % ', '.join(source_models))
+    ordered_tables = get_dependencies(target_connection, source_tables, excluded_tables)
+    print(u'The real list of models to export is: %s' % ', '.join(ordered_tables))
 
     # compute the foreign keys to modify in the csv
     print('Computing the list of Foreign Keys to update in the exported csv files...')
-    fields2update = get_fk_to_update(source_connection, source_models)
+    fields2update = get_fk_to_update(target_connection, ordered_tables)
 
     # construct the mapping and the csv processor
     # (TODO? autodetect mapping file with source and target db)

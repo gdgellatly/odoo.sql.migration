@@ -53,7 +53,7 @@ if __name__ == '__main__':
     main()
 
 
-def get_dependencies(username, pwd, dbname, models, excluded_models,
+def get_dependencies(target_connection, tables, excluded_tables,
                      path=None, seen=None):
     """ Given a list of OpenERP models, return the full list of dependant models,
     ordered by dependencies. Warning are displayed if there are dependency loops
@@ -61,79 +61,105 @@ def get_dependencies(username, pwd, dbname, models, excluded_models,
     If you want to exclude some models, use the following syntax :
     excluded_models = ['res.currency', 'res.country']
     """
-    # XML-RPC
-    sock, uid = get_socket(username, pwd, dbname, 8069)
     res = []
     if seen is None:
         seen = set()
     if path is None:
         path = ()
-    if excluded_models is not None:
-        for excl_model in excluded_models:
-            seen.add(excl_model)
-        excluded_models = None
+    if excluded_tables is not None:
+        for excl_table in excluded_tables:
+            seen.add(excl_table)
+        excluded_tables = None
     m2o = set()
     m2m = set()
+    potentials_m2m = set()
     related_tables = set()
-    for model in models:
-        seen.add(model)
-        fields = sock.execute(dbname, uid, pwd, model, 'fields_get')
-        for field in fields:
-            if fields[field]['type'] == 'many2one':
-                m = fields[field]['relation']
-                # Cas des structures arborescentes (reflexives)
-                if m in path:
-                    LOG.warn('Dependency LOOP: '
-                             '%s has a m2o %r to %s which is one of its ancestors (path=%r)',
-                             model, field, m, path)
-                if m not in seen:
-                    m2o.add(m)
-                    seen.add(m)
-            if fields[field]['type'] == 'many2many' and 'related_columns' in fields[field]:
-                m = fields[field]['relation']
-                third_table = fields[field]['third_table']
-                # Cas des structures arborescentes (reflexives)
-                if m in path:
-                    LOG.warn('Dependency LOOP: '
-                             '%s has a m2m %r to %s which is one of its ancestors (path=%r)',
-                             model, field, m, path)
-                if m not in seen:
-                    m2m.add(m)
-                    seen.add(m)
-                if third_table not in seen:
-                    related_tables.add(third_table)
-                    seen.add(third_table)
-        for m in m2m:
-            res += get_dependencies(username, pwd, dbname, (m,),
-                                    path=path+(model,),
-                                    excluded_models=excluded_models,
+    for table in tables:
+        with target_connection.cursor() as c:
+            seen.add(table)
+            query_fk = """
+SELECT pg_cl_2.relname as related_table
+FROM pg_class pg_cl_1, pg_class pg_cl_2, pg_constraint, pg_attribute pg_attr_1,
+pg_attribute pg_attr_2 WHERE pg_cl_1.relname = '%s'
+and pg_constraint.conrelid = pg_cl_1.oid
+AND pg_cl_2.relkind = 'r' AND pg_cl_2.oid = pg_constraint.confrelid
+AND pg_attr_1.attnum = pg_constraint.confkey[1]
+AND pg_attr_1.attrelid = pg_cl_2.oid
+AND pg_attr_2.attnum = pg_constraint.conkey[1]
+AND pg_attr_2.attrelid = pg_cl_1.oid;
+""" % table
+            query_third_tables = """
+SELECT DISTINCT ir_model_relation.name FROM ir_model, ir_model_relation
+WHERE ir_model.model = '%s' AND ir_model.id = ir_model_relation.model;
+""" % table.replace('_', '.')
+
+            c.execute(query_third_tables)
+            third_tables = c.fetchall()
+
+            for third_table in third_tables:
+                query_m2m = """
+SELECT model FROM ir_model WHERE id IN
+(SELECT ir_model_relation.model FROM ir_model_relation, ir_model
+WHERE ir_model_relation.name = '%s'
+AND ir_model_relation.model NOT IN
+( SELECT id FROM ir_model WHERE model = '%s'));
+""" % (third_table[0], table)
+                c.execute(query_m2m)
+                potentials_m2m.add(c.fetchone()[0].replace('.', '_'))
+
+            c.execute(query_fk)
+            results_fk = c.fetchall()
+            if results_fk:
+                for fk in results_fk:
+                    # Cas des structures arborescentes (reflexives)
+                    tbl = fk[0]
+                    if tbl in path:
+                        LOG.warn('Dependency LOOP: '
+                                 '%s has a m2o to %s which is one of its ancestors (path=%r)',
+                                 table, tbl, path)
+                    if tbl not in seen:
+                        m2o.add(tbl)
+                        seen.add(tbl)
+            if third_tables:
+                for third_table in third_tables:
+                    tbl = third_table[0]
+                    if tbl not in seen:
+                        related_tables.add(tbl)
+                        seen.add(tbl)
+            if potentials_m2m:
+                for tbl in potentials_m2m:
+                    if tbl in path:
+                        LOG.warn('Dependency LOOP: '
+                                 '%s has a m2m to %s which is one of its ancestors (path=%r)',
+                                 table, tbl, path)
+                    if tbl not in seen:
+                        m2m.add(tbl)
+        for t in m2m:
+            res += get_dependencies(target_connection, (t,),
+                                    path=path+(table,),
+                                    excluded_tables=excluded_tables,
                                     seen=seen)
-        for m in m2o:
-            res += get_dependencies(username, pwd, dbname, (m,),
-                                    path=path+(model,),
-                                    excluded_models=excluded_models,
+        for t in m2o:
+            res += get_dependencies(target_connection, (t,),
+                                    path=path+(table,),
+                                    excluded_tables=excluded_tables,
                                     seen=seen)
-    if model == 'ir.actions.actions':
-        model = 'ir.actions'
-    res.append(model)
+    #if model == 'ir.actions.actions':
+    #    model = 'ir.actions'
+    res.append(table)
     if related_tables:
         for table in related_tables:
-            #table = table.replace('_', '.')
             res.append(table)
-
     return res
 
 
-def get_fk_to_update(connection, models):
+def get_fk_to_update(target_connection, tables):
     """ Method to get back all columns referencing another table
     """
     fields2update = {}
-    for model in models:
-        with connection.cursor() as c:
-            if model not in fields2update:
-                if model == 'ir.actions':
-                    model = 'ir.actions.actions'
-                model = model.replace('.', '_')
+    for table in tables:
+        with target_connection.cursor() as c:
+            if table not in fields2update:
                 query = """
 SELECT tc.table_name, kcu.column_name
 FROM information_schema.table_constraints AS tc JOIN
@@ -142,18 +168,19 @@ tc.constraint_name = kcu.constraint_name JOIN
 information_schema.constraint_column_usage AS
 ccu ON ccu.constraint_name = tc.constraint_name
 WHERE constraint_type = 'FOREIGN KEY' AND
-ccu.table_name='%s';""" % model
+ccu.table_name='%s';""" % table
                 c.execute(query)
                 results = c.fetchall()
-                fields2update[model] = results
+                fields2update[table] = results
     # transpose the result to obtain:
     # {'table.fkname': 'pointed_table', ...}
     # so that processing each input line is easier
-    result = {}
-    for pointed_table, fknames in fields2update.iteritems():
-        for fkname in fknames:
-            result['.'.join(fkname)] = pointed_table
-    return result
+    #result = {}
+    #for pointed_table, fknames in fields2update.iteritems():
+    #    for fkname in fknames:
+    #        result['.'.join(fkname)] = pointed_table
+    #return result
+    return fields2update
 
 
 def get_mapping_migration(username_from, username_to, pwd_from, pwd_to,
