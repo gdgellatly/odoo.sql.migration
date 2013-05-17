@@ -91,13 +91,16 @@ def get_sql_dependencies(target_connection, tables, excluded_tables,
         for excl_table in excluded_tables:
             seen.add(excl_table)
         excluded_tables = None
-    m2o = set()
-    m2m = set()
+    third_tables = set()
     potentials_m2m = set()
     related_tables = set()
     for table in tables:
         with target_connection.cursor() as c:
+            m2o = set()
+            m2m = set()
             seen.add(table)
+            # Requete permettant de recuperer les tables referencees
+            # par les cle etrangeres de la table passee en entree
             query_fk = """
   SELECT pg_cl_2.relname as related_table
   FROM pg_class pg_cl_1, pg_class pg_cl_2, pg_constraint,
@@ -111,8 +114,12 @@ def get_sql_dependencies(target_connection, tables, excluded_tables,
   AND pg_attr_2.attrelid = pg_cl_1.oid;
   """ % table
 
-            query_ref = """
-  SELECT tc.table_name, kcu.column_name
+            c.execute(query_fk)
+            results_fk = c.fetchall()
+            # Requete permettant de recuperer toutes les tables referencant
+            # la table passee en entree
+            query_table_ref = """
+  SELECT tc.table_name
   FROM information_schema.table_constraints AS tc JOIN
   information_schema.key_column_usage AS kcu ON
   tc.constraint_name = kcu.constraint_name JOIN
@@ -120,30 +127,8 @@ def get_sql_dependencies(target_connection, tables, excluded_tables,
   ccu ON ccu.constraint_name = tc.constraint_name
   WHERE constraint_type = 'FOREIGN KEY' AND
   ccu.table_name='%s';""" % table
-            c.execute(query_ref)
-            ref = c.fetchall()
-
-            query_third_tables = """
-  SELECT DISTINCT ir_model_relation.name FROM ir_model, ir_model_relation
-  WHERE ir_model.model = '%s' AND ir_model.id = ir_model_relation.model;
-  """ % table.replace('_', '.')
-
-            c.execute(query_third_tables)
-            third_tables = c.fetchall()
-
-            for third_table in third_tables:
-                query_m2m = """
-  SELECT model FROM ir_model WHERE id IN
-  (SELECT ir_model_relation.model FROM ir_model_relation, ir_model
-  WHERE ir_model_relation.name = '%s'
-  AND ir_model_relation.model NOT IN
-  ( SELECT id FROM ir_model WHERE model = '%s'));
-  """ % (third_table[0], table)
-                c.execute(query_m2m)
-                potentials_m2m.add(c.fetchone()[0].replace('.', '_'))
-
-            c.execute(query_fk)
-            results_fk = c.fetchall()
+            c.execute(query_table_ref)
+            results_ref = c.fetchall()
             if results_fk:
                 for fk in results_fk:
                     # Cas des structures arborescentes (reflexives)
@@ -155,12 +140,28 @@ def get_sql_dependencies(target_connection, tables, excluded_tables,
                     if tbl not in seen:
                         m2o.add(tbl)
                         seen.add(tbl)
-            if third_tables:
-                for third_table in third_tables:
-                    tbl = third_table[0]
-                    if tbl not in seen:
-                        related_tables.add(tbl)
-                        seen.add(tbl)
+            # Premier ecremage, on vire les doublons
+            # On considere qu'il ya des tables de jointures ici
+            # NOT REALLY EFFICIENT
+            diff_tables = set(results_ref).difference(set(results_fk))
+            if diff_tables:
+                for t in diff_tables:
+                    # Requete permettant de trouver les tables referencees
+                    # dans une table de jointure donnee
+                    query_third_tables = """
+SELECT information_schema.constraint_table_usage.table_name
+FROM information_schema.table_constraints, information_schema.constraint_table_usage
+WHERE information_schema.table_constraints.table_name = '%s'
+AND information_schema.constraint_table_usage.constraint_name = information_schema.table_constraints.constraint_name;""" % t
+                    c.execute(query_third_tables)
+                    third_tables = c.fetchall()
+                    if third_tables:
+                        for third_table in third_tables:
+                            tbl = third_table[0]
+                            if tbl not in seen:
+                                seen.add(tbl)
+                            if tbl not in related_tables:
+                                related_tables.add(tbl)
             if potentials_m2m:
                 for tbl in potentials_m2m:
                     if tbl in path:
@@ -170,23 +171,21 @@ def get_sql_dependencies(target_connection, tables, excluded_tables,
                     if tbl not in seen:
                         m2m.add(tbl)
         for t in m2m:
-            results, related_tables = get_dependencies(target_connection, (t,),
+            results, related_tables = get_sql_dependencies(target_connection, (t,),
                                     path=path+(table,),
                                     excluded_tables=excluded_tables,
-                                    seen=seen)
+                                    seen=seen, related_tables=related_tables)
             res += results
         for t in m2o:
-            results, related_tables = get_dependencies(target_connection, (t,),
+            results, related_tables = get_sql_dependencies(target_connection, (t,),
                                     path=path+(table,),
                                     excluded_tables=excluded_tables,
-                                    seen=seen)
+                                    seen=seen, related_tables=related_tables)
             res += results
         #if model == 'ir.actions.actions':
         #    model = 'ir.actions'
-        res.append(table)
-        if related_tables:
-            for table in related_tables:
-                res.append(table)
+        if table not in res:
+            res.append(table)
     return res, related_tables
 
 
