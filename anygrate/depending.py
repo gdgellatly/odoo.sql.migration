@@ -152,7 +152,8 @@ def get_sql_dependencies(target_connection, tables, excluded_tables,
 SELECT information_schema.constraint_table_usage.table_name
 FROM information_schema.table_constraints, information_schema.constraint_table_usage
 WHERE information_schema.table_constraints.table_name = '%s'
-AND information_schema.constraint_table_usage.constraint_name = information_schema.table_constraints.constraint_name;""" % t
+AND information_schema.constraint_table_usage.constraint_name \
+= information_schema.table_constraints.constraint_name;""" % t
                     c.execute(query_third_tables)
                     third_tables = c.fetchall()
                     if third_tables:
@@ -171,16 +172,18 @@ AND information_schema.constraint_table_usage.constraint_name = information_sche
                     if tbl not in seen:
                         m2m.add(tbl)
         for t in m2m:
-            results, related_tables = get_sql_dependencies(target_connection, (t,),
-                                    path=path+(table,),
-                                    excluded_tables=excluded_tables,
-                                    seen=seen, related_tables=related_tables)
+            results, related_tables = get_sql_dependencies(
+                target_connection, (t,),
+                path=path+(table,),
+                excluded_tables=excluded_tables,
+                seen=seen, related_tables=related_tables)
             res += results
         for t in m2o:
-            results, related_tables = get_sql_dependencies(target_connection, (t,),
-                                    path=path+(table,),
-                                    excluded_tables=excluded_tables,
-                                    seen=seen, related_tables=related_tables)
+            results, related_tables = get_sql_dependencies(
+                target_connection, (t,),
+                path=path+(table,),
+                excluded_tables=excluded_tables,
+                seen=seen, related_tables=related_tables)
             res += results
         #if model == 'ir.actions.actions':
         #    model = 'ir.actions'
@@ -242,16 +245,18 @@ def get_dependencies(username, pwd, dbname, models, excluded_models,
                 if third_table not in related_tables:
                     related_tables.add(third_table)
         for m in m2m:
-            result, related_tables = get_dependencies(username, pwd, dbname, (m,),
-                                    path=path+(model,),
-                                    excluded_models=excluded_models,
-                                    seen=seen, related_tables=related_tables)
+            result, related_tables = get_dependencies(
+                username, pwd, dbname, (m,),
+                path=path+(model,),
+                excluded_models=excluded_models,
+                seen=seen, related_tables=related_tables)
             res += result
         for m in m2o:
-            result, related_tables = get_dependencies(username, pwd, dbname, (m,),
-                                    path=path+(model,),
-                                    excluded_models=excluded_models,
-                                    seen=seen, related_tables=related_tables)
+            result, related_tables = get_dependencies(
+                username, pwd, dbname, (m,),
+                path=path+(model,),
+                excluded_models=excluded_models,
+                seen=seen, related_tables=related_tables)
             res += result
         if model == 'ir.actions.actions':
             model = 'ir.actions'

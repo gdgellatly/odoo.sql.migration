@@ -183,8 +183,6 @@ account:
     account_account_type.*:
     account_account_type.__discriminator__:
         - name
-    account_account_type.name:
-        account_account_type.report_type: return "receivable"
 
     account_journal_view.*:
     account_journal_view.view_id: False
