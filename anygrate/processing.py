@@ -240,3 +240,4 @@ class CSVProcessor(object):
                         ] + [update_row['id']]
                 cursor.execute('UPDATE %s SET (%s)=(%s) WHERE id=%s'
                                % (table, columns, values, '%s'), tuple(args))
+            LOG.info(u'Successfully updated table %s', table)

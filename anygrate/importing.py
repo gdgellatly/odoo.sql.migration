@@ -1,4 +1,5 @@
 from os.path import basename, exists
+from os import rename
 import csv
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -31,9 +32,13 @@ def import_from_csv(filepaths, connection):
                 else:
                     LOG.info('Succesfully imported %s' % basename(filepath))
                     filepaths.remove(filepath)
-        if len(filepaths) == remaining:
+        if len(filepaths) != remaining:
+            remaining = len(filepaths)
+        else:
             LOG.error('Could not import remaining files : %s :-('
                       % ', '.join([basename(f) for f in filepaths]))
+            # don't permit update for non imported files
+            for update_file in [filename.replace('.target2.csv', '.update2.csv')
+                                for filename in filepaths]:
+                rename(update_file, update_file + '.disabled')
             break
-        else:
-            remaining = len(filepaths)
