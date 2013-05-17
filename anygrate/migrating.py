@@ -7,8 +7,7 @@ from .exporting import export_to_csv, extract_existing
 from .importing import import_from_csv
 from .mapping import Mapping
 from .processing import CSVProcessor
-from .depending import add_related_tables_to_models_dependencies
-from .depending import add_related_tables_to_tables_dependencies
+from .depending import encapsulation_get_dep
 from .depending import get_fk_to_update
 import logging
 from os.path import basename, join, abspath, dirname, exists
@@ -80,8 +79,8 @@ def migrate(source_db, target_db, source_models, mapping_name,
 
     # we turn the list of wanted models into the full list of required models
     print(u'Computing the real list of models to export...')
-    source_models = set(add_related_tables_to_models_dependencies('admin', 'admin',
-                                                   'test', source_models, excluded_models))
+    source_models = encapsulation_get_dep('admin', 'admin',
+                                          source_db, source_models, excluded_models)
     print(u'The real list of models to export is: %s' % ', '.join(source_models))
 
     # compute the foreign keys to modify in the csv

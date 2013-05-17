@@ -11,7 +11,11 @@ base:
     res_country.__discriminator__:
         - code
     res_country_state.*:
+    res_country_state.__discriminator__:
+        - code
     res_currency.*:
+    res_currency.__discriminator__:
+        - name
 
     # Users
     res_users.*:
@@ -91,8 +95,10 @@ base:
     res_company.rml_footer1:
         res_company.rml_footer:
 
-    res.bank.*:
-    res.partner.category.*:
+    res_bank.*:
+    res_partner_category.*:
+    res_partner_category.__discriminator__:
+        - name
 
     # Tables de jointures
     res_groups_users_rel.*:
@@ -127,9 +133,15 @@ mail:
 account:
     account_account.*:
     account_tax_code.*:
+    account_tax_code.__discriminator__:
+        - code
     account_period.*:
     account_fiscalyear.*:
+    account_financial_report.*:
+    account_account_financial_report.*:
     account_fiscal_position.*:
+    account_fiscal_position.__discriminator__:
+        - name
     account_account.__discriminator__:
         - name
     account_bank_statement.*:
@@ -161,12 +173,16 @@ account:
     account_move_reconcile.*:
 
     account_tax.*:
+    account_tax.__discriminator__:
+        - name
 
     res_company._:
         res_company.expects_chart_of_accounts: return True # car on suppose que le plan comptable est déjà installé
         res_company.tax_calculation_rounding_method: return 'round_per_line'
 
     account_account_type.*:
+    account_account_type.__discriminator__:
+        - name
     account_account_type.name:
         account_account_type.report_type: return "receivable"
 
@@ -185,6 +201,8 @@ account:
         - ref
         - date
     account_payment_term.*:
+    account_payment_term.__discriminator__:
+        - name
     account_journal_period.*:
 
 
@@ -307,13 +325,18 @@ analytic_user_function:
 sale:
     sale.*:
     sale_order.*:
+    sale_order_line.*:
     sale_order_line.notes: False
 
 stock:
     stock.*:
     stock_location.*:
+    stock_location.__discriminator__:
+        - name
     stock_warehouse.*:
     stock_journal.*:
+    stock_journal.__discriminator__:
+        - name
 
 # module point_of_sale
 point_of_sale:
@@ -339,6 +362,8 @@ product:
     product_uom_categ.*:
     product_category.*:
     product_pricelist.*:
+    product_pricelist.__discriminator__:
+        - name
     product_supplierinfo.*:
     product_product.id:
         product_product.id:
