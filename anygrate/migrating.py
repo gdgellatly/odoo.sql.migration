@@ -11,7 +11,7 @@ from .depending import encapsulation_get_dep
 from .depending import get_dependencies
 from .depending import get_fk_to_update
 import logging
-from os.path import basename, join, abspath, dirname
+from os.path import basename, join, abspath, dirname, exists
 
 HERE = dirname(__file__)
 logging.basicConfig(level=logging.DEBUG)
@@ -86,7 +86,7 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
 
     # compute the foreign keys to modify in the csv
     print('Computing the list of Foreign Keys to update in the exported csv files...')
-    fields2update = get_fk_to_update(source_connection, source_models)
+    fields2update = get_fk_to_update(target_connection, source_models)
 
     # construct the mapping and the csv processor
     # (TODO? autodetect mapping file with source and target db)
@@ -117,12 +117,11 @@ def migrate(source_db, target_db, source_models, mapping_name, excluded_models=N
 
     # execute deferred updates for preexisting data
     print(u'Updating pre-existing data...')
-    update_filenames = [
-        join(target_dir, table + '.update2.csv')
-        for table in target_tables
-    ]
-    for update_filename in update_filenames:
-        filepath = join(target_dir, update_filename)
+    for table in target_tables:
+        filepath = join(target_dir, table + '.update2.csv')
+        if not exists(filepath):
+            LOG.warn(u'Not updating %s as it was not imported', table)
+            continue
         processor.update_one(filepath, target_connection)
 
     # \o/
