@@ -1,4 +1,5 @@
 base:
+    ir_sequence.*:
     res_groups.*:
     res_groups.__discriminator__:
         - name
@@ -9,6 +10,8 @@ base:
     res_country.*:
     res_country.__discriminator__:
         - code
+    res_country_state.*:
+    res_currency.*:
 
     # Users
     res_users.*:
@@ -52,8 +55,6 @@ base:
         - name
     res_partner.allow_refund: False
     res_partner.producer: False
-    res_partner_address.email:
-        res_partner.email:
     res_users.context_tz:
         res_partner.tz:
     res_partner._:
@@ -63,6 +64,8 @@ base:
     res_partner_address.id:
         res_partner.id: return newid('res_partner')
         res_partner.notification_email_send: return 'comment'
+    res_partner_address.*:
+        res_partner.*:
     res_partner_address.contact_id: False
     res_partner_address.x_openupgrade_job_id: False
     res_partner_address.location_id: False
@@ -73,26 +76,12 @@ base:
         res_partner.section_id: return ' ' 
         res_partner.is_company: return False
         res_partner.use_parent_address: return True # make a function which finds the value in the target database
-    res_partner_address.fax:
-        res_partner.fax:
-    res_partner_address.function:
-        res_partner.function:
-    res_partner_address.mobile:
-        res_partner.mobile:
-    res_partner_address.phone:
-        res_partner.phone:
-    res_partner_address.street:
-        res_partner.street:
-    res_partner_address.street2:
-        res_partner.street2:
-    res_partner_address.type:
-        res_partner.type:
-    res_partner_address.zip:
-        res_partner.zip:
     res_partner_address.name:
         res_partner.name: return source_row['name'] or source_row['street'] or source_row['city'] or 'noname'
     res_partner_address.partner_id:
         res_partner.parent_id:
+
+    res_partner_bank.*:
 
     res_company.__discriminator__:
         - name
@@ -102,8 +91,8 @@ base:
     res_company.rml_footer1:
         res_company.rml_footer:
 
-    # Menu
-    ir_ui_menu.*:
+    res.bank.*:
+    res.partner.category.*:
 
     # Tables de jointures
     res_groups_users_rel.*:
@@ -112,7 +101,6 @@ base:
     res_groups_implied_rel.*:
 
 
-# Module mail
 mail:
     mail.*:
         
@@ -136,9 +124,12 @@ mail:
     mail_alias.__discriminator__:
         - alias_name
 
-# Module account
 account:
     account_account.*:
+    account_tax_code.*:
+    account_period.*:
+    account_fiscalyear.*:
+    account_fiscal_position.*:
     account_account.__discriminator__:
         - name
     account_bank_statement.*:
@@ -149,10 +140,6 @@ account:
     account_invoice.*:
     account_invoice.address_contact_id: False
     account_invoice.address_invoice_id: False
-    account_invoice.id:
-        account_invoice.id:
-        account_invoice.send: #new:true or false
-        account_invoice.supplier_invoice_number: #new
 
     account_invoice_line.*:
     account_invoice_line.name:
@@ -197,14 +184,14 @@ account:
         - name
         - ref
         - date
+    account_payment_term.*:
+    account_journal_period.*:
 
 
-# Module account_accountant
 account_accountant:
     account_accountant.*:
 
 
-# Module account_analytic_analysis
 account_analytic_analysis:
     account_analytic_analysis.*:
     account_analytic_account.*:
@@ -215,22 +202,20 @@ account_analytic_analysis:
         account_analytic_account.invoice_on_timesheets:    #new: boolean
 
 
-# Module account_analytic_default
 account_analytic_default:
     account_analytic_default.*:
 
 
-# Module account_analytic_plans
 account_analytic_plans:
     account_analytic_plans.*:
 
 
-# Module account_anglo_saxon
 account_anglo_saxon:
     account_anglo_saxon.*:
 
+project:
+    account_analytic_journal.*:
 
-# Module account_asset
 account_asset:
     account_asset.*:
     account_asset_depreciation_line.*:
@@ -238,7 +223,6 @@ account_asset:
         account_asset_depreciation_line.depreciation_date: #change type char to date
 
 
-# Module account_bank_statement_extensions
 account_bank_statement_extensions:
     account_bank_statement_extensions.*:
     account_bank_statement_line.*:
@@ -246,27 +230,22 @@ account_bank_statement_extensions:
         account.account_bank_statement_extensions:
 
 
-# Module account_budget
 account_budget:
     account_budget.*:
 
 
-# Module account_cancel
 account_cancel:
     account_cancel.*:
 
 
-# Module account_chart
 account_chart:
     account_chart.*:
 
 
-# Module account_check_writing
 account_check_writing:
     account_check_writing.*:
 
 
-# Module account_followup
 account_followup:
     account_followup.*:
     account_followup_followup.*:
@@ -285,27 +264,22 @@ account_followup:
             target_rows['account_followup_followup_line']['description'] = source_row['follow_up_msg']
             return line_id
 
-# Module account_payment
 account_payment:
     account_payment.*:
 
 
-# Module account_sequence
 account_sequence:
     account_sequence.*:
 
 
-# Module account_test
 account_test:
     account_test.*:
 
 
-# Module account_voucher
 account_voucher:
     account_voucher.*:
 
 
-# Module analytic
 analytic:
     analytic.*:
     account_analytic_account.*:
@@ -315,7 +289,6 @@ analytic:
         account_analytic_account.type: return 'normal' #now required, default = normal
 
 
-# Module analytic_contract_hr_expense
 analytic_contract_hr_expense:
     analytic_contract_hr_expense.*:
     account_analytic_account.id:
@@ -324,7 +297,6 @@ analytic_contract_hr_expense:
         account_analytic_account.est_expenses:    # new, float
 
 
-# Module analytic_user_function
 analytic_user_function:
     analytic_user_function.*:
     analytic_user_funct_grid.id:
@@ -332,19 +304,21 @@ analytic_user_function:
         analytic_user_funct_grid.price:     #NEW required: required (float)
 
 
-# Module sale
 sale:
     sale.*:
     sale_order.*:
     sale_order_line.notes: False
 
-# Module stock
 stock:
     stock.*:
+    stock_location.*:
+    stock_warehouse.*:
+    stock_journal.*:
 
 # module point_of_sale
 point_of_sale:
-    point_of_sale.*:
+    pos_order.*:
+    pos_category.*:
     account_bank_statement.pos_session_id:
         account_bank_statement.pos_session_id:
 
@@ -361,6 +335,11 @@ point_of_sale:
 product:
     product_product.*:
     product_template.*:
+    product_uom.*:
+    product_uom_categ.*:
+    product_category.*:
+    product_pricelist.*:
+    product_supplierinfo.*:
     product_product.id:
         product_product.id:
         product_product.image:  #new, binary
