@@ -53,11 +53,10 @@ if __name__ == '__main__':
     main()
 
 
-def add_related_tables_to_tables_dependencies(target_connection, initial_tables,
-                                              tables,
+def add_related_tables_to_tables_dependencies(target_connection, tables,
                                               excluded_tables, path=None,
                                               seen=None, related_tables=None):
-    res, related_tables = get_sql_dependencies(target_connection, initial_tables,
+    res, related_tables = get_sql_dependencies(target_connection, tables,
                                                tables, excluded_tables)
     for tbl in related_tables:
         res.append(tbl)
@@ -129,6 +128,7 @@ def get_sql_dependencies(target_connection, tables, real_tables, excluded_tables
   ccu ON ccu.constraint_name = tc.constraint_name
   WHERE constraint_type = 'FOREIGN KEY' AND
   ccu.table_name='%s';""" % table
+	    # On n'execute la requete cherche que les references pour les vraies tables
 	    if table in real_tables:
             	c.execute(query_table_ref)
             	results_ref = c.fetchall()
@@ -174,7 +174,7 @@ WHERE TABLE_NAME = '%s';""" % tbl
                                  	     table, tbl, path)
                     	        if tbl not in m2m:
                                     m2m.add(tbl)
-        for t in m2m:
+	for t in m2m:
             results, related_tables = get_sql_dependencies(target_connection, (t,),
                                     real_tables, path=path+(table,),
                                     excluded_tables=excluded_tables,
