@@ -188,7 +188,7 @@ WHERE TABLE_NAME = '%s';""" % tbl
             res += results
         #if model == 'ir.actions.actions':
         #    model = 'ir.actions'
-        if table not in res:
+        if table not in res and table not in related_tables:
             res.append(table)
     return res, related_tables
 
