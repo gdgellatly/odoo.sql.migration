@@ -53,10 +53,11 @@ if __name__ == '__main__':
     main()
 
 
-def add_related_tables_to_tables_dependencies(target_connection, tables,
+def add_related_tables_to_tables_dependencies(target_connection, initial_tables,
+                                              tables,
                                               excluded_tables, path=None,
                                               seen=None, related_tables=None):
-    res, related_tables = get_sql_dependencies(target_connection,
+    res, related_tables = get_sql_dependencies(target_connection, initial_tables,
                                                tables, excluded_tables)
     for tbl in related_tables:
         res.append(tbl)
@@ -74,7 +75,7 @@ def add_related_tables_to_models_dependencies(username, pwd, dbname, models,
     return res
 
 
-def get_sql_dependencies(target_connection, tables, excluded_tables,
+def get_sql_dependencies(target_connection, tables, real_tables, excluded_tables,
                          path=None, seen=None, related_tables=None):
     """ Given a list of PSQL tables, return the full list of dependant tables,
     ordered by dependencies. Warning are displayed if there are dependency loops
@@ -93,7 +94,8 @@ def get_sql_dependencies(target_connection, tables, excluded_tables,
         excluded_tables = None
     third_tables = set()
     potentials_m2m = set()
-    related_tables = set()
+    if related_tables is None:
+    	related_tables = set()
     for table in tables:
         with target_connection.cursor() as c:
             m2o = set()
@@ -127,8 +129,9 @@ def get_sql_dependencies(target_connection, tables, excluded_tables,
   ccu ON ccu.constraint_name = tc.constraint_name
   WHERE constraint_type = 'FOREIGN KEY' AND
   ccu.table_name='%s';""" % table
-            c.execute(query_table_ref)
-            results_ref = c.fetchall()
+	    if table in real_tables:
+            	c.execute(query_table_ref)
+            	results_ref = c.fetchall()
             if results_fk:
                 for fk in results_fk:
                     # Cas des structures arborescentes (reflexives)
@@ -140,50 +143,48 @@ def get_sql_dependencies(target_connection, tables, excluded_tables,
                     if tbl not in seen:
                         m2o.add(tbl)
                         seen.add(tbl)
-            # Premier ecremage, on vire les doublons
-            # On considere qu'il ya des tables de jointures ici
-            # NOT REALLY EFFICIENT
-            diff_tables = set(results_ref).difference(set(results_fk))
-            if diff_tables:
+			real_tables.append(tbl)
+            if table in real_tables:
+	    	diff_tables = set(results_ref).difference(set(results_fk))
+	    if table not in real_tables:
+		diff_tables = None
+            if diff_tables is not None:
                 for t in diff_tables:
-                    # Requete permettant de trouver les tables referencees
-                    # dans une table de jointure donnee
-                    query_third_tables = """
-SELECT information_schema.constraint_table_usage.table_name
-FROM information_schema.table_constraints, information_schema.constraint_table_usage
-WHERE information_schema.table_constraints.table_name = '%s'
-AND information_schema.constraint_table_usage.constraint_name \
-= information_schema.table_constraints.constraint_name;""" % t
-                    c.execute(query_third_tables)
-                    third_tables = c.fetchall()
-                    if third_tables:
-                        for third_table in third_tables:
-                            tbl = third_table[0]
-                            if tbl not in seen:
-                                seen.add(tbl)
+		    tbl = t[0]
+		    query_third_tables = """
+SELECT column_name
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = '%s';""" % tbl
+		    c.execute(query_third_tables)
+                    columns = c.fetchall()
+		    columns_list = []
+                    if columns:
+                        for item in columns:
+			    columns_list.append(item[0])
+			columns_set = set(columns_list)
+			if 'id' in columns_set:
+			    continue
+                        if tbl not in seen:
+                            seen.add(tbl)
                             if tbl not in related_tables:
                                 related_tables.add(tbl)
-            if potentials_m2m:
-                for tbl in potentials_m2m:
-                    if tbl in path:
-                        LOG.warn('Dependency LOOP: '
-                                 '%s has a m2m to %s which is one of its ancestors (path=%r)',
-                                 table, tbl, path)
-                    if tbl not in seen:
-                        m2m.add(tbl)
+                    	        if tbl in path:
+                        	    LOG.warn('Dependency LOOP: '
+                                	     '%s has a m2m to %s which is one of its ancestors (path=%r)',
+                                 	     table, tbl, path)
+                    	        if tbl not in m2m:
+                                    m2m.add(tbl)
         for t in m2m:
-            results, related_tables = get_sql_dependencies(
-                target_connection, (t,),
-                path=path+(table,),
-                excluded_tables=excluded_tables,
-                seen=seen, related_tables=related_tables)
+            results, related_tables = get_sql_dependencies(target_connection, (t,),
+                                    real_tables, path=path+(table,),
+                                    excluded_tables=excluded_tables,
+                                    seen=seen, related_tables=related_tables)
             res += results
         for t in m2o:
-            results, related_tables = get_sql_dependencies(
-                target_connection, (t,),
-                path=path+(table,),
-                excluded_tables=excluded_tables,
-                seen=seen, related_tables=related_tables)
+            results, related_tables = get_sql_dependencies(target_connection, (t,),
+                                    real_tables, path=path+(table,),
+                                    excluded_tables=excluded_tables,
+                                    seen=seen, related_tables=related_tables)
             res += results
         #if model == 'ir.actions.actions':
         #    model = 'ir.actions'
