@@ -173,7 +173,8 @@ WHERE TABLE_NAME = '%s';""" % tbl
                                 	     '%s has a m2m to %s which is one of its ancestors (path=%r)',
                                  	     table, tbl, path)
                     	        if tbl not in m2m:
-                                    m2m.add(tbl)
+                                    #m2m.add(tbl) # ccomb disabled temporarily
+                                    pass
 	for t in m2m:
             results, related_tables = get_sql_dependencies(target_connection, (t,),
                                     real_tables, path=path+(table,),
@@ -239,7 +240,7 @@ def get_dependencies(username, pwd, dbname, models, excluded_models,
                              '%s has a m2m %r to %s which is one of its ancestors (path=%r)',
                              model, field, m, path)
                 if m not in seen:
-                    m2m.add(m)
+                    #m2m.add(m)  # ccomb disabled temporarily
                     seen.add(m)
                 if third_table not in seen:
                     seen.add(third_table)
