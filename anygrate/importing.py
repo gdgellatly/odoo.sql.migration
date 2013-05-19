@@ -20,6 +20,7 @@ def import_from_csv(filepaths, connection):
                 continue
             with connection.cursor() as cursor, open(filepath) as f:
                 columns = ','.join(csv.reader(f).next())
+                f.seek(0)
                 copy = ("COPY %s (%s) FROM STDOUT WITH CSV HEADER NULL ''"
                         % (basename(filepath).rsplit('.', 2)[0], columns))
                 try:

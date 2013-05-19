@@ -19,16 +19,16 @@ base:
 
     # Users
     res_users.*:
-    res_users.term_id: False
+    res_users.term_id: __forget__
     res_users.__discriminator__:
         - login
     res_users.id:
         res_users.id:
     res_users.context_lang:
         res_partner.lang:
-    res_users.date: False
-    res_users.email: False
-    res_users.menu_tips: False
+    res_users.date: __forget__
+    res_users.email: __forget__
+    res_users.menu_tips: __forget__
     res_users.user_email:
         res_partner.email:
     res_users.name:
@@ -57,8 +57,8 @@ base:
     res_partner.*:
     res_partner.__discriminator__:
         - name
-    res_partner.allow_refund: False
-    res_partner.producer: False
+    res_partner.allow_refund: __forget__
+    res_partner.producer: __forget__
     res_users.context_tz:
         res_partner.tz:
     res_partner._:
@@ -71,9 +71,9 @@ base:
         res_partner.notification_email_send: return 'comment'
     res_partner_address.*:
         res_partner.*:
-    res_partner_address.contact_id: False
-    res_partner_address.x_openupgrade_job_id: False
-    res_partner_address.location_id: False
+    res_partner_address.contact_id: __forget__
+    res_partner_address.x_openupgrade_job_id: __forget__
+    res_partner_address.location_id: __forget__
     res_partner_address.country_id:
         res_partner.country_id:
         #adding the new fields with default value
@@ -90,7 +90,7 @@ base:
     res_company.__discriminator__:
         - name
     res_company.*:
-    res_company.stylesheet_id: False
+    res_company.stylesheet_id: __forget__
     res_company.logo:
         res_company.logo_web:
     res_company.rml_footer1:
@@ -148,22 +148,22 @@ account:
     account_bank_statement.*:
 
     account_chart_template.*:
-    account_chart_template.property_reserve_and_surplus_account: False
+    account_chart_template.property_reserve_and_surplus_account: __forget__
 
     account_invoice.*:
-    account_invoice.address_contact_id: False
-    account_invoice.address_invoice_id: False
+    account_invoice.address_contact_id: __forget__
+    account_invoice.address_invoice_id: __forget__
 
     account_invoice_line.*:
     account_invoice_line.name:
         account_invoice_line.name: #cmt changer le type char en text ??
-    account_invoice_line.note: False
+    account_invoice_line.note: __forget__
 
     account_invoice_report.*:
-    account_invoice_report.address_contact_id: False
-    account_invoice_report.address_invoice_id: False
-    account_invoice_report.delay_to_pay: False
-    account_invoice_report.due_delay: False
+    account_invoice_report.address_contact_id: __forget__
+    account_invoice_report.address_invoice_id: __forget__
+    account_invoice_report.delay_to_pay: __forget__
+    account_invoice_report.due_delay: __forget__
 
     account_invoice_tax.*:
 
@@ -202,7 +202,7 @@ account:
         - name
 
     account_journal_view.*:
-    account_journal_view.view_id: False
+    account_journal_view.view_id: __forget__
     account_journal_column.*:
 
     account_move.*:
@@ -228,12 +228,13 @@ account_accountant:
 account_analytic_analysis:
     account_analytic_analysis.*:
     account_analytic_account.*:
+    account_analytic_account._:
+        account_analytic_account.charge_expenses:   # new, boolean
+        account_analytic_account.est_expenses:    # new, float
+        account_analytic_account.type: return 'normal' #now required, default = normal
     account_analytic_account.contact_id: __forget__
     account_analytic_account.id:
         accound_analytic_account.id:
-        account_analytic_account.fix_price_invoices:    #new: boolean
-        account_analytic_account.hours_qtt_est:    #new: float
-        account_analytic_account.invoice_on_timesheets:    #new: boolean
 
 
 account_analytic_default:
@@ -283,7 +284,7 @@ account_check_writing:
 account_followup:
     account_followup.*:
     account_followup_followup.*:
-    account_followup_followup.description: False
+    account_followup_followup.description: __forget__
     account_followup_followup_line.*:
     account_followup_followup_line.delay:
         account_followup_followup_line.delay: source_row['delay'] or 0
@@ -316,19 +317,10 @@ account_voucher:
 
 analytic:
     analytic.*:
-    account_analytic_account.*:
-    account_analytic_account.contact_id:
-        account_analytic_account.contact_id:    #DEL relation: res.partner.address
-    account_analytic_account._:
-        account_analytic_account.type: return 'normal' #now required, default = normal
 
 
 analytic_contract_hr_expense:
     analytic_contract_hr_expense.*:
-    account_analytic_account.id:
-        account_analytic_account.id:
-        account_analytic_account.charge_expenses:   # new, boolean
-        account_analytic_account.est_expenses:    # new, float
 
 
 analytic_user_function:
@@ -345,7 +337,8 @@ sale:
     sale_shop.__discriminator__:
         - name
     sale_order_line.*:
-    sale_order_line.notes: False
+    sale_order_line.notes: __forget__
+    sale_shop.shop_registry: __forget__
 
 stock:
     stock.*:
@@ -356,6 +349,8 @@ stock:
         - name
     stock_warehouse.*:
     stock_warehouse.lot_return_id: __forget__
+    stock_warehouse.partner_address_id:
+        stock_warehouse.partner_id:  # foireux
     stock_journal.*:
     stock_journal.__discriminator__:
         - name
@@ -392,7 +387,7 @@ product:
         product_product.image:  #new, binary
     product_product.message_ids:
         mail_message.message_ids:
-    product_product.product_image: False
+    product_product.product_image: __forget__
 
 
 # module edi
