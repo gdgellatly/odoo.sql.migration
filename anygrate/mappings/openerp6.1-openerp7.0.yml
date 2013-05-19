@@ -43,13 +43,13 @@ base:
         res_users.partner_id:
         res_partner.notification_email_send: return 'comment'
         res_partner.id: |
-            i = newid('res_partner')
+            i = newid()
             target_rows['res_users']['partner_id'] = i
             target_rows['res_partner']['id'] = i
             return i
     res_users.address_id:
         # foireux
-        res_partner.id: return newid('res_partner')
+        res_partner.id: return newid()
     res_users.login_date:
         res_users.date:
 
@@ -67,7 +67,7 @@ base:
 
     # address
     res_partner_address.id:
-        res_partner.id: return newid('res_partner')
+        res_partner.id: return newid()
         res_partner.notification_email_send: return 'comment'
     res_partner_address.*:
         res_partner.*:
@@ -122,7 +122,7 @@ mail:
     res_users._:
         res_users.alias_id: return target_rows['res_users'].get('alias_id') or None
         mail_alias.id: |
-            i = newid('mail_alias')
+            i = newid()
             target_rows['res_users']['alias_id'] = i
             return i
         mail_alias.alias_model_id: return sql("select id from ir_model where model='res.users'")[0][0]
@@ -290,8 +290,8 @@ account_followup:
         account_followup_followup_line.delay: source_row['delay'] or 0
     res_company.follow_up_msg:
         account_followup_followup.id: |
-            followup_id = newid('account_followup_followup')
-            line_id = newid('account_followup_followup_line')
+            followup_id = newid()
+            line_id = newid()
             target_rows['account_followup_followup_line']['followup_id'] = followup_id
             return followup_id
         account_followup_followup_line.id: |

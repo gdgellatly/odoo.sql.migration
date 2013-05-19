@@ -194,7 +194,7 @@ class CSVProcessor(object):
                         # offset the id of the line, except for m2m
                         if (self.fields2update and 'id' in target_row
                                 and table in self.fields2update.itervalues()):
-                            last_id = self.mapping.last_id.get(table, 0)
+                            last_id = self.mapping.last_id
                             target_row['id'] = int(target_row['id']) + last_id
                             # otherwise write the target csv line
                         self.writers[table].writerow(target_row)
@@ -213,7 +213,7 @@ class CSVProcessor(object):
                     fk_table = self.fields2update.get(table + '.' + key)
                     # if this is a fk, fix it
                     if value and fk_table:
-                        last_id = self.mapping.last_id.get(fk_table, 0)
+                        last_id = self.mapping.last_id
                         # if the target record is an existing record it should be in the fk_mapping
                         # so we restore the real target id, or offset it if not found
                         value = int(value)

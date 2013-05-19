@@ -11,7 +11,8 @@ class Mapping(object):
     """ Stores the mapping and offers a simple API
     """
 
-    last_id = {}
+    last_id = 1
+    new_id = 1
     target_connection = None
 
     def __init__(self, modules, filename):
@@ -72,13 +73,12 @@ class Mapping(object):
                 for key, value in mapping.items()
                 if '__discriminator__' in key})
 
-    def newid(self, table):
+    def newid(self):
         """ increment the global stored last_id
         This method is available as a function in the mapping
         """
-        self.last_id.setdefault(table, 0)
-        self.last_id[table] += 1
-        return self.last_id[table]
+        self.new_id += 1
+        return self.new_id
 
     def sql(self, sql):
         """ execute an sql statement in the target db and return the value
@@ -134,9 +134,7 @@ class Mapping(object):
                 try:
                     c.execute('select max(id) from %s' % source_table)
                     maxid = c.fetchone()
-                    self.last_id[source_table] = max(
-                        maxid and maxid[0] or 1,
-                        self.last_id.get(source_table, 1))
+                    self.last_id = max(maxid and maxid[0] or 1, self.last_id)
                 except psycopg2.ProgrammingError:
                     LOG.debug(u'"id" column does not exist in table "%s"', source_table)
                     source_connection.rollback()
@@ -146,9 +144,8 @@ class Mapping(object):
                 try:
                     c.execute('select max(id) from %s' % target_table)
                     maxid = c.fetchone()
-                    self.last_id[target_table] = max(
-                        maxid and maxid[0] or 1,
-                        self.last_id.get(target_table, 1))
+                    self.last_id = max(maxid and maxid[0] or 1, self.last_id)
                 except psycopg2.ProgrammingError:
                     LOG.debug(u'"id" column does not exist in table "%s"', target_table)
                     target_connection.rollback()
+        self.new_id = 10 * self.last_id  # FIXME 10 is arbitrary but should be enough
