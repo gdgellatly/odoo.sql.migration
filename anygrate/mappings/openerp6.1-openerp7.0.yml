@@ -228,6 +228,7 @@ account_accountant:
 account_analytic_analysis:
     account_analytic_analysis.*:
     account_analytic_account.*:
+    account_analytic_account.contact_id: __forget__
     account_analytic_account.id:
         accound_analytic_account.id:
         account_analytic_account.fix_price_invoices:    #new: boolean

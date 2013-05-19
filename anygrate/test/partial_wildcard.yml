@@ -22,6 +22,8 @@ base:
         res_partner.name: return source_row['res_partner_address']['name']
     res_partner_address.partner_id:
         res_partner.parent_id:
+    res_partner_address.street2: __forget__
+
 mail:
     res_users.login:
         mail_alias.alias: return source_row['login']

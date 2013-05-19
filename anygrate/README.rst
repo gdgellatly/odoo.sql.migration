@@ -119,6 +119,8 @@ We can use wildcards in the mappings to avoid filling every column:
     {'res_partner.plop': None}
     >>> partial_wildcard.get_targets('res_partner_address.name')
     {'res_partner.name': <function mapping_function at ...>}
+    >>> partial_wildcard.get_targets('res_partner_address.street2')
+    {}
 
 Discriminator mapping
 ---------------------
