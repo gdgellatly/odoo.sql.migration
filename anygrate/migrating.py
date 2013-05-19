@@ -7,7 +7,7 @@ from .exporting import export_to_csv, extract_existing
 from .importing import import_from_csv
 from .mapping import Mapping
 from .processing import CSVProcessor
-from .depending import get_dependencies
+from .depending import get_sql_dependencies
 from .depending import get_fk_to_update
 import logging
 from os.path import basename, join, abspath, dirname, exists
@@ -78,9 +78,10 @@ def migrate(source_db, target_db, source_models, mapping_name,
         target_modules = [m[0] for m in c.fetchall()]
 
     # we turn the list of wanted models into the full list of required models
-    print(u'Computing the real list of models to export...')
-    source_models, _ = get_dependencies('admin', 'admin',
-                                        source_db, source_models, excluded_models)
+    print(u'Computing the real list of tables to export...')
+    #source_models, _ = get_dependencies('admin', 'admin',
+    #                                    source_db, source_models, excluded_models)
+    source_models, _ = get_sql_dependencies(source_connection, source_models, [], excluded_models)
     print(u'The real list of models to export is: %s' % ', '.join(source_models))
 
     # compute the foreign keys to modify in the csv
@@ -107,7 +108,7 @@ def migrate(source_db, target_db, source_models, mapping_name,
     print(u'Migrating CSV files...')
     # FIXME refactor the process() arguments, there are too many of them
     processor.process(target_dir, filepaths, target_dir,
-                      target_connection, existing_records, fields2update)
+                      target_connection, existing_records)
 
     # import data in the target
     print(u'Trying to import data in the target database...')

@@ -14,6 +14,7 @@ base:
     res_users.login:
         res_users.name: return source_row['login']
         res_partner.name: return source_row['login']
+        res_users.login: __copy__
     res_users.name:
         res_partner.name: __copy__
         res_users.name: __copy__

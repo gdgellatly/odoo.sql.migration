@@ -14,7 +14,7 @@ class CSVProcessor(object):
     """
     def __init__(self, mapping, fields2update=None):
 
-        self.fields2update = fields2update
+        self.fields2update = fields2update or {}
         self.mapping = mapping
         self.target_columns = {}
         self.writers = {}
@@ -50,7 +50,7 @@ class CSVProcessor(object):
         return self.target_columns
 
     def process(self, source_dir, source_filenames, target_dir,
-                target_connection=None, existing_records=None, fields2update=None):
+                target_connection=None, existing_records=None):
         """ The main processing method
         """
         # compute the target columns
@@ -88,7 +88,7 @@ class CSVProcessor(object):
             writer.writeheader()
         for source_filename in source_filenames:
             source_filepath = join(source_dir, source_filename)
-            self.process_one(source_filepath, target_connection, existing_records, fields2update)
+            self.process_one(source_filepath, target_connection, existing_records)
         # close files
         for target_file in target_files.values():
             target_file.close()
@@ -110,7 +110,7 @@ class CSVProcessor(object):
             writer.writeheader()
         for target_filename in target_filenames.values():
             filepath = join(target_dir, target_filename)
-            self.postprocess_one(filepath, existing_records, fields2update)
+            self.postprocess_one(filepath, existing_records)
         for target2_file in target2_files.values():
             target2_file.close()
 
@@ -129,15 +129,16 @@ class CSVProcessor(object):
             writer.writeheader()
         for update_filename in update_filenames.values():
             update_filepath = join(target_dir, update_filename)
-            self.postprocess_one(update_filepath, existing_records, fields2update)
+            self.postprocess_one(update_filepath, existing_records)
         # close files
         for update2_file in update2_files.values():
             update2_file.close()
 
     def process_one(self, source_filepath,
-                    target_connection=None, existing_records=None, fields2update=None):
+                    target_connection=None, existing_records=None):
         """ Process one csv file
         """
+        existing_records = existing_records or {}
         source_table = basename(source_filepath).rsplit('.', 1)[0]
         with open(source_filepath, 'rb') as source_csv:
             reader = csv.DictReader(source_csv, delimiter=',')
@@ -174,7 +175,7 @@ class CSVProcessor(object):
                     discriminators = self.mapping.discriminators.get(table)
                     # if the line exists in the target db, we don't offset and write to update file
                     # (we recognize by matching the set of discriminator values against existing)
-                    existing = existing_records[table]
+                    existing = existing_records.get(table, [])
                     existing_without_id = [{v for k, v in nt.iteritems() if k != 'id'}
                                            for nt in existing]
                     discriminator_values = {target_row[d] for d in (discriminators or [])}
@@ -191,14 +192,14 @@ class CSVProcessor(object):
                         self.updatewriters[table].writerow(target_row)
                     else:
                         # offset the id of the line, except for m2m
-                        if (fields2update and 'id' in target_row
-                                and table in fields2update.itervalues()):
+                        if (self.fields2update and 'id' in target_row
+                                and table in self.fields2update.itervalues()):
                             last_id = self.mapping.last_id.get(table, 0)
                             target_row['id'] = int(target_row['id']) + last_id
                             # otherwise write the target csv line
                         self.writers[table].writerow(target_row)
 
-    def postprocess_one(self, target_filepath, existing_records=None, fields2update=None):
+    def postprocess_one(self, target_filepath, existing_records=None):
         """ Postprocess one target csv file
         """
         table = basename(target_filepath).rsplit('.', 2)[0]
@@ -209,7 +210,7 @@ class CSVProcessor(object):
                 # fix the foreign keys of the line
                 for key, value in target_row.items():
                     postprocessed_row[key] = value
-                    fk_table = fields2update.get(table + '.' + key)
+                    fk_table = self.fields2update.get(table + '.' + key)
                     # if this is a fk, fix it
                     if value and fk_table:
                         last_id = self.mapping.last_id.get(fk_table, 0)

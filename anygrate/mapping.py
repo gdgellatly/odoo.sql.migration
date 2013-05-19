@@ -42,7 +42,7 @@ class Mapping(object):
         for incolumn in self.mapping:
             for outcolumn in self.mapping[incolumn]:
                 mapping = self.mapping[incolumn][outcolumn]
-                if mapping not in (None, '__copy__'):
+                if mapping not in (None, '__copy__', False, '__forget__'):
                     function_body = "def mapping_function(source_row, target_rows):\n"
                     if type(mapping) is not str:
                         raise ValueError('Error in the mapping file: "%s" is invalid in %s'

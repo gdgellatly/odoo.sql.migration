@@ -72,6 +72,7 @@ And the target tables and fields from a source field:
     >>> from pprint import pprint
     >>> pprint(mapping.get_targets('res_users.login'), width=1)
     {'res_partner.name': <function mapping_function at ...,
+     'res_users.login': '__copy__',
      'res_users.name': <function mapping_function at ...}
 
 
@@ -82,6 +83,7 @@ And the target tables and fields from a source field:
     >>> pprint(mapping.get_targets('res_users.login'), width=1)
     {'mail_alias.alias': <function mapping_function at ...,
      'res_partner.name': <function mapping_function at ...,
+     'res_users.login': '__copy__',
      'res_users.name': <function mapping_function at ...}
 
     >>> mapping = Mapping(['base'], test_file)
@@ -169,15 +171,16 @@ csv files be generated
     {'res_partner': ['id',
                      'name'],
      'res_users': ['foobar',
+                   'login',
                    'name',
                    'partner_id']}
 
     >>> processor.process(directory, ['res_users.csv'], directory)
     >>> sorted(os.listdir(directory))
-    ['res_partner.csv', 'res_partner.out.csv', 'res_users.csv', 'res_users.out.csv']
+    ['res_partner.csv', 'res_partner.target.csv', 'res_partner.target2.csv', 'res_partner.update.csv', 'res_partner.update2.csv', 'res_users.csv', 'res_users.target.csv', 'res_users.target2.csv', 'res_users.update.csv', 'res_users.update2.csv']
     >>> import csv
-    >>> sorted(csv.DictReader(open(join(directory, 'res_users.out.csv'))).next().keys())
-    ['foobar', 'name', 'partner_id']
+    >>> sorted(csv.DictReader(open(join(directory, 'res_users.target2.csv'))).next().keys())
+    ['foobar', 'login', 'name', 'partner_id']
 
 Process with partial_wildcard:
 
@@ -194,9 +197,9 @@ Process with partial_wildcard:
 
     >>> processor.process(directory2, ['res_users.csv'], directory2)
     >>> sorted(os.listdir(directory2))
-    ['res_partner.csv', 'res_users.csv', 'res_users.out.csv']
+    ['res_partner.csv', 'res_users.csv', 'res_users.target.csv', 'res_users.target2.csv', 'res_users.update.csv', 'res_users.update2.csv']
     >>> import csv
-    >>> sorted(csv.DictReader(open(join(directory2, 'res_users.out.csv'))).next().keys())
+    >>> sorted(csv.DictReader(open(join(directory2, 'res_users.target2.csv'))).next().keys())
     ['action_id', 'active', ...]
 
 
@@ -209,7 +212,8 @@ We can try more complex scenarios, such as:
     >>> processor = CSVProcessor(mapping)
     >>> processor.process(testdir, ['res_users.csv', 'res_partner.csv', 'res_partner_address.csv'], directory3)
     >>> sorted(os.listdir(directory3))
-    ['res_partner.out.csv', 'res_users.out.csv']
+    ['res_partner.target.csv', 'res_partner.target2.csv', 'res_partner.update.csv', 'res_partner.update2.csv', 'res_users.target.csv', 'res_users.target2.csv', 'res_users.update.csv', 'res_users.update2.csv']
+
 
 Extracting existing data from the target db
 ===========================================
@@ -223,7 +227,7 @@ csv files, then remove the lines from the csv.
     >>> source_tables = ['res_users', 'res_partner', 'account_move']
     >>> result = extract_existing(source_tables, mapping.discriminators, connection)
     >>> result['res_users'][0]['login']
-    'admin'
+    'demo'
 
 Importing the CSV files
 =======================
@@ -257,10 +261,7 @@ WHERE constraint_type = 'FOREIGN KEY' AND ccu.table_name='one_model';
 Now we can import a csv file using the mapping:
 
     >>> from anygrate import importing
-    >>> importing.import_from_csv(join(directory, 'res_users.csv'), connection)
-    Traceback (most recent call last):
-    ...
-    IntegrityError: ...
+    >>> importing.import_from_csv([join(directory, 'res_users.csv')], connection)
     >>> import shutil
     >>> shutil.rmtree(directory)
     >>> shutil.rmtree(directory2)

@@ -110,9 +110,9 @@ base:
 
 mail:
     mail.*:
-        
+
     mail_message.*:
- 
+
     mail_message.type:
         mail_message.type: return 'email'
 
@@ -166,11 +166,11 @@ account:
     account_invoice_report.due_delay: False
 
     account_invoice_tax.*:
-    
+
     account_journal.*:
     account_journal.__discriminator__:
         - code
-    
+
     account_move_reconcile.*:
 
     account_tax.*:
@@ -340,6 +340,9 @@ analytic_user_function:
 sale:
     sale.*:
     sale_order.*:
+    sale_shop.*:
+    sale_shop.__discriminator__:
+        - name
     sale_order_line.*:
     sale_order_line.notes: False
 
@@ -351,6 +354,7 @@ stock:
     stock_location.__discriminator__:
         - name
     stock_warehouse.*:
+    stock_warehouse.lot_return_id: __forget__
     stock_journal.*:
     stock_journal.__discriminator__:
         - name
