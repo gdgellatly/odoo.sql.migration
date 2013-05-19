@@ -11,10 +11,11 @@ def import_from_csv(filepaths, connection):
     """
     # we try with brute force,
     # waiting for a pure sql implementation of get_dependencies
-    remaining = len(filepaths)
-    while remaining:
+    remaining = list(filepaths)
+    while len(remaining) > 0:
         LOG.info(u'BRUTE FORCE LOOP')
-        for filepath in filepaths:
+        paths = list(remaining)
+        for filepath in paths:
             if not exists(filepath):
                 LOG.warn(u'Missing CSV for table %s', filepath.rsplit('.', 2)[0])
                 continue
@@ -25,20 +26,17 @@ def import_from_csv(filepaths, connection):
                         % (basename(filepath).rsplit('.', 2)[0], columns))
                 try:
                     cursor.copy_expert(copy, f)
+                    LOG.info('Succesfully imported %s' % basename(filepath))
+                    remaining.remove(filepath)
                 except Exception, e:
                     LOG.warn('Error importing file %s:\n%s',
                              basename(filepath), e.message)
                     connection.rollback()
-                else:
-                    LOG.info('Succesfully imported %s' % basename(filepath))
-                    filepaths.remove(filepath)
-        if len(filepaths) != remaining:
-            remaining = len(filepaths)
-        else:
-            LOG.error('Could not import remaining files : %s :-('
-                      % ', '.join([basename(f) for f in filepaths]))
+        if len(paths) == len(remaining):
+            LOG.error('Could not import remaining tables : %s :-('
+                      % ', '.join([basename(f).rsplit('.', 2)[0] for f in remaining]))
             # don't permit update for non imported files
             for update_file in [filename.replace('.target2.csv', '.update2.csv')
-                                for filename in filepaths]:
+                                for filename in remaining]:
                 rename(update_file, update_file + '.disabled')
             break
