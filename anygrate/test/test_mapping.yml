@@ -7,7 +7,7 @@ base:
         res_users.partner_id: __copy__
         # define a function body to use for this column mapping
         res_partner.id: |
-            i = newid('res_partner')
+            i = newid()
             target_rows['res_users']['partner_id'] = i
             target_rows['res_partner']['id'] = i
             return i
