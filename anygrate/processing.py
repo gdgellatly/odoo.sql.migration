@@ -250,6 +250,5 @@ class CSVProcessor(object):
                     cursor = connection.cursor()
                     cursor.execute('ROLLBACK TO savepoint')
                     cursor.close()
-                    import pdb; pdb.set_trace()
                     break
             LOG.info(u'Successfully updated table %s', table)
