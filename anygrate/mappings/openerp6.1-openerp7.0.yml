@@ -97,6 +97,8 @@ base:
         res_partner.parent_id:
 
     res_partner_bank.*:
+    res_partner_bank.__discriminator__:
+        - name
 
     res_company.__discriminator__:
         - name
@@ -168,6 +170,8 @@ account:
     account_chart_template.property_reserve_and_surplus_account: __forget__
 
     account_invoice.*:
+    account_invoice.__discriminator__:
+        - name
     account_invoice.address_contact_id: __forget__
     account_invoice.address_invoice_id: __forget__
 
@@ -364,6 +368,8 @@ sale:
 
 stock:
     stock_picking.*:
+    stock_picking.__discriminator__:
+        - name
     stock_picking.address_id:
         stock_picking.partner_id:
     stock_location.*:
@@ -383,6 +389,8 @@ stock:
 
 point_of_sale:
     pos_order.*:
+    pos_order.__discriminator__:
+        - name
     pos_order.command_number: __forget__  # specific
     pos_order.draft_number: __forget__  # specific
     pos_order.from_wizard: __forget__  # specific
