@@ -147,6 +147,8 @@ account:
         - code
     account_period.*:
     account_fiscalyear.*:
+    account_fiscalyear.__discriminator__:
+        - code
     account_financial_report.*:
     account_account_financial_report.*:
     account_fiscal_position.*:
@@ -179,6 +181,7 @@ account:
     account_journal.*:
     account_journal.__discriminator__:
         - code
+    account_journal.view_id: __forget__
 
     account_move_reconcile.*:
 
@@ -210,8 +213,6 @@ account:
     account_account_type.__discriminator__:
         - name
 
-    account_journal_view.*:
-    account_journal_view.view_id: __forget__
     account_journal_column.*:
 
     account_move.*:

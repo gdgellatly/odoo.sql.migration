@@ -37,10 +37,12 @@ def import_from_csv(filepaths, connection):
                     cursor.execute('ROLLBACK TO savepoint')
                     cursor.close()
         if len(paths) == len(remaining):
-            LOG.error('Could not import remaining tables : %s :-('
+            LOG.error('\n\n***\n* Could not import remaining tables : %s :-( \n***\n'
                       % ', '.join([basename(f).rsplit('.', 2)[0] for f in remaining]))
             # don't permit update for non imported files
             for update_file in [filename.replace('.target2.csv', '.update2.csv')
                                 for filename in remaining]:
                 rename(update_file, update_file + '.disabled')
             break
+    else:
+            LOG.info('\n\n***\n* Successfully imported all csv files!! :-)\n***\n')
