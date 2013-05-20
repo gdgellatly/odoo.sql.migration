@@ -19,19 +19,23 @@ def import_from_csv(filepaths, connection):
             if not exists(filepath):
                 LOG.warn(u'Missing CSV for table %s', filepath.rsplit('.', 2)[0])
                 continue
-            with connection.cursor() as cursor, open(filepath) as f:
+            with open(filepath) as f:
                 columns = ','.join(csv.reader(f).next())
                 f.seek(0)
                 copy = ("COPY %s (%s) FROM STDOUT WITH CSV HEADER NULL ''"
                         % (basename(filepath).rsplit('.', 2)[0], columns))
                 try:
+                    cursor = connection.cursor()
                     cursor.copy_expert(copy, f)
+                    cursor.execute('SAVEPOINT savepoint')
                     LOG.info('Succesfully imported %s' % basename(filepath))
                     remaining.remove(filepath)
                 except Exception, e:
                     LOG.warn('Error importing file %s:\n%s',
                              basename(filepath), e.message)
-                    connection.rollback()
+                    cursor = connection.cursor()
+                    cursor.execute('ROLLBACK TO savepoint')
+                    cursor.close()
         if len(paths) == len(remaining):
             LOG.error('Could not import remaining tables : %s :-('
                       % ', '.join([basename(f).rsplit('.', 2)[0] for f in remaining]))

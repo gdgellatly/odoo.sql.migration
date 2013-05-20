@@ -7,12 +7,15 @@ base:
     res_partner_title.*:
     res_partner_title.__discriminator__:
         - name
+
     res_country.*:
     res_country.__discriminator__:
         - code
+
     res_country_state.*:
     res_country_state.__discriminator__:
         - code
+
     res_currency.*:
     res_currency.__discriminator__:
         - name
@@ -38,6 +41,8 @@ base:
     res_users.company_id:
         res_users.company_id:
         res_partner.company_id:
+    res_users.create_uid: __forget__  # FIXME : implement __defer__
+    res_users.write_uid: __forget__  # FIXME : implement __defer__
     res_users.id:
         res_users.id:
         res_users.partner_id:
@@ -59,16 +64,20 @@ base:
         - name
     res_partner.allow_refund: __forget__
     res_partner.producer: __forget__
+    res_partner.create_uid: __forget__  # FIXME : implement __defer__
+    res_partner.write_uid: __forget__  # FIXME : implement __defer__
     res_users.context_tz:
         res_partner.tz:
     res_partner._:
         res_partner.is_company: return True
         res_partner.notification_email_send: return 'comment'
 
-    # address
+    # addresses
     res_partner_address.id:
         res_partner.id: return newid()
         res_partner.notification_email_send: return 'comment'
+    res_partner_address.create_uid: __forget__  # FIXME : implement __defer__
+    res_partner_address.write_uid: __forget__  # FIXME : implement __defer__
     res_partner_address.*:
         res_partner.*:
     res_partner_address.contact_id: __forget__
@@ -348,6 +357,8 @@ stock:
     stock_location.__discriminator__:
         - name
     stock_warehouse.*:
+    stock_warehouse.__discriminator__:
+        - name
     stock_warehouse.lot_return_id: __forget__
     stock_warehouse.partner_address_id:
         stock_warehouse.partner_id:  # foireux

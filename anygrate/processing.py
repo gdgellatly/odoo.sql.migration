@@ -223,7 +223,7 @@ class CSVProcessor(object):
                             postprocessed_row[key] = value + last_id
                 self.writers[table].writerow(postprocessed_row)
 
-    def update_one(self, filepath, target_connection):
+    def update_one(self, filepath, connection):
         """ Apply updates in the target db with update file
         """
         table = basename(filepath).rsplit('.', 2)[0]
@@ -232,13 +232,24 @@ class CSVProcessor(object):
         if not discriminators:
             LOG.warn(u'Cannot update table %s, no discriminators found', table)
             return
-        with open(filepath, 'rb') as update_csv, target_connection.cursor() as cursor:
+        with open(filepath, 'rb') as update_csv:
+            cursor = connection.cursor()
             reader = csv.DictReader(update_csv, delimiter=',')
             for update_row in reader:
                 columns = ', '.join(update_row.keys())
                 values = ', '.join(['%s' for i in update_row])
                 args = [i if i != '' else None for i in update_row.values()
                         ] + [update_row['id']]
-                cursor.execute('UPDATE %s SET (%s)=(%s) WHERE id=%s'
-                               % (table, columns, values, '%s'), tuple(args))
+                try:
+                    cursor.execute('UPDATE %s SET (%s)=(%s) WHERE id=%s'
+                                   % (table, columns, values, '%s'), tuple(args))
+                    cursor.execute('SAVEPOINT savepoint')
+                except Exception, e:
+                    LOG.warn('Error importing file %s:\n%s',
+                             basename(filepath), e.message)
+                    cursor = connection.cursor()
+                    cursor.execute('ROLLBACK TO savepoint')
+                    cursor.close()
+                    import pdb; pdb.set_trace()
+                    break
             LOG.info(u'Successfully updated table %s', table)
