@@ -12,6 +12,9 @@ def import_from_csv(filepaths, connection):
     # we try with brute force,
     # waiting for a pure sql implementation of get_dependencies
     remaining = list(filepaths)
+    cursor = connection.cursor()
+    cursor.execute('SAVEPOINT savepoint')
+    cursor.close()
     while len(remaining) > 0:
         LOG.info(u'BRUTE FORCE LOOP')
         paths = list(remaining)

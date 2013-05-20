@@ -173,14 +173,15 @@ class CSVProcessor(object):
                     if not any(target_row.values()):
                         continue
                     discriminators = self.mapping.discriminators.get(table)
-                    if not discriminators:
-                        raise ValueError(u'Cannot process table %s, no discriminators found'
-                                         % table)
                     # if the line exists in the target db, we don't offset and write to update file
                     # (we recognize by matching the set of discriminator values against existing)
                     existing = existing_records.get(table, [])
                     existing_without_id = [{v for k, v in nt.iteritems() if k != 'id'}
                                            for nt in existing]
+                    if existing and not discriminators:
+                        raise ValueError(u'Cannot handle existing data for table %s: '
+                                         u'no discriminators found'
+                                         % table)
                     discriminator_values = {target_row[d] for d in (discriminators or [])}
                     if discriminators and discriminator_values in existing_without_id:
                         # find the id of the existing record in the target
