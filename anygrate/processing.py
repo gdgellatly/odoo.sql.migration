@@ -108,11 +108,11 @@ class CSVProcessor(object):
                         for t, f in target2_files.items()}
         for writer in self.writers.values():
             writer.writeheader()
-        for target_filename in target_filenames.values():
-            filepath = join(target_dir, target_filename)
+        for filename in target_filenames.values():
+            filepath = join(target_dir, filename)
             self.postprocess_one(filepath, existing_records)
-        for target2_file in target2_files.values():
-            target2_file.close()
+        for f in target2_files.values():
+            f.close()
 
         # POSTPROCESS update filenames and files
         update2_filenames = {
@@ -127,12 +127,12 @@ class CSVProcessor(object):
                         for t, f in update2_files.items()}
         for writer in self.writers.values():
             writer.writeheader()
-        for update_filename in update_filenames.values():
-            update_filepath = join(target_dir, update_filename)
-            self.postprocess_one(update_filepath, existing_records)
+        for filename in update_filenames.values():
+            filepath = join(target_dir, filename)
+            self.postprocess_one(filepath, existing_records)
         # close files
-        for update2_file in update2_files.values():
-            update2_file.close()
+        for f in update2_files.values():
+            f.close()
 
     def process_one(self, source_filepath,
                     target_connection=None, existing_records=None):
@@ -224,16 +224,22 @@ class CSVProcessor(object):
                             postprocessed_row[key] = self.fk_mapping[fk_table][value]
                         else:
                             postprocessed_row[key] = value + last_id
+                    # if we're postprocessing an update we should restore the id as well
+                    if key == 'id' and table in self.fk_mapping:
+                        value = int(value)
+                        postprocessed_row[key] = self.fk_mapping[table].get(value, value)
                 self.writers[table].writerow(postprocessed_row)
 
     def update_one(self, filepath, connection):
         """ Apply updates in the target db with update file
         """
         table = basename(filepath).rsplit('.', 2)[0]
+        has_data = False
         with open(filepath, 'rb') as update_csv:
             cursor = connection.cursor()
             reader = csv.DictReader(update_csv, delimiter=',')
             for update_row in reader:
+                has_data = True
                 columns = ', '.join(update_row.keys())
                 values = ', '.join(['%s' for i in update_row])
                 args = [i if i != '' else None for i in update_row.values()
@@ -249,4 +255,7 @@ class CSVProcessor(object):
                     cursor.execute('ROLLBACK TO savepoint')
                     cursor.close()
                     break
-            LOG.info(u'Successfully updated table %s', table)
+            if has_data:
+                LOG.info(u'Successfully updated table %s', table)
+            else:
+                LOG.info(u'Nothing to update in table %s', table)

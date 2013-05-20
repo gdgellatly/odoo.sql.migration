@@ -267,16 +267,15 @@ def get_dependencies(username, pwd, dbname, models, excluded_models,
     return res, related_tables
 
 
-def get_fk_to_update(connection, models):
+def get_fk_to_update(connection, tables):
     """ Method to get back all columns referencing another table
     """
     fields2update = {}
-    for model in models:
-        with connection.cursor() as c:
-            if model not in fields2update:
-                if model == 'ir.actions':
-                    model = 'ir.actions.actions'
-                model = model.replace('.', '_')
+    with connection.cursor() as c:
+        for table in tables:
+            if table not in fields2update:
+                if table == 'ir.actions':
+                    table = 'ir.actions.actions'
                 query = """
 SELECT tc.table_name, kcu.column_name
 FROM information_schema.table_constraints AS tc JOIN
@@ -285,10 +284,10 @@ tc.constraint_name = kcu.constraint_name JOIN
 information_schema.constraint_column_usage AS
 ccu ON ccu.constraint_name = tc.constraint_name
 WHERE constraint_type = 'FOREIGN KEY' AND
-ccu.table_name='%s';""" % model
+ccu.table_name='%s';""" % table
                 c.execute(query)
                 results = c.fetchall()
-                fields2update[model] = results
+                fields2update[table] = results
     # transpose the result to obtain:
     # {'table.fkname': 'pointed_table', ...}
     # so that processing each input line is easier

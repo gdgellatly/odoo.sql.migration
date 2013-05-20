@@ -84,10 +84,6 @@ def migrate(source_db, target_db, source_models, mapping_name,
     source_models, _ = get_sql_dependencies(source_connection, source_models, [], excluded_models)
     print(u'The real list of models to export is: %s' % ', '.join(source_models))
 
-    # compute the foreign keys to modify in the csv
-    print('Computing the list of Foreign Keys to update in the exported csv files...')
-    fields2update = get_fk_to_update(target_connection, source_models)
-
     # construct the mapping and the csv processor
     # (TODO? autodetect mapping file with source and target db)
     print('Exporting tables as CSV files...')
@@ -95,11 +91,14 @@ def migrate(source_db, target_db, source_models, mapping_name,
     filepaths = export_to_csv(source_tables, target_dir, source_connection)
     mappingfile = join(HERE, 'mappings', mapping_name)
     mapping = Mapping(target_modules, mappingfile)
-    processor = CSVProcessor(mapping, fields2update)
+    processor = CSVProcessor(mapping)
     target_tables = processor.get_target_columns(filepaths).keys()
     print(u'The real list of tables to import is: %s' % ', '.join(target_tables))
     processor.mapping.update_last_id(source_tables, source_connection,
                                      target_tables, target_connection)
+
+    print('Computing the list of Foreign Keys to update in the exported csv files...')
+    processor.fields2update = get_fk_to_update(target_connection, target_tables)
 
     # extract the existing records from the target database
     existing_records = extract_existing(target_tables, mapping.discriminators, target_connection)
