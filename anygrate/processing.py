@@ -173,6 +173,9 @@ class CSVProcessor(object):
                     if not any(target_row.values()):
                         continue
                     discriminators = self.mapping.discriminators.get(table)
+                    if not discriminators:
+                        raise ValueError(u'Cannot process table %s, no discriminators found'
+                                         % table)
                     # if the line exists in the target db, we don't offset and write to update file
                     # (we recognize by matching the set of discriminator values against existing)
                     existing = existing_records.get(table, [])
@@ -227,11 +230,6 @@ class CSVProcessor(object):
         """ Apply updates in the target db with update file
         """
         table = basename(filepath).rsplit('.', 2)[0]
-        discriminators = self.mapping.discriminators.get(table)
-        # create a deferred update for existing data in the target
-        if not discriminators:
-            LOG.warn(u'Cannot update table %s, no discriminators found', table)
-            return
         with open(filepath, 'rb') as update_csv:
             cursor = connection.cursor()
             reader = csv.DictReader(update_csv, delimiter=',')

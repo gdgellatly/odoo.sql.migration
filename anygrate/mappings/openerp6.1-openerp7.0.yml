@@ -1,5 +1,7 @@
 base:
     ir_sequence.*:
+    ir_sequence.__discriminator__:
+        - name
     res_groups.*:
     res_groups.__discriminator__:
         - name
@@ -146,6 +148,8 @@ account:
     account_tax_code.__discriminator__:
         - code
     account_period.*:
+    account_period.__discriminator__:
+        - name
     account_fiscalyear.*:
     account_fiscalyear.__discriminator__:
         - code
@@ -190,7 +194,7 @@ account:
         - name
 
     res_company._:
-        res_company.expects_chart_of_accounts: return True # car on suppose que le plan comptable est déjà installé
+        res_company.expects_chart_of_accounts: return True
         res_company.tax_calculation_rounding_method: return 'round_per_line'
 
     account_account_type.*:
@@ -229,6 +233,8 @@ account:
     account_payment_term.__discriminator__:
         - name
     account_journal_period.*:
+    account_journal_period.__discriminator__:
+        - name
 
 
 account_accountant:
@@ -260,6 +266,8 @@ account_anglo_saxon:
 
 project:
     account_analytic_journal.*:
+    account_analytic_journal.__discriminator__:
+        - name
 
 account_asset:
     account_asset.*:
