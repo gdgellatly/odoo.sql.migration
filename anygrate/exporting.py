@@ -31,8 +31,7 @@ def extract_existing(source_tables, discriminators, connection):
         result[table] = []
         with connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
             if table not in discriminators:
-                LOG.warn(u'No discriminator defined for table %s', table)
-                continue
+                raise ValueError(u'No discriminator defined for table %s' % table)
             columns = discriminators[table]
             cursor.execute('select %s from %s' % (', '.join(columns + ['id']), table))
             result[table] = cursor.fetchall()

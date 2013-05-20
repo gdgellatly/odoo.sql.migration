@@ -178,10 +178,6 @@ class CSVProcessor(object):
                     existing = existing_records.get(table, [])
                     existing_without_id = [{v for k, v in nt.iteritems() if k != 'id'}
                                            for nt in existing]
-                    if existing and not discriminators:
-                        raise ValueError(u'Cannot handle existing data for table %s: '
-                                         u'no discriminators found'
-                                         % table)
                     discriminator_values = {target_row[d] for d in (discriminators or [])}
                     if discriminators and discriminator_values in existing_without_id:
                         # find the id of the existing record in the target
