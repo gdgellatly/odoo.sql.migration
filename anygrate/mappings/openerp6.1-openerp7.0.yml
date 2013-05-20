@@ -108,6 +108,8 @@ base:
         res_company.rml_footer:
 
     res_bank.*:
+    res_bank.__discriminator__:
+        - name
     res_partner_category.*:
     res_partner_category.__discriminator__:
         - name
@@ -351,6 +353,8 @@ analytic_user_function:
 sale:
     sale.*:
     sale_order.*:
+    sale_order.__discriminator__:
+        - name
     sale_shop.*:
     sale_shop.__discriminator__:
         - name
@@ -375,7 +379,6 @@ stock:
     stock_journal.__discriminator__:
         - name
 
-# module point_of_sale
 point_of_sale:
     pos_order.*:
     pos_category.*:
@@ -391,7 +394,6 @@ point_of_sale:
     account_journal.check_dtls: __forget__
 
 
-# module product
 product:
     product_product.*:
     product_template.*:
@@ -410,13 +412,13 @@ product:
     product_product.product_image: __forget__
 
 
-# module edi
 edi:
     edi.*:
 
 
-# module purchase
 purchase:
     purchase_order.*:
+    purchase_order.__discriminator__:
+        - name
     purchase_order_line.*:
     purchase_order_line.notes: __forget__
