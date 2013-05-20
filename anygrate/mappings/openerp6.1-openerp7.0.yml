@@ -24,7 +24,7 @@ base:
 
     # Users
     res_users.*:
-    res_users.term_id: __forget__
+    res_users.term_id: __forget__  # specific
     res_users.__discriminator__:
         - login
     res_users.id:
@@ -64,8 +64,8 @@ base:
     res_partner.*:
     res_partner.__discriminator__:
         - name
-    res_partner.allow_refund: __forget__
-    res_partner.producer: __forget__
+    res_partner.allow_refund: __forget__  # specific
+    res_partner.producer: __forget__  # specific
     res_partner.create_uid: __forget__  # FIXME : implement __defer__
     res_partner.write_uid: __forget__  # FIXME : implement __defer__
     res_users.context_tz:
@@ -351,8 +351,8 @@ analytic_user_function:
 
 
 sale:
-    sale.*:
     sale_order.*:
+    sale_order.partner_order_id: __forget__
     sale_order.__discriminator__:
         - name
     sale_shop.*:
@@ -363,7 +363,9 @@ sale:
     sale_shop.shop_registry: __forget__
 
 stock:
-    stock.*:
+    stock_picking.*:
+    stock_picking.address_id:
+        stock_picking.partner_id:
     stock_location.*:
     stock_location.address_id:
         stock_location.partner_id:
@@ -381,6 +383,12 @@ stock:
 
 point_of_sale:
     pos_order.*:
+    pos_order.command_number: __forget__  # specific
+    pos_order.draft_number: __forget__  # specific
+    pos_order.from_wizard: __forget__  # specific
+    pos_order.init_state: __forget__  # specific
+    pos_order.return_anomalie: __forget__  # specific
+    pos_order.term_id: __forget__  # specific
     pos_category.*:
     account_bank_statement.pos_session_id:
         account_bank_statement.pos_session_id:
@@ -412,13 +420,11 @@ product:
     product_product.product_image: __forget__
 
 
-edi:
-    edi.*:
-
-
 purchase:
     purchase_order.*:
     purchase_order.__discriminator__:
         - name
+    purchase_order.partner_address_id:
+        purchase_order.partner_id:
     purchase_order_line.*:
     purchase_order_line.notes: __forget__
