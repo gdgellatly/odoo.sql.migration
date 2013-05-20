@@ -1,10 +1,10 @@
-=====================================================
-Fast OpenERP migration tool using CSV export / import
-=====================================================
+================================
+Fast OpenERP migration framework
+================================
 
 .. warning:: Reminder
     This tool is highly experimental and is distributed in the hope that it
-    will be useful, but WITHOUT ANY WARRANTY of FITNESS FOR A PARTICULAR
+    might be useful, but WITHOUT ANY WARRANTY of FITNESS FOR A PARTICULAR
     PURPOSE. In particular, if you're using OpenERP for your company, you
     should consider purchasing an OpenERP Enterprise contract that will
     provide you with the best and riskless migration path for your database
@@ -37,7 +37,7 @@ Usage
 
 This tool offer a single "migrate" script::
 
-    $ sandbox/bin/migrate -s source_dbname -t target_dbname
+    $ sandbox/bin/migrate -s source_dbname -t target_dbname -m res_partner account_move
 
 If you want to inpect the temporary CSV files created, use the --keepcsv
 option. They will be stored in a temporary directory under the current
@@ -57,9 +57,11 @@ The different internal steps are:
 
  - exporting CSV from the old database
  - Transforming CSV to match the target database
- - reinjecting into OpenERP in the right order (possibly in 2-pass)
+ - Postprocessing CSV files to fix some data links
+ - reinjecting into OpenERP
+ - updating pre-existing data with incoming data
 
-The transformation of CSV files is done using a simple mapping file written in Yaml:
+The transformation of CSV files is done using a mapping file written in Yaml:
 
 TODO: mapping example with different scenario (splitting lines, generating new
 ids, modifying output, etc.)
