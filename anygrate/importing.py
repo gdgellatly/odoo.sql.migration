@@ -49,3 +49,4 @@ def import_from_csv(filepaths, connection):
             break
     else:
             LOG.info('\n\n***\n* Successfully imported all csv files!! :-)\n***\n')
+    return remaining

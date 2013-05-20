@@ -112,7 +112,10 @@ def migrate(source_db, target_db, source_models, mapping_name,
     # import data in the target
     print(u'Trying to import data in the target database...')
     target_files = [join(target_dir, '%s.target2.csv' % c) for c in target_tables]
-    import_from_csv(target_files, target_connection)
+    remaining = import_from_csv(target_files, target_connection)
+    if remaining:
+        print(u'Please improve the mapping by inspecting the errors above')
+        return
 
     # execute deferred updates for preexisting data
     print(u'Updating pre-existing data...')
