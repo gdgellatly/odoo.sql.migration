@@ -46,6 +46,10 @@ def main():
                         'the file must be stored in the mappings dir'  # FIXME allow a real path
                         'Exemple: openerp6.1-openerp7.0.yml'
                         )
+    parser.add_argument('-w', '--write',
+                        action='store_true', default=False,
+                        help=u'Really write to the target database if migration is successfull'
+                        )
 
     args = parser.parse_args()
     source_db, target_db, models = args.source, args.target, args.models
@@ -61,13 +65,13 @@ def main():
     tempdir = mkdtemp(prefix=source_db + '-' + str(int(time.time()))[-4:] + '-',
                       dir=abspath('.'))
     migrate(source_db, target_db, models, mapping_name,
-            excluded_models, target_dir=tempdir)
+            excluded_models, target_dir=tempdir, write=args.write)
     if not args.keepcsv:
         shutil.rmtree(tempdir)
 
 
 def migrate(source_db, target_db, source_models, mapping_name,
-            excluded_models=None, target_dir=None):
+            excluded_models=None, target_dir=None, write=False):
     """ The main migration function
     """
     source_connection = psycopg2.connect("dbname=%s" % source_db)
@@ -127,5 +131,9 @@ def migrate(source_db, target_db, source_models, mapping_name,
             continue
         processor.update_one(filepath, target_connection)
 
-    # \o/
-    print(u'Finished ! \o/')
+    if write:
+        target_connection.commit()
+        print(u'Finished, and transaction committed !! \o/')
+    else:
+        target_connection.rollback()
+        print(u'Finished \o/ Use --write to really write to the target database')

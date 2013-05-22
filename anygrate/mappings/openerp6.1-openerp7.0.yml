@@ -391,6 +391,9 @@ point_of_sale:
     pos_order.*:
     pos_order.__discriminator__:
         - name
+    pos_order_line.*:
+    pos_order_line.__discriminator__:
+        - name
     pos_order.command_number: __forget__  # specific
     pos_order.draft_number: __forget__  # specific
     pos_order.from_wizard: __forget__  # specific
@@ -398,6 +401,8 @@ point_of_sale:
     pos_order.return_anomalie: __forget__  # specific
     pos_order.term_id: __forget__  # specific
     pos_category.*:
+    pos_category.__discriminator__:
+        - name
     account_bank_statement.pos_session_id:
         account_bank_statement.pos_session_id:
 
@@ -412,10 +417,31 @@ point_of_sale:
 
 product:
     product_product.*:
+    product_product.prestation: __forget__  # specific
+    product_product.producer_code: __forget__  # specific
+    product_product.producer_id: __forget__  # specific
+    product_product.vae_type: __forget__  # specific
+    product_product.vae: __forget__  # specific
+    product_product.douane_number: __forget__  # specific
+    product_product.internet: __forget__  # specific
+    product_product.product_image_small:
+        product_product.image_small:
+    product_product.product_image:
+        product_product.image:
+    product_product.__discriminator__:
+        - name_template
     product_template.*:
+    product_template.__discriminator__:
+        - name
     product_uom.*:
+    product_uom.__discriminator__:
+        - name
     product_uom_categ.*:
+    product_uom_categ.__discriminator__:
+        - name
     product_category.*:
+    product_category.__discriminator__:
+        - name
     product_pricelist.*:
     product_pricelist.__discriminator__:
         - name
