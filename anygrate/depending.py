@@ -94,7 +94,7 @@ def get_sql_dependencies(target_connection, tables, real_tables, excluded_tables
     third_tables = set()
     potentials_m2m = set()
     if related_tables is None:
-    	related_tables = set()
+        related_tables = set()
     for table in tables:
         with target_connection.cursor() as c:
             m2o = set()
@@ -128,65 +128,72 @@ def get_sql_dependencies(target_connection, tables, real_tables, excluded_tables
   ccu ON ccu.constraint_name = tc.constraint_name
   WHERE constraint_type = 'FOREIGN KEY' AND
   ccu.table_name='%s';""" % table
-	    # On n'execute la requete cherche que les references pour les vraies tables
-	    if table in real_tables:
-            	c.execute(query_table_ref)
-            	results_ref = c.fetchall()
+        # On n'execute la requete cherche que les references pour les
+        # vraies tables
+        if table in real_tables:
+            c.execute(query_table_ref)
+            results_ref = c.fetchall()
             if results_fk:
                 for fk in results_fk:
                     # Cas des structures arborescentes (reflexives)
                     tbl = fk[0]
                     if tbl in path:
                         LOG.warn('Dependency LOOP: '
-                                 '%s has a m2o to %s which is one of its ancestors (path=%r)',
+                                 '%s has a m2o to %s which is one of its '
+                                 'ancestors (path=%r)',
                                  table, tbl, path)
                     if tbl not in seen:
                         m2o.add(tbl)
                         seen.add(tbl)
-			real_tables.append(tbl)
-            if table in real_tables:
-	    	diff_tables = set(results_ref).difference(set(results_fk))
-	    if table not in real_tables:
-		diff_tables = None
-            if diff_tables is not None:
-                for t in diff_tables:
-		    tbl = t[0]
-		    query_third_tables = """
+                        real_tables.append(tbl)
+        if table in real_tables:
+            diff_tables = set(results_ref).difference(set(results_fk))
+        if table not in real_tables:
+            diff_tables = None
+        if diff_tables is not None:
+            for t in diff_tables:
+                tbl = t[0]
+                query_third_tables = """
 SELECT column_name
 FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = '%s';""" % tbl
-		    c.execute(query_third_tables)
-                    columns = c.fetchall()
-		    columns_list = []
-                    if columns:
-                        for item in columns:
-			    columns_list.append(item[0])
-			columns_set = set(columns_list)
-			if 'id' in columns_set:
-			    continue
+                c.execute(query_third_tables)
+                columns = c.fetchall()
+                columns_list = []
+                if columns:
+                    for item in columns:
+                        columns_list.append(item[0])
+                    columns_set = set(columns_list)
+                    if 'id' in columns_set:
+                        continue
                         if tbl not in seen:
                             seen.add(tbl)
                             if tbl not in related_tables:
                                 related_tables.add(tbl)
-                    	        if tbl in path:
-                        	    LOG.warn('Dependency LOOP: '
-                                	     '%s has a m2m to %s which is one of its ancestors (path=%r)',
-                                 	     table, tbl, path)
-                    	        if tbl not in m2m:
+                                if tbl in path:
+                                    LOG.warn('Dependency LOOP: '
+                                             '%s has a m2m to %s which is one of'
+                                             'its ancestors (path=%r)',
+                                             table, tbl, path)
+                                if tbl not in m2m:
                                     #m2m.add(tbl) # ccomb disabled temporarily
                                     pass
-	for t in m2m:
-            results, related_tables = get_sql_dependencies(target_connection, (t,),
-                                    real_tables, path=path+(table,),
-                                    excluded_tables=excluded_tables,
-                                    seen=seen, related_tables=related_tables)
-            res += results
-        for t in m2o:
-            results, related_tables = get_sql_dependencies(target_connection, (t,),
-                                    real_tables, path=path+(table,),
-                                    excluded_tables=excluded_tables,
-                                    seen=seen, related_tables=related_tables)
-            res += results
+    for t in m2m:
+        results, related_tables = get_sql_dependencies(target_connection, (t,),
+                                                       real_tables,
+                                                       path=path+(table,),
+                                                       excluded_tables=excluded_tables,
+                                                       seen=seen,
+                                                       related_tables=related_tables)
+        res += results
+    for t in m2o:
+        results, related_tables = get_sql_dependencies(target_connection, (t,),
+                                                       real_tables,
+                                                       path=path+(table,),
+                                                       excluded_tables=excluded_tables,
+                                                       seen=seen,
+                                                       related_tables=related_tables)
+        res += results
         #if model == 'ir.actions.actions':
         #    model = 'ir.actions'
         if table not in res and table not in related_tables:
