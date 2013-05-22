@@ -53,9 +53,9 @@ if __name__ == '__main__':
     main()
 
 
-def add_related_tables_to_tables_dependencies(target_connection, tables,
-                                              excluded_tables, path=None,
-                                              seen=None, related_tables=None):
+def add_related_tables(target_connection, tables,
+                       excluded_tables, path=None,
+                       seen=None, related_tables=None):
     res, related_tables = get_sql_dependencies(target_connection, tables,
                                                tables, excluded_tables)
     for tbl in related_tables:
@@ -63,9 +63,9 @@ def add_related_tables_to_tables_dependencies(target_connection, tables,
     return res
 
 
-def add_related_tables_to_models_dependencies(username, pwd, dbname, models,
-                                              excluded_models, path=None,
-                                              seen=None, related_tables=None):
+def add_related_models(username, pwd, dbname, models,
+                       excluded_models, path=None,
+                       seen=None, related_tables=None):
 
     res, related_tables = get_dependencies(username, pwd, dbname, models,
                                            excluded_models)
