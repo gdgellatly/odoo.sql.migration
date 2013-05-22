@@ -8,6 +8,7 @@ from .importing import import_from_csv
 from .mapping import Mapping
 from .processing import CSVProcessor
 from .depending import get_sql_dependencies
+from .depending import add_related_tables
 from .depending import get_fk_to_update
 import logging
 from os.path import basename, join, abspath, dirname, exists
@@ -81,7 +82,7 @@ def migrate(source_db, target_db, source_models, mapping_name,
     print(u'Computing the real list of tables to export...')
     #source_models, _ = get_dependencies('admin', 'admin',
     #                                    source_db, source_models, excluded_models)
-    source_models, _ = get_sql_dependencies(source_connection, source_models, [], excluded_models)
+    source_models = add_related_tables(source_connection, source_models, excluded_models)
     print(u'The real list of models to export is: %s' % ', '.join(source_models))
 
     # construct the mapping and the csv processor
