@@ -264,6 +264,7 @@ Now we can import a csv file using the mapping:
 
     >>> from anygrate import importing
     >>> importing.import_from_csv([join(directory, 'res_users.csv')], connection)
+    ['/tmp/.../res_users.csv']
     >>> import shutil
     >>> shutil.rmtree(directory)
     >>> shutil.rmtree(directory2)
