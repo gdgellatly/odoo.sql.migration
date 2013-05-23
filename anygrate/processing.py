@@ -20,6 +20,7 @@ class CSVProcessor(object):
         self.writers = {}
         self.updated_values = {}
         self.fk_mapping = {}
+        self.lines = 0
 
     def get_target_columns(self, filepaths):
         """ Compute target columns with source columns + mapping
@@ -144,6 +145,7 @@ class CSVProcessor(object):
             reader = csv.DictReader(source_csv, delimiter=',')
             # process each csv line
             for source_row in reader:
+                self.lines += 1
                 target_rows = {}
                 # process each column (also handle '_' as a possible new column)
                 source_row.update({'_': None})

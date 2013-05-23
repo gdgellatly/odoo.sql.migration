@@ -73,6 +73,7 @@ def migrate(source_db, target_db, source_tables, mapping_name,
             excluded_models=None, target_dir=None, write=False):
     """ The main migration function
     """
+    start_time = time.time()
     source_connection = psycopg2.connect("dbname=%s" % source_db)
     target_connection = psycopg2.connect("dbname=%s" % target_db)
 
@@ -137,3 +138,9 @@ def migrate(source_db, target_db, source_tables, mapping_name,
     else:
         target_connection.rollback()
         print(u'Finished \o/ Use --write to really write to the target database')
+
+    seconds = time.time() - start_time
+    lines = processor.lines
+    rate = lines / seconds
+    print(u'Migrated %s lines in %s seconds (%s lines/s)'
+          % (processor.lines, int(seconds), int(rate)))
