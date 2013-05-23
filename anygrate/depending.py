@@ -94,6 +94,8 @@ def get_sql_dependencies(target_connection, tables, initial_tables,
     if related_tables is None:
         related_tables = set()
     for table in tables:
+        if table in seen and table in initial_tables:
+            continue
         with target_connection.cursor() as c:
             m2o = set()
             m2m = set()
