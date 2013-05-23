@@ -173,6 +173,7 @@ csv files be generated
     {'res_partner': ['id',
                      'name'],
      'res_users': ['foobar',
+                   'id',
                    'login',
                    'name',
                    'partner_id']}
@@ -182,7 +183,7 @@ csv files be generated
     ['res_partner.csv', 'res_partner.target.csv', 'res_partner.target2.csv', 'res_partner.update.csv', 'res_partner.update2.csv', 'res_users.csv', 'res_users.target.csv', 'res_users.target2.csv', 'res_users.update.csv', 'res_users.update2.csv']
     >>> import csv
     >>> sorted(csv.DictReader(open(join(directory, 'res_users.target2.csv'))).next().keys())
-    ['foobar', 'login', 'name', 'partner_id']
+    ['foobar', 'id', 'login', 'name', 'partner_id']
 
 Process with partial_wildcard:
 
@@ -227,7 +228,7 @@ csv files, then remove the lines from the csv.
 
     >>> from anygrate.exporting import extract_existing
     >>> source_tables = ['res_users', 'res_partner', 'account_move']
-    >>> result = extract_existing(source_tables, mapping.discriminators, connection)
+    >>> result = extract_existing(source_tables, [], mapping.discriminators, connection)
     >>> result['res_users'][0]['login']
     'demo'
 
@@ -260,7 +261,7 @@ tc.constraint_name = kcu.constraint_name JOIN information_schema.constraint_colu
 ccu ON ccu.constraint_name = tc.constraint_name
 WHERE constraint_type = 'FOREIGN KEY' AND ccu.table_name='one_model';
 
-Now we can import a csv file using the mapping:
+Now we can import a csv file using the mapping. The list of not imported tables is returned:
 
     >>> from anygrate import importing
     >>> importing.import_from_csv([join(directory, 'res_users.csv')], connection)

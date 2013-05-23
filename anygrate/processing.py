@@ -202,6 +202,7 @@ class CSVProcessor(object):
     def postprocess_one(self, target_filepath, existing_records=None):
         """ Postprocess one target csv file
         """
+        existing_records = existing_records or {}
         table = basename(target_filepath).rsplit('.', 2)[0]
         with open(target_filepath, 'rb') as target_csv:
             reader = csv.DictReader(target_csv, delimiter=',')
@@ -226,7 +227,7 @@ class CSVProcessor(object):
                         value = int(value)
                         postprocessed_row[key] = self.fk_mapping[table].get(value, value)
                 # don't write m2m lines if they exist in the target
-                # FIXME: refactor these 4 lines with process_one?
+                # FIXME: refactor these 4 lines with those from process_one()?
                 discriminators = self.mapping.discriminators.get(table)
                 existing = existing_records.get(table, [])
                 existing_without_id = [{k: v for k, v in nt.iteritems() if k != 'id'}

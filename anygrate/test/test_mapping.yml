@@ -3,6 +3,7 @@ base:
     res_users.__discriminator__:
         - login
     res_users.id:
+        res_users.id:
         # this allows to link the new partner with the existing user
         res_users.partner_id: __copy__
         # define a function body to use for this column mapping
