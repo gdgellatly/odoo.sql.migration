@@ -147,16 +147,16 @@ def get_sql_dependencies(target_connection, tables, initial_tables,
                         if tbl not in seen:
                             m2o.add(tbl)
                 elif table not in initial_tables:
-                        to_import = True
-                        for fk in results_fk:
-                            tbl = fk[0]
-                            if tbl not in initial_tables:
-                                to_import = False
-                        if to_import:
-                            related_tables.add(table)
-                        elif not to_import:
-                            excluded_tables.append(table)
-                        seen.add(tbl)
+                    to_import = True
+                    for fk in results_fk:
+                        tbl = fk[0]
+                        if tbl not in initial_tables:
+                            to_import = False
+                    if to_import:
+                        related_tables.add(table)
+                    elif not to_import:
+                        excluded_tables.append(table)
+                    seen.add(tbl)
             if table in real_tables and table not in excluded_tables:
                 diff_tables = set(results_ref).difference(set(results_fk))
                 for t in diff_tables:
@@ -187,7 +187,8 @@ WHERE TABLE_NAME = '%s';""" % tbl
                                     m2m.add(tbl) # ccomb disabled temporarily
         if table not in res and table not in related_tables and table not in excluded_tables:
             initial_tables.append(table)
-        for t in m2m:
+        for t in m2o:
+            real_tables.add(t)
             results, related_tables = get_sql_dependencies(target_connection, (t,),
                                                            initial_tables, real_tables,
                                                            path=path+(table,),
@@ -195,8 +196,7 @@ WHERE TABLE_NAME = '%s';""" % tbl
                                                            seen=seen,
                                                            related_tables=related_tables)
             res += results
-        for t in m2o:
-            real_tables.add(t)
+        for t in m2m:
             results, related_tables = get_sql_dependencies(target_connection, (t,),
                                                            initial_tables, real_tables,
                                                            path=path+(table,),
