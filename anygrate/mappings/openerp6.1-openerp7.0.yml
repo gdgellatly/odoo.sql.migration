@@ -11,6 +11,7 @@ base:
         - name
 
     res_country.*:
+    res_country.create_uid: __forget__
     res_country.__discriminator__:
         - code
 
@@ -234,15 +235,7 @@ account:
     account_journal_column.*:
 
     account_move.*:
-    account_move.__discriminator__:
-        - name
-        - ref
-        - date
     account_move_line.*:
-    account_move_line.__discriminator__:
-        - name
-        - ref
-        - date
     account_payment_term.*:
     account_payment_term.__discriminator__:
         - name
@@ -397,11 +390,7 @@ stock:
 
 point_of_sale:
     pos_order.*:
-    pos_order.__discriminator__:
-        - name
     pos_order_line.*:
-    pos_order_line.__discriminator__:
-        - name
     pos_order.command_number: __forget__  # specific
     pos_order.draft_number: __forget__  # specific
     pos_order.from_wizard: __forget__  # specific
@@ -425,6 +414,7 @@ point_of_sale:
 
 product:
     product_product.*:
+    product_ul.*:
     product_product.prestation: __forget__  # specific
     product_product.producer_code: __forget__  # specific
     product_product.producer_id: __forget__  # specific
@@ -432,6 +422,7 @@ product:
     product_product.vae: __forget__  # specific
     product_product.douane_number: __forget__  # specific
     product_product.internet: __forget__  # specific
+    product_product.weight_ul: __forget__  # specific FIXME
     product_product.product_image_small:
         product_product.image_small:
     product_product.product_image:

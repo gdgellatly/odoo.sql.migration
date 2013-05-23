@@ -193,9 +193,8 @@ class CSVProcessor(object):
                         self.fk_mapping[table][int(target_row['id'])] = real_target_id
                         self.updatewriters[table].writerow(target_row)
                     else:
-                        # offset the id of the line, except for m2m
-                        if (self.fields2update and 'id' in target_row
-                                and table in self.fields2update.itervalues()):
+                        # offset the id of the line, except for m2m (no id)
+                        if 'id' in target_row:
                             last_id = self.mapping.last_id
                             target_row['id'] = int(target_row['id']) + last_id
                             # otherwise write the target csv line
