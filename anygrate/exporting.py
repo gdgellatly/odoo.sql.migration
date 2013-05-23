@@ -6,11 +6,11 @@ logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(basename(__file__))
 
 
-def export_to_csv(source_tables, dest_dir, connection):
+def export_to_csv(tables, dest_dir, connection):
     """ Export data using postgresql COPY
     """
     csv_filenames = []
-    for table in source_tables:
+    for table in tables:
         filename = join(dest_dir, table + '.csv')
         with connection.cursor() as cursor, open(filename, 'w') as f:
             cursor.copy_expert("COPY %s TO STDOUT WITH CSV HEADER NULL ''" % table, f)
@@ -18,7 +18,7 @@ def export_to_csv(source_tables, dest_dir, connection):
     return csv_filenames
 
 
-def extract_existing(source_tables, discriminators, connection):
+def extract_existing(tables, m2m_tables, discriminators, connection):
     """ Extract data from the target db,
     focusing only on discriminator columns.
     Extracted data is a dict whose values are lists of named tuples:
@@ -27,12 +27,14 @@ def extract_existing(source_tables, discriminators, connection):
     This function is used to get the list of data to update in the target db
     """
     result = {}
-    for table in source_tables:
+    for table in tables:
         result[table] = []
         with connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
             if table not in discriminators:
-                raise ValueError(u'No discriminator defined for table %s' % table)
+                LOG.warning(u'No discriminator defined for table %s', table)
+                continue
             columns = discriminators[table]
-            cursor.execute('select %s from %s' % (', '.join(columns + ['id']), table))
+            id_column = ['id'] if table not in m2m_tables else []
+            cursor.execute('select %s from %s' % (', '.join(columns + id_column), table))
             result[table] = cursor.fetchall()
     return result

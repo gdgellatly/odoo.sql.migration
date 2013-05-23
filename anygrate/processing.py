@@ -174,15 +174,15 @@ class CSVProcessor(object):
                         continue
                     discriminators = self.mapping.discriminators.get(table)
                     # if the line exists in the target db, we don't offset and write to update file
-                    # (we recognize by matching the set of discriminator values against existing)
+                    # (we recognize by matching the dict of discriminator values against existing)
                     existing = existing_records.get(table, [])
-                    existing_without_id = [{v for k, v in nt.iteritems() if k != 'id'}
+                    existing_without_id = [{k: v for k, v in nt.iteritems() if k != 'id'}
                                            for nt in existing]
-                    discriminator_values = {target_row[d] for d in (discriminators or [])}
+                    discriminator_values = {d: target_row[d] for d in (discriminators or [])}
                     if discriminators and discriminator_values in existing_without_id:
                         # find the id of the existing record in the target
                         for i, nt in enumerate(existing):
-                            if discriminator_values == {v for k, v in nt.items() if k != 'id'}:
+                            if discriminator_values == {k: v for k, v in nt.items() if k != 'id'}:
                                 real_target_id = existing[i]['id']
                                 break
                         self.fk_mapping.setdefault(table, {})
@@ -225,7 +225,17 @@ class CSVProcessor(object):
                     if key == 'id' and table in self.fk_mapping:
                         value = int(value)
                         postprocessed_row[key] = self.fk_mapping[table].get(value, value)
-                self.writers[table].writerow(postprocessed_row)
+                # don't write m2m lines if they exist in the target
+                # FIXME: refactor these 4 lines with process_one?
+                discriminators = self.mapping.discriminators.get(table)
+                existing = existing_records.get(table, [])
+                existing_without_id = [{k: v for k, v in nt.iteritems() if k != 'id'}
+                                       for nt in existing]
+                discriminator_values = {d: postprocessed_row[d] for d in (discriminators or [])}
+                if ('id' in postprocessed_row
+                        or {k: int(v) for k, v in discriminator_values.iteritems()}
+                        not in existing_without_id):
+                    self.writers[table].writerow(postprocessed_row)
 
     def update_one(self, filepath, connection):
         """ Apply updates in the target db with update file

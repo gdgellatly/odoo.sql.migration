@@ -7,7 +7,6 @@ from .exporting import export_to_csv, extract_existing
 from .importing import import_from_csv
 from .mapping import Mapping
 from .processing import CSVProcessor
-from .depending import get_sql_dependencies
 from .depending import add_related_tables
 from .depending import get_fk_to_update
 import logging
@@ -70,7 +69,7 @@ def main():
         shutil.rmtree(tempdir)
 
 
-def migrate(source_db, target_db, source_models, mapping_name,
+def migrate(source_db, target_db, source_tables, mapping_name,
             excluded_models=None, target_dir=None, write=False):
     """ The main migration function
     """
@@ -86,13 +85,13 @@ def migrate(source_db, target_db, source_models, mapping_name,
     print(u'Computing the real list of tables to export...')
     #source_models, _ = get_dependencies('admin', 'admin',
     #                                    source_db, source_models, excluded_models)
-    source_models = add_related_tables(source_connection, source_models, excluded_models)
-    print(u'The real list of models to export is: %s' % ', '.join(source_models))
+    source_tables, m2m_tables = add_related_tables(source_connection, source_tables,
+                                                   excluded_models)
+    print(u'The real list of models to export is: %s' % ', '.join(source_tables))
 
     # construct the mapping and the csv processor
     # (TODO? autodetect mapping file with source and target db)
     print('Exporting tables as CSV files...')
-    source_tables = [model.replace('.', '_') for model in source_models]
     filepaths = export_to_csv(source_tables, target_dir, source_connection)
     mappingfile = join(HERE, 'mappings', mapping_name)
     mapping = Mapping(target_modules, mappingfile)
@@ -106,7 +105,8 @@ def migrate(source_db, target_db, source_models, mapping_name,
     processor.fields2update = get_fk_to_update(target_connection, target_tables)
 
     # extract the existing records from the target database
-    existing_records = extract_existing(target_tables, mapping.discriminators, target_connection)
+    existing_records = extract_existing(target_tables, m2m_tables,
+                                        mapping.discriminators, target_connection)
 
     # create migrated csv files from exported csv
     print(u'Migrating CSV files...')

@@ -59,7 +59,7 @@ def add_related_tables(target_connection, tables,
                                                tables, tables, excluded_tables)
     for tbl in related_tables:
         res.append(tbl)
-    return res
+    return res, related_tables
 
 
 def add_related_models(username, pwd, dbname, models,
@@ -186,7 +186,7 @@ WHERE TABLE_NAME = '%s';""" % tbl
                                              'its ancestors (path=%r)',
                                              table, tbl, path)
                                 if tbl not in m2m:
-                                    m2m.add(tbl) # ccomb disabled temporarily
+                                    m2m.add(tbl)
         if table not in res and table not in related_tables and table not in excluded_tables:
             initial_tables.append(table)
         for t in m2o:
@@ -261,7 +261,7 @@ def get_dependencies(username, pwd, dbname, models, excluded_models,
                              '%s has a m2m %r to %s which is one of its ancestors (path=%r)',
                              model, field, m, path)
                 if m not in seen:
-                    #m2m.add(m)  # ccomb disabled temporarily
+                    #m2m.add(m)
                     seen.add(m)
                 if third_table not in seen:
                     seen.add(third_table)

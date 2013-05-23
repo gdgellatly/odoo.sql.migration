@@ -119,6 +119,9 @@ base:
     # Tables de jointures
     res_groups_users_rel.*:
     res_company_users_rel.*:
+    res_company_users_rel.__discriminator__:
+        - cid
+        - user_id
     res_partner_category_rel.*:
     res_groups_implied_rel.*:
 
@@ -165,6 +168,9 @@ account:
     account_account.__discriminator__:
         - name
     account_bank_statement.*:
+    account_bank_statement.balance_end_cash: __forget__
+    account_bank_statement.shop_id: __forget__  # create pos_sessions?
+    account_bank_statement.term_id: __forget__  # specific
 
     account_chart_template.*:
     account_chart_template.property_reserve_and_surplus_account: __forget__
@@ -194,6 +200,8 @@ account:
     account_journal.view_id: __forget__
 
     account_move_reconcile.*:
+    account_move_reconcile.__discriminator__:
+        - name
 
     account_tax.*:
     account_tax.__discriminator__:
