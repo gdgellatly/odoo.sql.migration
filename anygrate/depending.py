@@ -72,6 +72,7 @@ def add_related_models(username, pwd, dbname, models,
         res.append(tbl)
     return res
 
+
 def get_sql_dependencies(target_connection, tables, initial_tables,
                          real_tables, excluded_tables, path=None, seen=None,
                          related_tables=None):
@@ -90,7 +91,8 @@ def get_sql_dependencies(target_connection, tables, initial_tables,
     if excluded_tables is not None:
         for excl_table in excluded_tables:
             seen.add(excl_table)
-    #excluded_tables = None
+    if excluded_tables is None:
+        excluded_tables = []
     if related_tables is None:
         related_tables = set()
     for table in tables:
@@ -189,16 +191,20 @@ WHERE TABLE_NAME = '%s';""" % tbl
             initial_tables.append(table)
         for t in m2o:
             real_tables.add(t)
-            results, related_tables = get_sql_dependencies(target_connection, (t,),
-                                                           initial_tables, real_tables,
+            results, related_tables = get_sql_dependencies(target_connection,
+                                                           (t,),
+                                                           initial_tables,
+                                                           real_tables,
                                                            path=path+(table,),
                                                            excluded_tables=excluded_tables,
                                                            seen=seen,
                                                            related_tables=related_tables)
             res += results
         for t in m2m:
-            results, related_tables = get_sql_dependencies(target_connection, (t,),
-                                                           initial_tables, real_tables,
+            results, related_tables = get_sql_dependencies(target_connection,
+                                                           (t,),
+                                                           initial_tables,
+                                                           real_tables,
                                                            path=path+(table,),
                                                            excluded_tables=excluded_tables,
                                                            seen=seen,
