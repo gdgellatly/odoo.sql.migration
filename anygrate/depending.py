@@ -81,7 +81,8 @@ def get_sql_dependencies(target_connection, tables, initial_tables,
     If you want to exclude some tables, use the following syntax :
     excluded_tables = ['res.currency', 'res.country']
     initial_tables and real_tables are first initialized with the given tables
-    - initial_tables represents the given psql tables list
+    - initial_tables represents the given psql tables list at first
+    then add the real_tables already met
     - real_tables records table processed only if it had an id column
     """
     res = []
@@ -104,7 +105,6 @@ def get_sql_dependencies(target_connection, tables, initial_tables,
             m2o = set()
             m2m = set()
             seen.add(table)
-
             query_fk = """
   SELECT DISTINCT pg_cl_2.relname as related_table
   FROM pg_class pg_cl_1, pg_class pg_cl_2, pg_constraint,
@@ -131,28 +131,17 @@ def get_sql_dependencies(target_connection, tables, initial_tables,
             c.execute(query_fk)
             foreign_keys = c.fetchall()
 
-            if foreign_keys:
-                if table in real_tables:
+            if table in real_tables:
+                if foreign_keys:
                     for foreign_key in foreign_keys:
                         tbl = foreign_key[0]
                         if tbl in path:
                             LOG.warn('Dependency LOOP: '
                                      '%s has a m2o to %s which is one of its '
                                      'ancestors (path=%r)',
-                                     table, tbl, path)
+                                       table, tbl, path)
                         if tbl not in seen:
                             m2o.add(tbl)
-                else:
-                    to_import = True
-                    for foreign_key in foreign_keys:
-                        tbl = foreign_key[0]
-                        if tbl not in initial_tables:
-                            to_import = False
-                    if to_import:
-                        related_tables.add(table)
-                    elif not to_import:
-                        excluded_tables.append(table)
-            if table in real_tables:
                 c.execute(query_table_ref)
                 results_ref = c.fetchall()
                 diff_tables = set(results_ref).difference(set(foreign_keys))
@@ -181,7 +170,19 @@ WHERE TABLE_NAME = '%s';""" % tbl
                                              table, tbl, path)
                                 if tbl not in m2m:
                                     m2m.add(tbl)
-        if table not in related_tables and table not in excluded_tables:
+            else:
+                if foreign_keys:
+                    to_import = True
+                    for foreign_key in foreign_keys:
+                        tbl = foreign_key[0]
+                        if tbl not in initial_tables:
+                            to_import = False
+                    if to_import:
+                        related_tables.add(table)
+                    elif not to_import:
+                        excluded_tables.append(table)
+
+        if table not in related_tables and table not in excluded_tables and table not in initial_tables:
             initial_tables.append(table)
         for t in m2o:
             real_tables.add(t)
@@ -204,6 +205,7 @@ WHERE TABLE_NAME = '%s';""" % tbl
                                                            seen=seen,
                                                            related_tables=related_tables)
             res += results
+
         if table not in related_tables and table not in excluded_tables:
             res.append(table)
     return res, related_tables
