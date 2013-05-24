@@ -178,13 +178,15 @@ class CSVProcessor(object):
                     # if the line exists in the target db, we don't offset and write to update file
                     # (we recognize by matching the dict of discriminator values against existing)
                     existing = existing_records.get(table, [])
-                    existing_without_id = [{k: v for k, v in nt.iteritems() if k != 'id'}
+                    existing_without_id = [{k: str(v) for k, v in nt.iteritems() if k != 'id'}
                                            for nt in existing]
                     discriminator_values = {d: target_row[d] for d in (discriminators or [])}
-                    if discriminators and discriminator_values in existing_without_id:
+                    if (discriminators and 'id' in target_row
+                            and discriminator_values in existing_without_id):
                         # find the id of the existing record in the target
                         for i, nt in enumerate(existing):
-                            if discriminator_values == {k: v for k, v in nt.items() if k != 'id'}:
+                            if discriminator_values == {k: str(v)
+                                                        for k, v in nt.iteritems() if k != 'id'}:
                                 real_target_id = existing[i]['id']
                                 break
                         self.fk_mapping.setdefault(table, {})

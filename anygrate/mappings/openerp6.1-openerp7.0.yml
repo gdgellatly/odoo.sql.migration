@@ -167,7 +167,8 @@ account:
     account_fiscal_position.__discriminator__:
         - name
     account_account.__discriminator__:
-        - name
+        - code
+        - company_id
     account_bank_statement.*:
     account_bank_statement.balance_end_cash: __forget__
     account_bank_statement.shop_id: __forget__  # create pos_sessions?

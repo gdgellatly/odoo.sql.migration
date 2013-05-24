@@ -1,3 +1,4 @@
+import sys
 import time
 import psycopg2
 import shutil
@@ -121,7 +122,7 @@ def migrate(source_db, target_db, source_tables, mapping_name,
     remaining = import_from_csv(target_files, target_connection)
     if remaining:
         print(u'Please improve the mapping by inspecting the errors above')
-        return
+        sys.exit(1)
 
     # execute deferred updates for preexisting data
     print(u'Updating pre-existing data...')
