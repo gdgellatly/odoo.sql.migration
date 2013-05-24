@@ -14,10 +14,12 @@ class Mapping(object):
     last_id = 1
     new_id = 1
     target_connection = None
+    fk2update = None
 
     def __init__(self, modules, filename):
         """ Open the file and compute the mapping
         """
+        self.fk2update = {}
         # load the full mapping file
         with open(filename) as stream:
             full_mapping = yaml.load(stream)
@@ -51,6 +53,13 @@ class Mapping(object):
                 continue
             for outcolumn, function in targets.items():
                 if function in ('__copy__', None):
+                    continue
+                if function.startswith('__fk__ '):
+                    if len(function.split()) != 2:
+                        raise ValueError('Error in the mapping file: "%s" is invalid in %s'
+                                         % (repr(function), outcolumn))
+                    self.fk2update[outcolumn] = function.split()[1]
+                    self.mapping[incolumn][outcolumn] = '__copy__'
                     continue
                 function_body = "def mapping_function(source_row, target_rows):\n"
                 if type(function) is not str:

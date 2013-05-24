@@ -104,7 +104,10 @@ def migrate(source_db, target_db, source_tables, mapping_name,
                                      target_tables, target_connection)
 
     print('Computing the list of Foreign Keys to update in the exported csv files...')
-    processor.fields2update = get_fk_to_update(target_connection, target_tables)
+    processor.fk2update = get_fk_to_update(target_connection, target_tables)
+
+    # update the list of fk to update with the fake fk given in the mapping
+    processor.fk2update.update(processor.mapping.fk2update)
 
     # extract the existing records from the target database
     existing_records = extract_existing(target_tables, m2m_tables,

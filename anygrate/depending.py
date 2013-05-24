@@ -287,10 +287,10 @@ def get_dependencies(username, pwd, dbname, models, excluded_models,
 def get_fk_to_update(connection, tables):
     """ Method to get back all columns referencing another table
     """
-    fields2update = {}
+    fk2update = {}
     with connection.cursor() as c:
         for table in tables:
-            if table not in fields2update:
+            if table not in fk2update:
                 if table == 'ir.actions':
                     table = 'ir.actions.actions'
                 query = """
@@ -304,12 +304,12 @@ WHERE constraint_type = 'FOREIGN KEY' AND
 ccu.table_name='%s';""" % table
                 c.execute(query)
                 results = c.fetchall()
-                fields2update[table] = results
+                fk2update[table] = results
     # transpose the result to obtain:
     # {'table.fkname': 'pointed_table', ...}
     # so that processing each input line is easier
     result = {}
-    for pointed_table, fknames in fields2update.iteritems():
+    for pointed_table, fknames in fk2update.iteritems():
         for fkname in fknames:
             result['.'.join(fkname)] = pointed_table
     return result

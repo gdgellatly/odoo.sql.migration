@@ -12,9 +12,9 @@ class CSVProcessor(object):
     """ Take a csv file, process it with the mapping
     and output a new csv file
     """
-    def __init__(self, mapping, fields2update=None):
+    def __init__(self, mapping, fk2update=None):
 
-        self.fields2update = fields2update or {}
+        self.fk2update = fk2update or {}
         self.mapping = mapping
         self.target_columns = {}
         self.writers = {}
@@ -214,7 +214,7 @@ class CSVProcessor(object):
                 # fix the foreign keys of the line
                 for key, value in target_row.items():
                     postprocessed_row[key] = value
-                    fk_table = self.fields2update.get(table + '.' + key)
+                    fk_table = self.fk2update.get(table + '.' + key)
                     # if this is a fk, fix it
                     if value and fk_table:
                         last_id = self.mapping.last_id

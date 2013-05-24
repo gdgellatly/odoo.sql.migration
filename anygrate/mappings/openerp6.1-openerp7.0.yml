@@ -152,6 +152,9 @@ mail:
 
 account:
     account_account.*:
+    account_account.__discriminator__:
+        - code
+        - company_id
     account_tax_code.*:
     account_tax_code.__discriminator__:
         - code
@@ -166,9 +169,6 @@ account:
     account_fiscal_position.*:
     account_fiscal_position.__discriminator__:
         - name
-    account_account.__discriminator__:
-        - code
-        - company_id
     account_bank_statement.*:
     account_bank_statement.balance_end_cash: __forget__
     account_bank_statement.shop_id: __forget__  # create pos_sessions?
@@ -236,7 +236,11 @@ account:
     account_journal_column.*:
 
     account_move.*:
+    account_move.company_id:
+        account_move.company_id: __fk__ res_company  # (related with store)
     account_move_line.*:
+    account_move_line.company_id:
+        account_move_line.company_id: __fk__ res_company  # (related with store)
     account_payment_term.*:
     account_payment_term.__discriminator__:
         - name
