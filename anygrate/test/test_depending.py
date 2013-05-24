@@ -13,19 +13,19 @@ class TestDepending(unittest.TestCase):
         """ Method to verify that the dependency order is right """
 
         connection = psycopg2.connect("dbname=test")
-        country = depending.add_related_tables(connection,
-                                               ['res_country'], None)
+        country, _ = depending.add_related_tables(connection,
+                                                  ['res_country'], None)
 
-        account = depending.add_related_tables(connection,
-                                               ['account_account'],
-                                               ['ir_model'],
-                                               None)
+        account, _ = depending.add_related_tables(connection,
+                                                  ['account_account'],
+                                                  ['ir_model'],
+                                                  None)
 
-        groups_excl = depending.add_related_tables(connection,
-                                                   ['res_groups'],
-                                                   ['ir_module_category',
-                                                   'ir_model'],
-                                                   None)
+        groups_excl, _ = depending.add_related_tables(connection,
+                                                      ['res_groups'],
+                                                      ['ir_module_category',
+                                                      'ir_model'],
+                                                      None)
 
         self.assertTrue(country is not None)
         self.assertTrue(account is not None)

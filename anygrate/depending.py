@@ -57,8 +57,7 @@ def add_related_tables(target_connection, tables,
                        seen=None, related_tables=None):
     res, related_tables = get_sql_dependencies(target_connection, tables,
                                                tables, tables, excluded_tables)
-    for tbl in related_tables:
-        res.append(tbl)
+    res += related_tables
     return res, related_tables
 
 
@@ -81,6 +80,9 @@ def get_sql_dependencies(target_connection, tables, initial_tables,
     Set excluded_models to None if there is no table to exclude.
     If you want to exclude some tables, use the following syntax :
     excluded_tables = ['res.currency', 'res.country']
+    initial_tables and real_tables are first initialized with the given tables
+    - initial_tables represents the given psql tables list
+    - real_tables records table processed only if it had an id column
     """
     res = []
     if seen is None:
@@ -96,14 +98,13 @@ def get_sql_dependencies(target_connection, tables, initial_tables,
     if related_tables is None:
         related_tables = set()
     for table in tables:
-        if table in seen and table in initial_tables:
+        if table in seen:
             continue
         with target_connection.cursor() as c:
             m2o = set()
             m2m = set()
             seen.add(table)
-            # Requete permettant de recuperer les tables referencees
-            # par les cle etrangeres de la table passee en entree
+
             query_fk = """
   SELECT DISTINCT pg_cl_2.relname as related_table
   FROM pg_class pg_cl_1, pg_class pg_cl_2, pg_constraint,
@@ -116,10 +117,7 @@ def get_sql_dependencies(target_connection, tables, initial_tables,
   AND pg_attr_2.attnum = pg_constraint.conkey[1]
   AND pg_attr_2.attrelid = pg_cl_1.oid;
   """ % table
-            c.execute(query_fk)
-            results_fk = c.fetchall()
-            # Requete permettant de recuperer toutes les tables referencant
-            # la table passee en entree
+
             query_table_ref = """
   SELECT tc.table_name
   FROM information_schema.table_constraints AS tc JOIN
@@ -129,18 +127,14 @@ def get_sql_dependencies(target_connection, tables, initial_tables,
   ccu ON ccu.constraint_name = tc.constraint_name
   WHERE constraint_type = 'FOREIGN KEY' AND
   ccu.table_name='%s';""" % table
-        # On cherche les references uniquement pour les tables
-        # possedant un id
-            if table in real_tables:
-                c.execute(query_table_ref)
-                results_ref = c.fetchall()
-            if results_fk:
-                # Si la table possede un identifiant
-                # On ajoute les m2o
+
+            c.execute(query_fk)
+            foreign_keys = c.fetchall()
+
+            if foreign_keys:
                 if table in real_tables:
-                    for fk in results_fk:
-                        # Cas des structures arborescentes (reflexives)
-                        tbl = fk[0]
+                    for foreign_key in foreign_keys:
+                        tbl = foreign_key[0]
                         if tbl in path:
                             LOG.warn('Dependency LOOP: '
                                      '%s has a m2o to %s which is one of its '
@@ -148,19 +142,20 @@ def get_sql_dependencies(target_connection, tables, initial_tables,
                                      table, tbl, path)
                         if tbl not in seen:
                             m2o.add(tbl)
-                elif table not in initial_tables:
+                else:
                     to_import = True
-                    for fk in results_fk:
-                        tbl = fk[0]
+                    for foreign_key in foreign_keys:
+                        tbl = foreign_key[0]
                         if tbl not in initial_tables:
                             to_import = False
                     if to_import:
                         related_tables.add(table)
                     elif not to_import:
                         excluded_tables.append(table)
-                    seen.add(tbl)
-            if table in real_tables and table not in excluded_tables:
-                diff_tables = set(results_ref).difference(set(results_fk))
+            if table in real_tables:
+                c.execute(query_table_ref)
+                results_ref = c.fetchall()
+                diff_tables = set(results_ref).difference(set(foreign_keys))
                 for t in diff_tables:
                     tbl = t[0]
                     query_third_tables = """
@@ -178,7 +173,6 @@ WHERE TABLE_NAME = '%s';""" % tbl
                             real_tables.add(tbl)
                             continue
                         if tbl not in seen:
-                            seen.add(tbl)
                             if tbl not in related_tables:
                                 if tbl in path:
                                     LOG.warn('Dependency LOOP: '
@@ -187,7 +181,7 @@ WHERE TABLE_NAME = '%s';""" % tbl
                                              table, tbl, path)
                                 if tbl not in m2m:
                                     m2m.add(tbl)
-        if table not in res and table not in related_tables and table not in excluded_tables:
+        if table not in related_tables and table not in excluded_tables:
             initial_tables.append(table)
         for t in m2o:
             real_tables.add(t)
@@ -210,7 +204,7 @@ WHERE TABLE_NAME = '%s';""" % tbl
                                                            seen=seen,
                                                            related_tables=related_tables)
             res += results
-        if table not in res and table not in related_tables and table not in excluded_tables:
+        if table not in related_tables and table not in excluded_tables:
             res.append(table)
     return res, related_tables
 
