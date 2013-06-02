@@ -25,7 +25,6 @@ base:
 
     # Users
     res_users.*:
-    res_users.term_id: __forget__  # specific
     res_users.__discriminator__:
         - login
     res_users.id:
@@ -39,6 +38,7 @@ base:
         res_partner.email:
     res_users.name:
         res_partner.name:
+        res_partner.display_name:
     res_users.active:
         res_partner.active:
     res_users.company_id:
@@ -63,16 +63,17 @@ base:
 
     # Partners
     res_partner.*:
+    res_partner.name:
+        res_partner.name:
+        res_partner.display_name:
     res_partner.__discriminator__:
         - name
-    res_partner.allow_refund: __forget__  # specific
-    res_partner.producer: __forget__  # specific
     res_partner.create_uid: __forget__  # FIXME : implement __defer__
     res_partner.write_uid: __forget__  # FIXME : implement __defer__
     res_users.context_tz:
         res_partner.tz:
     res_partner._:
-        res_partner.is_company: return True
+        res_partner.is_company: return False
         res_partner.notification_email_send: return 'comment'
 
     # addresses
@@ -94,6 +95,7 @@ base:
         res_partner.use_parent_address: return True # make a function which finds the value in the target database
     res_partner_address.name:
         res_partner.name: return source_row['name'] or source_row['street'] or source_row['city'] or 'noname'
+        res_partner.display_name: return source_row['name'] or source_row['street'] or source_row['city'] or 'noname'
     res_partner_address.partner_id:
         res_partner.parent_id:
 
@@ -126,6 +128,10 @@ base:
     res_partner_category_rel.*:
     res_groups_implied_rel.*:
 
+procurement:
+    procurement_order.*:
+    procurement_order.__discriminator__:
+        - name
 
 mail:
     mail.*:
@@ -172,7 +178,6 @@ account:
     account_bank_statement.*:
     account_bank_statement.balance_end_cash: __forget__
     account_bank_statement.shop_id: __forget__  # create pos_sessions?
-    account_bank_statement.term_id: __forget__  # specific
 
     account_chart_template.*:
     account_chart_template.property_reserve_and_surplus_account: __forget__
@@ -373,9 +378,17 @@ sale:
     sale_shop.shop_registry: __forget__
 
 stock:
+    stock_move.*:
+    stock_move.sale_line_id: __forget__  # FIXME __defer__
+    stock_move.__discriminator__:
+        - name
+        - company_id
+    stock_move.address_id:
+        stock_move.partner_id:
     stock_picking.*:
     stock_picking.__discriminator__:
         - name
+        - company_id
     stock_picking.address_id:
         stock_picking.partner_id:
     stock_location.*:
@@ -396,12 +409,6 @@ stock:
 point_of_sale:
     pos_order.*:
     pos_order_line.*:
-    pos_order.command_number: __forget__  # specific
-    pos_order.draft_number: __forget__  # specific
-    pos_order.from_wizard: __forget__  # specific
-    pos_order.init_state: __forget__  # specific
-    pos_order.return_anomalie: __forget__  # specific
-    pos_order.term_id: __forget__  # specific
     pos_category.*:
     pos_category.__discriminator__:
         - name
@@ -420,14 +427,6 @@ point_of_sale:
 product:
     product_product.*:
     product_ul.*:
-    product_product.prestation: __forget__  # specific
-    product_product.producer_code: __forget__  # specific
-    product_product.producer_id: __forget__  # specific
-    product_product.vae_type: __forget__  # specific
-    product_product.vae: __forget__  # specific
-    product_product.douane_number: __forget__  # specific
-    product_product.internet: __forget__  # specific
-    product_product.weight_ul: __forget__  # specific FIXME
     product_product.product_image_small:
         product_product.image_small:
     product_product.product_image:
@@ -466,3 +465,33 @@ purchase:
         purchase_order.partner_id:
     purchase_order_line.*:
     purchase_order_line.notes: __forget__
+
+
+ecox:  # FIXME move outside + option to load
+    fiche_vae.*:
+    vae_entretien.*:
+    fiche_vae.batterie_number: __forget__
+    fiche_vae.moteur_number: __forget__
+    fiche_vae.console_number: __forget__
+    res_users.term_id: __forget__  # specific
+    res_partner.allow_refund: __forget__  # specific
+    res_partner.producer: __forget__  # specific
+    account_bank_statement.term_id: __forget__  # specific
+    pos_order.command_number: __forget__  # specific
+    pos_order.draft_number: __forget__  # specific
+    pos_order.from_wizard: __forget__  # specific
+    pos_order.init_state: __forget__  # specific
+    pos_order.return_anomalie: __forget__  # specific
+    pos_order.term_id: __forget__  # specific
+    product_product.prestation: __forget__  # specific
+    product_product.producer_code: __forget__  # specific
+    product_product.producer_id: __forget__  # specific
+    product_product.vae_type: __forget__  # specific
+    product_product.vae: __forget__  # specific
+    product_product.douane_number: __forget__  # specific
+    product_product.internet: __forget__  # specific
+    product_product.weight_ul: __forget__  # specific FIXME
+    stock_move.pos_line_id: __forget__
+    stock_move.serial_id: __forget__
+    product_serial_number.*:
+

@@ -260,8 +260,7 @@ class CSVProcessor(object):
                                    % (table, columns, values, '%s'), tuple(args))
                     cursor.execute('SAVEPOINT savepoint')
                 except Exception, e:
-                    LOG.warn('Error importing file %s:\n%s',
-                             basename(filepath), e.message)
+                    LOG.warn('Error updating table %s:\n%s', table, e.message)
                     cursor = connection.cursor()
                     cursor.execute('ROLLBACK TO savepoint')
                     cursor.close()
