@@ -485,7 +485,8 @@ ecox:  # FIXME move outside + option to load
     pos_order.term_id: __forget__  # specific
     product_product.prestation: __forget__  # specific
     product_product.producer_code: __forget__  # specific
-    product_product.producer_id: __forget__  # specific
+    product_product.producer_id:
+        product_product.manufacturer:
     product_product.vae_type: __forget__  # specific
     product_product.vae: __forget__  # specific
     product_product.douane_number: __forget__  # specific
