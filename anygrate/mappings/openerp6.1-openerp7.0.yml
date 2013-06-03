@@ -130,8 +130,6 @@ base:
 
 procurement:
     procurement_order.*:
-    procurement_order.__discriminator__:
-        - name
 
 mail:
     mail.*:
@@ -183,8 +181,6 @@ account:
     account_chart_template.property_reserve_and_surplus_account: __forget__
 
     account_invoice.*:
-    account_invoice.__discriminator__:
-        - name
     account_invoice.address_contact_id: __forget__
     account_invoice.address_invoice_id: __forget__
 
@@ -207,8 +203,6 @@ account:
     account_journal.view_id: __forget__
 
     account_move_reconcile.*:
-    account_move_reconcile.__discriminator__:
-        - name
 
     account_tax.*:
     account_tax.__discriminator__:
@@ -368,8 +362,6 @@ analytic_user_function:
 sale:
     sale_order.*:
     sale_order.partner_order_id: __forget__
-    sale_order.__discriminator__:
-        - name
     sale_shop.*:
     sale_shop.__discriminator__:
         - name
@@ -380,15 +372,9 @@ sale:
 stock:
     stock_move.*:
     stock_move.sale_line_id: __forget__  # FIXME __defer__
-    stock_move.__discriminator__:
-        - name
-        - company_id
     stock_move.address_id:
         stock_move.partner_id:
     stock_picking.*:
-    stock_picking.__discriminator__:
-        - name
-        - company_id
     stock_picking.address_id:
         stock_picking.partner_id:
     stock_location.*:
@@ -459,8 +445,6 @@ product:
 
 purchase:
     purchase_order.*:
-    purchase_order.__discriminator__:
-        - name
     purchase_order.partner_address_id:
         purchase_order.partner_id:
     purchase_order_line.*:
