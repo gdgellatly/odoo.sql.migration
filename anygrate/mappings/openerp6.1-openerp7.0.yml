@@ -165,6 +165,7 @@ account:
     account_period.*:
     account_period.__discriminator__:
         - name
+        - company_id
     account_fiscalyear.*:
     account_fiscalyear.__discriminator__:
         - code
@@ -174,6 +175,8 @@ account:
     account_fiscal_position.__discriminator__:
         - name
     account_bank_statement.*:
+    account_bank_statement.company_id:
+        account_bank_statement.company_id: __fk__ res_company  # (related with store)
     account_bank_statement.balance_end_cash: __forget__
     account_bank_statement.shop_id: __forget__  # create pos_sessions?
 
@@ -377,11 +380,12 @@ stock:
     stock_picking.*:
     stock_picking.address_id:
         stock_picking.partner_id:
+    stock_inventory.*:
+    stock_inventory_line.*:
+    stock_inventory_merge.*:
     stock_location.*:
     stock_location.address_id:
         stock_location.partner_id:
-    stock_location.__discriminator__:
-        - name
     stock_warehouse.*:
     stock_warehouse.__discriminator__:
         - name
