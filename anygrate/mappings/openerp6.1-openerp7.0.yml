@@ -1,7 +1,5 @@
 base:
     ir_sequence.*:
-    ir_sequence.__discriminator__:
-        - name
     res_groups.*:
     res_groups.__discriminator__:
         - name
@@ -20,6 +18,7 @@ base:
         - code
 
     res_currency.*:
+    res_currency.company_id: __forget__
     res_currency.__discriminator__:
         - name
 
@@ -68,6 +67,7 @@ base:
         res_partner.display_name:
     res_partner.__discriminator__:
         - name
+        - company_id
     res_partner.create_uid: __forget__  # FIXME : implement __defer__
     res_partner.write_uid: __forget__  # FIXME : implement __defer__
     res_users.context_tz:
@@ -382,13 +382,12 @@ stock:
         stock_picking.partner_id:
     stock_inventory.*:
     stock_inventory_line.*:
+    stock_tracking.*:
     stock_inventory_merge.*:
     stock_location.*:
     stock_location.address_id:
         stock_location.partner_id:
     stock_warehouse.*:
-    stock_warehouse.__discriminator__:
-        - name
     stock_warehouse.lot_return_id: __forget__
     stock_warehouse.partner_address_id:
         stock_warehouse.partner_id:  # foireux
@@ -426,6 +425,7 @@ product:
     product_template.*:
     product_template.__discriminator__:
         - name
+    product_template.company_id: __forget__
     product_uom.*:
     product_uom.__discriminator__:
         - name
