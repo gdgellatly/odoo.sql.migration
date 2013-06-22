@@ -250,9 +250,17 @@ account:
     account_journal_period.__discriminator__:
         - name
     account_account_tax_default_rel.*:
+    account_account_tax_default_rel.__discriminator__:
+        - account_id
+        - tax_id
     product_taxes_rel.*:
+    product_taxes_rel.__discriminator__:
+        - prod_id
+        - tax_id
     product_supplier_taxes_rel.*:
-
+    product_supplier_taxes_rel.__discriminator__:
+        - prod_id
+        - tax_id
 
 account_accountant:
     account_accountant.*:
@@ -417,8 +425,8 @@ point_of_sale:
 
 
 product:
-    product_product.*:
     product_ul.*:
+    product_product.*:
     product_product.product_image_small:
         product_product.image_small:
     product_product.product_image:
