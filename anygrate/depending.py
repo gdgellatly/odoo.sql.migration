@@ -139,7 +139,7 @@ def get_sql_dependencies(target_connection, tables, initial_tables,
                             LOG.warn('Dependency LOOP: '
                                      '%s has a m2o to %s which is one of its '
                                      'ancestors (path=%r)',
-                                       table, tbl, path)
+                                     table, tbl, path)
                         if tbl not in seen:
                             m2o.add(tbl)
                 c.execute(query_table_ref)
@@ -182,7 +182,9 @@ WHERE TABLE_NAME = '%s';""" % tbl
                     elif not to_import:
                         excluded_tables.append(table)
 
-        if table not in related_tables and table not in excluded_tables and table not in initial_tables:
+        if (table not in related_tables
+                and table not in excluded_tables
+                and table not in initial_tables):
             initial_tables.append(table)
         for t in m2o:
             real_tables.add(t)

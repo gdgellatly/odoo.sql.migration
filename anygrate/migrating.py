@@ -89,7 +89,7 @@ def migrate(source_db, target_db, source_tables, mapping_name,
     #                                    source_db, source_models, excluded_models)
     source_tables, m2m_tables = add_related_tables(source_connection, source_tables,
                                                    excluded_models)
-    print(u'The real list of models to export is: %s' % ', '.join(source_tables))
+    print(u'The real list of tables to export is: %s' % ', '.join(source_tables))
 
     # construct the mapping and the csv processor
     # (TODO? autodetect mapping file with source and target db)

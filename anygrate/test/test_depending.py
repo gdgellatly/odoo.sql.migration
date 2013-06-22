@@ -2,6 +2,7 @@ import unittest
 from anygrate import depending
 import psycopg2
 
+
 class TestDepending(unittest.TestCase):
 
     """ Tests """
@@ -10,7 +11,9 @@ class TestDepending(unittest.TestCase):
         super(TestDepending, self).setUp()
 
     def test_get_dependencies(self):
-        """ Method to verify that the dependency order is right """
+        """ Verify that the dependency order is right.
+        This test should be done on a base with account module installed
+        """
 
         connection = psycopg2.connect("dbname=test")
         country, _ = depending.add_related_tables(connection,
@@ -30,7 +33,8 @@ class TestDepending(unittest.TestCase):
         self.assertTrue(country is not None)
         self.assertTrue(account is not None)
         self.assertTrue(groups_excl is not None)
-        self.assertTrue('res_users' in account)
+        self.assertTrue('res_users' in account,
+                        u"Did you forget to install 'account' in the 'test' db?")
         self.assertFalse('ir_model' in account)
         self.assertTrue('res_users' in groups_excl)
         self.assertTrue('res_groups_users_rel' in groups_excl)

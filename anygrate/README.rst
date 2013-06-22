@@ -229,8 +229,8 @@ csv files, then remove the lines from the csv.
     >>> from anygrate.exporting import extract_existing
     >>> source_tables = ['res_users', 'res_partner', 'account_move']
     >>> result = extract_existing(source_tables, [], mapping.discriminators, connection)
-    >>> result['res_users'][0]['login']
-    'demo'
+    >>> 'admin' in [r[0] for r in result['res_users']]
+    True
 
 Importing the CSV files
 =======================
