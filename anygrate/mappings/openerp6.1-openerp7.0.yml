@@ -249,6 +249,9 @@ account:
     account_journal_period.*:
     account_journal_period.__discriminator__:
         - name
+    account_account_tax_default_rel.*:
+    product_taxes_rel.*:
+    product_supplier_taxes_rel.*:
 
 
 account_accountant:
