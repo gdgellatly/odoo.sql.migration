@@ -30,8 +30,8 @@ base:
         res_users.id:
     res_users.context_lang:
         res_partner.lang:
-    res_users.date: __forget__
     res_users.email: __forget__
+    res_users.date: __forget__
     res_users.menu_tips: __forget__
     res_users.user_email:
         res_partner.email:
@@ -53,9 +53,9 @@ base:
             i = newid()
             target_rows['res_users']['partner_id'] = i
             target_rows['res_partner']['id'] = i
+            target_rows['res_partner']['name'] = source_row['name']
+            target_rows['res_partner']['email'] = source_row['user_email']
             return i
-    res_users.address_id:
-        res_partner.id: return newid()  # foireux
     res_users.login_date:
         res_users.date:
 
@@ -77,7 +77,7 @@ base:
 
     # addresses
     res_partner_address.id:
-        res_partner.id: return newid()
+        res_partner.id: __moved__
         res_partner.notification_email_send: return 'comment'
     res_partner_address.create_uid: __forget__  # FIXME : implement __defer__
     res_partner_address.write_uid: __forget__  # FIXME : implement __defer__
@@ -386,21 +386,21 @@ stock:
     stock_move.*:
     stock_move.sale_line_id: __forget__  # FIXME __defer__
     stock_move.address_id:
-        stock_move.partner_id:
+        stock_move.partner_id: __fk__ res_partner_address
     stock_picking.*:
     stock_picking.address_id:
-        stock_picking.partner_id:  # foireux
+        stock_picking.partner_id: __fk__ res_partner_address
     stock_inventory.*:
     stock_inventory_line.*:
     stock_tracking.*:
     stock_inventory_merge.*:
     stock_location.*:
     stock_location.address_id:
-        stock_location.partner_id:  # foireux
+        stock_location.partner_id: __fk__ res_partner_address
     stock_warehouse.*:
     stock_warehouse.lot_return_id: __forget__
     stock_warehouse.partner_address_id:
-        stock_warehouse.partner_id:  # foireux
+        stock_warehouse.partner_id: __fk__ res_partner_address
     stock_journal.*:
     stock_journal.__discriminator__:
         - name
@@ -460,7 +460,7 @@ product:
 purchase:
     purchase_order.*:
     purchase_order.partner_address_id:
-        purchase_order.partner_id:
+        purchase_order.partner_id: __fk__ res_partner_address
     purchase_order_line.*:
     purchase_order_line.notes: __forget__
 

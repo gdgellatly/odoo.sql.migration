@@ -52,7 +52,7 @@ class Mapping(object):
                 self.mapping[incolumn] = {}
                 continue
             for outcolumn, function in targets.items():
-                if function in ('__copy__', None):
+                if function in ('__copy__', '__moved__', None):
                     continue
                 if function.startswith('__fk__ '):
                     if len(function.split()) != 2:
