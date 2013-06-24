@@ -55,8 +55,7 @@ base:
             target_rows['res_partner']['id'] = i
             return i
     res_users.address_id:
-        # foireux
-        res_partner.id: return newid()
+        res_partner.id: return newid()  # foireux
     res_users.login_date:
         res_users.date:
 
@@ -390,14 +389,14 @@ stock:
         stock_move.partner_id:
     stock_picking.*:
     stock_picking.address_id:
-        stock_picking.partner_id:
+        stock_picking.partner_id:  # foireux
     stock_inventory.*:
     stock_inventory_line.*:
     stock_tracking.*:
     stock_inventory_merge.*:
     stock_location.*:
     stock_location.address_id:
-        stock_location.partner_id:
+        stock_location.partner_id:  # foireux
     stock_warehouse.*:
     stock_warehouse.lot_return_id: __forget__
     stock_warehouse.partner_address_id:
