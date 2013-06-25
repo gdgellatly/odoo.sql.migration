@@ -61,7 +61,7 @@ class Mapping(object):
                     self.fk2update[outcolumn] = function.split()[1]
                     self.mapping[incolumn][outcolumn] = '__copy__'
                     continue
-                function_body = "def mapping_function(source_row, target_rows):\n"
+                function_body = "def mapping_function(self, source_row, target_rows):\n"
                 if type(function) is not str:
                     raise ValueError('Error in the mapping file: "%s" is invalid in %s'
                                      % (repr(function), outcolumn))

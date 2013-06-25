@@ -181,7 +181,7 @@ class CSVProcessor(object):
                                 = newid + self.mapping.last_id
                         else:
                             # mapping is supposed to be a function
-                            result = function(source_row, target_rows)
+                            result = function(self, source_row, target_rows)
                             target_rows[target_table][target_column] = result
 
                 # offset all ids except existing data and choose to write now or update later
@@ -195,7 +195,9 @@ class CSVProcessor(object):
                     existing_without_id = [{k: str(v) for k, v in nt.iteritems() if k != 'id'}
                                            for nt in existing]
                     discriminator_values = {d: target_row[d] for d in (discriminators or [])}
-                    if (discriminators and 'id' in target_row
+                    if (discriminators
+                            and 'id' in target_row
+                            and all(discriminator_values.values())
                             and discriminator_values in existing_without_id):
                         # find the id of the existing record in the target
                         for i, nt in enumerate(existing):
