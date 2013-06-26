@@ -84,7 +84,6 @@ Authors and contributors:
 Code
 
  - Code repository and bug tracker: https://bitbucket.org/anybox/anybox.migration.openerp
- - PyPI page: http://pypi.python.org/pypi/anybox.migration.openerp
 
 Please don't hesitate to give us feedback, report bugs or contribute the mapping files
 on Bitbucket.
