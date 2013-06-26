@@ -161,6 +161,7 @@ account:
     account_tax_code.*:
     account_tax_code.__discriminator__:
         - code
+        - company_id
     account_period.*:
     account_period.__discriminator__:
         - name
@@ -173,6 +174,7 @@ account:
     account_fiscal_position.*:
     account_fiscal_position.__discriminator__:
         - name
+        - company_id
     account_bank_statement.*:
     account_bank_statement.company_id:
         account_bank_statement.company_id: __fk__ res_company  # (related with store)
@@ -202,6 +204,7 @@ account:
     account_journal.*:
     account_journal.__discriminator__:
         - code
+        - company_id
     account_journal.view_id: __forget__
 
     account_move_reconcile.*:
@@ -209,6 +212,7 @@ account:
     account_tax.*:
     account_tax.__discriminator__:
         - name
+        - company_id
 
     res_company._:
         res_company.expects_chart_of_accounts: return True
@@ -400,6 +404,9 @@ stock:
     stock_location.address_id:
         stock_location.partner_id: __fk__ res_partner_address
     stock_warehouse.*:
+    stock_warehouse.__discriminator__:
+        - name
+        - company_id
     stock_warehouse.lot_return_id: __forget__
     stock_warehouse.partner_address_id:
         stock_warehouse.partner_id: __fk__ res_partner_address
