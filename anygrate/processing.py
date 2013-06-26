@@ -195,6 +195,16 @@ class CSVProcessor(object):
                     existing_without_id = [{k: str(v) for k, v in nt.iteritems() if k != 'id'}
                                            for nt in existing]
                     discriminator_values = {d: target_row[d] for d in (discriminators or [])}
+                    # before matching existing, we should fix the discriminator_values which are fk
+                    # FIXME refactor and merge with the code in postprocess
+                    for key, value in discriminator_values.items():
+                        fk_table = self.fk2update.get(table + '.' + key)
+                        if not fk_table:
+                            continue
+                        value = int(value)
+                        if value in self.fk_mapping.get(fk_table, []):
+                            discriminator_values[key] = str(
+                                self.fk_mapping[fk_table].get(value, value))
                     if (discriminators
                             and 'id' in target_row
                             and all(discriminator_values.values())
