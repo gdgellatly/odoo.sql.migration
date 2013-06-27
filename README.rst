@@ -18,18 +18,19 @@ This tool has been developped with these initial goals in mind:
  - Migrating from Dolibarr to OpenERP
 
 The principle of this tool is to export CSV data from another application, then
-to process CSV files in order to import it into a freshly installed OpenERP
+to process CSV files in order to import them into a freshly installed OpenERP
 database. This is a completely different strategy than the in-place migration
-of OpenERP or OpenUpgrade. This tool is focusing only on important data, and
-assume the custom code has already been migrated.
+of OpenERP or OpenUpgrade.
 
 Installation
 ============
 
 You should install this tool in a virtualenv or buildout::
 
+    $ hg clone https://bitbucket.org/anybox/anybox.migration.openerp
+    $ cd anybox.migration.openerp
     $ virtualenv sandbox
-    $ sandbox/bin/pip install anybox.migration.openerp
+    $ sandbox/bin/python setup.py install
 
 
 Usage
@@ -37,17 +38,27 @@ Usage
 
 This tool offer a single "migrate" script::
 
+    $ sandbox/bin/migrate -h
+
+
+You should select the source and target DBs, and a selection of wanted tables to migrate.
+The script then takes care of selecting the dependant tables::
+
     $ sandbox/bin/migrate -s source_dbname -t target_dbname -m res_partner account_move
 
 If you want to inspect the temporary CSV files created, use the --keepcsv
 option. They will be stored in a temporary directory under the current
 directory.
 
+This script won't actually do anything unless you specify the ``-w`` option to
+commit the transaction at the end.
+
 The most important part of the migration is the YML mapping file, which
-describes how to handle data table by table. A default mapping file is provided
-and is being used as a real mapping for a migration consisting in migrating two
-6.1 databases into a single 7.0 multicompany database. 
-Future versions will allow to select a different mapping file, or to use several of them.
+describes how to handle data table by table and column by column. A default
+mapping file is provided and is being used as a real mapping for a migration
+consisting in migrating two 6.1 databases into a single 7.0 multicompany
+database.  Future versions will allow to select a different mapping file, or to
+use several of them.
 
 
 Internals
@@ -61,16 +72,17 @@ This tool was very loosely inspired from:
 
 The different internal steps are:
 
- - exporting CSV from the old database
+ - Exporting CSV from the old database
  - Transforming CSV to match the target database
- - Postprocessing CSV files to fix some data links
- - reinjecting into OpenERP
- - updating possible pre-existing data with incoming data
+ - Detect data existing in the target DB with discriminators
+ - Postprocessing CSV files to fix foreign keys
+ - Reinjecting into OpenERP
+ - Updating possible pre-existing data with incoming data
 
 The transformation of CSV files is done using a mapping file written in Yaml:
 
 TODO: mapping example with different scenario (splitting lines, generating new
-ids, modifying output, etc.)
+ids, modifying output, defining discriminators, etc.)
 
 Contribute
 ==========
