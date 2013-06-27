@@ -198,7 +198,7 @@ In this case, data in the ``table1`` will be directed to ``table2`` and
 
 However in the example above, there is a conflict since two source cells are directed
 to the same target cell (``table2.column2``). In this scenario, there is no way to
-predict which one will be used (because the mapping is a Python `dict` and a dict is not
+predict which one will be used (because the mapping is a Python *dict* and a dict is not
 ordered). You should avoid this kind of conflicts.
 
 In case of an OpenERP 6.1 to 7.0 migration, this kind of mapping is actually
@@ -273,7 +273,7 @@ means: append ``firstname`` to ``name`` coming from the ``table1``, and put it
 in the ``display_name`` cell of the target ``table1`` and ``table2``. The
 target ``name`` cell will contain a copy of the source ``name`` cell.
 
-If the target line is not supposed to have the same `id` as the source line, you can create a new `id` with the newid() function. This function returns a different value at each call and is responsible of incrementing the `id`. Here is an example::
+If the target line is not supposed to have the same *id* as the source line, you can create a new *id* with the newid() function. This function returns a different value at each call and is responsible of incrementing the *id*. Here is an example::
 
     base:
         res_users.id:
@@ -289,7 +289,7 @@ If the target line is not supposed to have the same `id` as the source line, you
                 return i
 
 Each ``res_users`` line will generate a new ``res_partner`` line with a new
-`id`, while the ``res_users`` `id` will be the same as the source. (Actually it
+*id*, while the ``res_users`` *id* will be the same as the source. (Actually it
 will not be the same, because an offset is applied to all ids).
 
 Feeding a new column
@@ -322,8 +322,8 @@ list of column names that will be used to recognize existing data::
 
 Using this statement, you can install a new OpenERP database with its admin
 account, and merge all existing accounts with data coming from the source
-table. The ``login`` column will be used to match data. The preexisting `admin`
-account won't be duplicated but will be updated with the `admin` account from
+table. The ``login`` column will be used to match data. The preexisting *admin*
+account won't be duplicated but will be updated with the *admin* account from
 the source table.
 
 Another use case in a multicompany scenario is to merge partners existing in
@@ -339,7 +339,7 @@ Foreign keys without constraints
 
 The first step of the migration is to automatically detect all the foreign keys
 of the source and target tables. Sometimes, OpenERP defines foreign keys
-without constraints. This mainly happens with `related` fields with
+without constraints. This mainly happens with *related* fields with
 ``store=True``, which create a column of integers without constraints. If you
 don't want to ``__forget__`` such columns, you have to tell the mapping what
 the target of the foreign key is, like in the real example below::
