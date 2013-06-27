@@ -136,8 +136,10 @@ specifying one mapping statement for each column and use a wildcard::
     module:
         table1.*:
 
-It means: copy all the columns of table1 from the source db to table1 in the target db.
-This kind of mapping is often used when source and table structures are the same.
+It means: copy all the columns of table1 from the source db to table1 in the
+target db.  This kind of mapping is often used when source and table structures
+are similar. You can then add mapping statements for specific columns to
+override this wildcard.
 
 Copying all columns to a different table
 ----------------------------------------
@@ -237,12 +239,12 @@ The eventual signature of the function constructed using the Python code block i
 
     def mapping_function(self, source_row, target_rows):
 
-It means that in the function body you can access the full ``source_row`` which is a
-dict containing all the keys (that is column names) and values of the current
-line being processed. But keep in mind that at this time, you are dealing with
-one specific cell of this line, and you should return the value that will be
-inserted in the corresponding cell of the target table. This can be used to
-aggregate data from two source cells into a target cell::
+It means that in the function body you can access the full ``source_row``,
+which is a dict containing all the keys (column names) and values of the
+current line being processed. But keep in mind that at this time, you are
+dealing with one specific cell of this line, and you should return the value
+that will be inserted in the corresponding cell of the target table. This can
+be used to aggregate data from two source cells into a target cell::
 
     base:
         table1.firstname: __forget__
@@ -371,25 +373,26 @@ Understanding errors
 
 The most difficult part of using this tool is to understand the errors during
 the processing, as it requires a deep knowledge of how it internally works.
-Most errors generally come from a bad mapping file. Errors can happen during
-the processing of the CSV files, but the most difficult ones come from the last
-import step, as some tables may fail to be imported. In this case, you should
-carefully look at the logging messages at the end, and try to understand the constraint errors or why
-tables cannot be imported. You also should use the ``--keepcsv`` option, and
-inspect the intermediate CSV files to understand the problem. By using this
-option, you will end up with a directory containing five CSV files for each table.
+Most errors generally come from an erroneous mapping file. Errors can happen
+during the processing of the CSV files, but the most difficult ones come from
+the last import step, because some tables may fail to be imported. In this
+case, you should carefully look at the logging messages at the end, and try to
+understand the constraint errors or why tables cannot be imported. You also
+should use the ``--keepcsv`` option, and inspect the intermediate CSV files to
+understand the problem. By using this option, you will end up with a directory
+containing five CSV files for each table.
 
-For instance, for the ``res_partner`` table you will find these files::
+For instance, for the ``res_partner`` table you will find these files:
 
- - res_partner.csv is the original data exported from the source
+ - **res_partner.csv** is the original data exported from the source
    database
- - res_partner.target.csv contains data after the first processing with
+ - **res_partner.target.csv** contains data after the first processing with
    the mapping file, but wrong foreign keys
- - res_partner.target2.csv contains final data with fixed foreign keys,
+ - **res_partner.target2.csv** contains final data with fixed foreign keys,
    that will eventually be imported at the end
- - res_partner.update.csv contains data which have been detected as
+ - **res_partner.update.csv** contains data which have been detected as
    existing in the target database, with wrong foreign keys.
- - res_partner.update2.csv contains the final existing data with fixed
+ - **res_partner.update2.csv** contains the final existing data with fixed
    foreign keys, that will be used to update the target table after import.
 
 
