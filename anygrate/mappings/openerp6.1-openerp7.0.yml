@@ -482,8 +482,7 @@ ecox:  # FIXME move outside + option to load
     fiche_vae.console_number: __forget__
     res_users.term_id: __forget__  # specific
     res_partner.allow_refund: __forget__  # specific
-    res_partner.producer:
-        res_partner.manufacturer:
+    res_partner.producer: __forget__  # specific
     account_bank_statement.term_id: __forget__  # specific
     pos_order.command_number: __forget__  # specific
     pos_order.draft_number: __forget__  # specific
@@ -492,7 +491,8 @@ ecox:  # FIXME move outside + option to load
     pos_order.return_anomalie: __forget__  # specific
     pos_order.term_id: __forget__  # specific
     product_product.prestation: __forget__  # specific
-    product_product.producer_code: __forget__  # specific
+    product_product.producer_code:
+        product_product.manufacturer_pname:
     product_product.producer_id:
         product_product.manufacturer:
     product_product.vae_type: __forget__  # specific
