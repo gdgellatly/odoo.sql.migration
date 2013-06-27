@@ -1,8 +1,10 @@
 from setuptools import setup, find_packages
 
+version = '0.1'
+
 setup(
     name='anybox.migration.openerp',
-    version='0.1',
+    version=version,
     author='Anybox',
     author_email='contact@anybox.fr',
     packages=find_packages(),
@@ -10,6 +12,7 @@ setup(
     description='Quick OpenERP migration tool',
     long_description=open('README.rst').read() + open('CHANGES.rst').read(),
     url="https://bitbucket.org/anybox/anybox.migration.openerp/overview",
+    include_package_data=True,
     install_requires=[
         "openobject-library < 2.0",
         "PyYAML",

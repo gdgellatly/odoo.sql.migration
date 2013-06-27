@@ -1,0 +1,4 @@
+recursive-include anygrate *.yml
+recursive-include anygrate *.csv
+recursive-include anygrate *.rst
+
