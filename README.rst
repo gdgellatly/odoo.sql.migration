@@ -79,10 +79,115 @@ The different internal steps are:
  - Reinjecting into OpenERP
  - Updating possible pre-existing data with incoming data
 
-The transformation of CSV files is done using a mapping file written in Yaml:
+The transformation of CSV files is done using a mapping file written in Yaml.
 
-TODO: mapping example with different scenario (splitting lines, generating new
-ids, modifying output, defining discriminators, etc.)
+Mapping file
+============
+
+You should always have in mind that the migration is only handling low-level
+database tables and columns, the OpenERP fields are unknown to this tool. Each
+table, each line, each cell of the source database is handled independently and
+the mapping file tells what to do with the current cell.
+
+Copying data
+------------
+
+The most simple and basic YML directive for a column is the following::
+
+    module:
+        table1.column1:
+            table2.column2: __copy__
+
+It defines that if the OpenERP ``module`` is installed in the **target** database, the
+``column1`` of the ``table1`` from the source DB should be copied
+onto the ``column2`` of the ``table2`` of the target DB.
+
+the ``__copy__`` instruction can be omitted and the previous directive is
+equivalent to this one::
+
+    module:
+        table1.column1:
+            table2.column2:
+
+Internally, this directive is actually converted to a Python dict::
+
+    {'module':
+        {'table1.column1':
+            {'table2.column2': '__copy__'}}
+
+Copying all columns of a table
+------------------------------
+If your target table has the same structure as the source table, you can avoid specifying one directive for each column and use a wildcard::
+
+    module:
+        table1.*:
+
+It means: copy all the columns from table1 of the source db to table1 in the target db.
+
+Copying all columns to a different table
+----------------------------------------
+If the source table has just been renamed, you can copy all the columns of the source table1 to the target table2::
+
+    module:
+        table1.*:
+            table2.*:
+
+Copying everything
+------------------
+If the source and target db have exactly the same structure and you just want to transfer data, you can use a global wildcard::
+
+    module:
+        .*:
+
+It means: copy all tables to the target database without transformation
+
+
+Transforming data with Python code
+----------------------------------
+
+Instead of a basic data copy with the ``__copy__`` directive, you can use any Python code
+
+TODO internal variables:
+source_row
+target_rows
+newid()
+
+Splitting a source line to several target lines
+-----------------------------------------------
+
+TODO several targets
+
+Not migrating a column
+----------------------
+
+If you want to get rid of a specific column in a table::
+
+    module:
+        table1.column1: __forget__
+
+TODO
+
+Feeding a new column
+--------------------
+
+TODO
+
+Merging with existing data
+--------------------------
+
+TODO explain __discriminator__
+
+Foreign keys without constraint
+-------------------------------
+(related with store)
+
+TODO explain __fk__
+
+Handle cyclic foreign keys
+--------------------------
+(This directive is not yet implemented)
+
+TODO explain __defer__
 
 Contribute
 ==========
