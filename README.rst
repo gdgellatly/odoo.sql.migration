@@ -137,9 +137,9 @@ specifying one mapping statement for each column and use a wildcard::
         table1.*:
 
 It means: copy all the columns of table1 from the source db to table1 in the
-target db.  This kind of mapping is often used when source and table structures
-are similar. You can then add mapping statements for specific columns to
-override this wildcard.
+target db.  This kind of mapping is often used as a starting point when source
+and table structures are similar. You can then add mapping statements for
+specific columns to override this wildcard.
 
 Copying all columns to a different table
 ----------------------------------------

@@ -1,3 +1,6 @@
+# WARNING: this mapping is not yet suitable for a real 6.1 to 7.0 migration
+# and still contains some specific code (in the bottom)
+
 base:
     ir_sequence.*:
     res_groups.*:
@@ -5,6 +8,8 @@ base:
         - name
 
     res_partner_title.*:
+    res_partner_title.create_uid: __forget__  # __defer__
+    res_partner_title.write_uid: __forget__  # __defer__
     res_partner_title.__discriminator__:
         - name
 
@@ -492,7 +497,7 @@ ecox:  # FIXME move outside + option to load
     pos_order.term_id: __forget__  # specific
     product_product.prestation: __forget__  # specific
     product_product.producer_code:
-        product_product.manufacturer_pname:
+        product_product.manufacturer_pref:
     product_product.producer_id:
         product_product.manufacturer:
     product_product.vae_type: __forget__  # specific
@@ -503,4 +508,5 @@ ecox:  # FIXME move outside + option to load
     stock_move.pos_line_id: __forget__
     stock_move.serial_id: __forget__
     product_serial_number.*:
+    product_supplierinfo.principale: __forget__
 
