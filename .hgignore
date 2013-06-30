@@ -10,3 +10,5 @@ anygrate/openobject_library-
 anygrate/Anygrate.egg-info
 anybox.migration.openerp.egg-info
 ecox.*
+build/
+dist/
