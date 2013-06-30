@@ -27,6 +27,7 @@ class Mapping(object):
                 full_mapping.update(yaml.load(stream))
         # filter to keep only wanted modules
         self.mapping = {}
+        self.deferred = {}
         for module in modules:
             if module not in full_mapping:
                 LOG.warn('Mapping is not complete: module "%s" is missing!', module)
@@ -55,6 +56,12 @@ class Mapping(object):
                 continue
             for outcolumn, function in targets.items():
                 if function in ('__copy__', '__moved__', None):
+                    continue
+                if function == '__defer__':
+                    self.mapping[incolumn][outcolumn] = '__copy__'
+                    table, column = outcolumn.split('.')
+                    self.deferred.setdefault(table, set())
+                    self.deferred[table].add(column)
                     continue
                 if function.startswith('__fk__ '):
                     if len(function.split()) != 2:

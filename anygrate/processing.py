@@ -229,7 +229,15 @@ class CSVProcessor(object):
                         # offset the id of the line, except for m2m (no id)
                         if 'id' in target_row:
                             target_row['id'] = int(target_row['id']) + self.mapping.last_id
-                            # otherwise write the target csv line
+                            # handle deferred records
+                            if table in self.mapping.deferred:
+                                self.updatewriters[table].writerow(
+                                    {k: v for k, v in target_row.iteritems()
+                                     if k == 'id' or k in self.mapping.deferred[table]})
+                                for k in self.mapping.deferred[table]:
+                                    if k in target_row:
+                                        del target_row[k]
+                        # otherwise write the target csv line
                         self.writers[table].writerow(target_row)
 
     def postprocess_one(self, target_filepath, existing_records=None):
@@ -284,10 +292,10 @@ class CSVProcessor(object):
             reader = csv.DictReader(update_csv, delimiter=',')
             for update_row in reader:
                 has_data = True
-                columns = ', '.join(update_row.keys())
-                values = ', '.join(['%s' for i in update_row])
-                args = [i if i != '' else None for i in update_row.values()
-                        ] + [update_row['id']]
+                items = [(k, v) for k, v in update_row.iteritems() if v != '']
+                columns = ', '.join([i[0] for i in items])
+                values = ', '.join(['%s' for i in items])
+                args = [i[1] for i in items] + [update_row['id']]
                 try:
                     cursor.execute('UPDATE %s SET (%s)=(%s) WHERE id=%s'
                                    % (table, columns, values, '%s'), tuple(args))

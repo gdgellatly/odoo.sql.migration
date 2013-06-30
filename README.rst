@@ -369,8 +369,6 @@ the column will be updated after all the data is imported::
         res_users.write_uid:
             res_users.write_uid: __defer__
 
-**Warning** :  this statement is not yet implemented
-
 Understanding errors
 ====================
 

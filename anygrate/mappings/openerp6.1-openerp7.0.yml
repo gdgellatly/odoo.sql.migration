@@ -5,8 +5,10 @@ base:
         - name
 
     res_partner_title.*:
-    res_partner_title.create_uid: __forget__  # __defer__
-    res_partner_title.write_uid: __forget__  # __defer__
+    res_partner_title.create_uid:
+        res_partner_title.create_uid: __defer__
+    res_partner_title.write_uid:
+        res_partner_title.write_uid: __defer__
     res_partner_title.__discriminator__:
         - name
 
@@ -45,8 +47,10 @@ base:
     res_users.company_id:
         res_users.company_id:
         res_partner.company_id:
-    res_users.create_uid: __forget__  # FIXME : implement __defer__
-    res_users.write_uid: __forget__  # FIXME : implement __defer__
+    res_users.create_uid:
+        res_users.create_uid: __defer__
+    res_users.write_uid:
+        res_users.write_uid: __defer__
     res_users.id:
         res_users.id:
         res_users.partner_id:
@@ -69,8 +73,10 @@ base:
     res_partner.__discriminator__:
         - name
         - company_id
-    res_partner.create_uid: __forget__  # FIXME : implement __defer__
-    res_partner.write_uid: __forget__  # FIXME : implement __defer__
+    res_partner.create_uid:
+        res_partner.create_uid: __defer__
+    res_partner.write_uid:
+        res_partner.write_uid: __defer__
     res_users.context_tz:
         res_partner.tz:
     res_partner._:
@@ -81,8 +87,10 @@ base:
     res_partner_address.id:
         res_partner.id: __moved__
         res_partner.notification_email_send: return 'comment'
-    res_partner_address.create_uid: __forget__  # FIXME : implement __defer__
-    res_partner_address.write_uid: __forget__  # FIXME : implement __defer__
+    res_partner_address.create_uid:
+        res_partner.create_uid: __defer__
+    res_partner_address.write_uid:
+        res_partner.write_uid: __defer__
     res_partner_address.*:
         res_partner.*:
     res_partner_address.contact_id: __forget__
@@ -390,7 +398,8 @@ sale:
 
 stock:
     stock_move.*:
-    stock_move.sale_line_id: __forget__  # FIXME __defer__
+    stock_move.sale_line_id:
+        stock_move.sale_line_id: __defer__
     stock_move.partner_id: __forget__
     stock_move.address_id:
         stock_move.partner_id: __fk__ res_partner_address
