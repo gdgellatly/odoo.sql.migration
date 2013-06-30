@@ -42,6 +42,11 @@ This tool offers a single ``migrate`` script::
 
     $ sandbox/bin/migrate -h
 
+You can list the available default mapping files::
+
+
+    $ sandbox/bin/migrate -l
+    openerp6.1-openerp7.0.yml
 
 You should specify the source and target DBs, a selection of the source tables
 to migrate, and the mapping files to use.  The tool then takes care of
