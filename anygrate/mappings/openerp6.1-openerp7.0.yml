@@ -1,6 +1,3 @@
-# WARNING: this mapping is not yet suitable for a real 6.1 to 7.0 migration
-# and still contains some specific code (in the bottom)
-
 base:
     ir_sequence.*:
     res_groups.*:
@@ -477,36 +474,4 @@ purchase:
         purchase_order.partner_id: __fk__ res_partner_address
     purchase_order_line.*:
     purchase_order_line.notes: __forget__
-
-
-ecox:  # FIXME move outside + option to load
-    fiche_vae.*:
-    vae_entretien.*:
-    fiche_vae.batterie_number: __forget__
-    fiche_vae.moteur_number: __forget__
-    fiche_vae.console_number: __forget__
-    res_users.term_id: __forget__  # specific
-    res_partner.allow_refund: __forget__  # specific
-    res_partner.producer: __forget__  # specific
-    account_bank_statement.term_id: __forget__  # specific
-    pos_order.command_number: __forget__  # specific
-    pos_order.draft_number: __forget__  # specific
-    pos_order.from_wizard: __forget__  # specific
-    pos_order.init_state: __forget__  # specific
-    pos_order.return_anomalie: __forget__  # specific
-    pos_order.term_id: __forget__  # specific
-    product_product.prestation: __forget__  # specific
-    product_product.producer_code:
-        product_product.manufacturer_pref:
-    product_product.producer_id:
-        product_product.manufacturer:
-    product_product.vae_type: __forget__  # specific
-    product_product.vae: __forget__  # specific
-    product_product.douane_number: __forget__  # specific
-    product_product.internet: __forget__  # specific
-    product_product.weight_ul: __forget__  # specific FIXME
-    stock_move.pos_line_id: __forget__
-    stock_move.serial_id: __forget__
-    product_serial_number.*:
-    product_supplierinfo.principale: __forget__
 

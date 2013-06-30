@@ -14,7 +14,6 @@ setup(
     url="https://bitbucket.org/anybox/anybox.migration.openerp/overview",
     include_package_data=True,
     install_requires=[
-        "openobject-library < 2.0",
         "PyYAML",
         "psycopg2 >= 2.5",
     ],

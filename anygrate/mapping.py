@@ -16,13 +16,15 @@ class Mapping(object):
     target_connection = None
     fk2update = None
 
-    def __init__(self, modules, filename):
+    def __init__(self, modules, filenames):
         """ Open the file and compute the mapping
         """
         self.fk2update = {}
+        full_mapping = {}
         # load the full mapping file
-        with open(filename) as stream:
-            full_mapping = yaml.load(stream)
+        for filename in filenames:
+            with open(filename) as stream:
+                full_mapping.update(yaml.load(stream))
         # filter to keep only wanted modules
         self.mapping = {}
         for module in modules:

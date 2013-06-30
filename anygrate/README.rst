@@ -18,7 +18,7 @@ The mapping depend on the installed modules
 Selecting a target table
 ========================
 
-The first step consists in selecting a target OpenERP model we want to import.
+The first step consists in selecting a target OpenERP table we want to import.
 We'll take two examples for this doctest: 'res.partner' and 'res.users'.
 
 Determining the dependent tables

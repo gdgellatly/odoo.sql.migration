@@ -32,19 +32,20 @@ def main():
     parser.add_argument('-k', '--keepcsv',
                         action='store_true',
                         help=u'Keep csv files in the current directory')
-    parser.add_argument('-m', '--models', nargs='+',
+    parser.add_argument('-r', '--relations', nargs='+',
                         required=True,
-                        help=u'List of space-separated models to migrate'
+                        help=u'List of space-separated tables to migrate'
                         'Example : (res.partner res.users)')
-    parser.add_argument('-x', '--excluded_models', nargs='+',
+    parser.add_argument('-x', '--excluded', nargs='+',
                         required=False,
-                        help=u'List of space-separated models to exclude'
+                        help=u'List of space-separated tables to exclude'
                         )
-    parser.add_argument('-p', '--path',
+    parser.add_argument('-p', '--paths',
                         required=False, default='openerp6.1-openerp7.0.yml',
-                        help=u'filemane.yml'
-                        'the file must be stored in the mappings dir'  # FIXME allow a real path
-                        'Exemple: openerp6.1-openerp7.0.yml'
+                        help=u'filename1.yml filename2.yml'
+                        'If not found in the specified path, '
+                        'each file is searched in the mappings dir'
+                        'Example: openerp6.1-openerp7.0.yml'
                         )
     parser.add_argument('-w', '--write',
                         action='store_true', default=False,
@@ -52,26 +53,25 @@ def main():
                         )
 
     args = parser.parse_args()
-    source_db, target_db, models = args.source, args.target, args.models
-    excluded_models = args.excluded_models or [] + [
-        'ir.model'
+    source_db, target_db = args.source, args.target
+    mapping_names = args.paths if len(args.paths) < 2 else [args.paths]
+    excluded = args.excluded or [] + [
+        'ir_model'
     ]
-    mapping_name = args.path
 
-    print "Importing into target db is not yet supported. Use --keepcsv for now"
     if args.keepcsv:
         print "Writing CSV files in the current dir"
 
     tempdir = mkdtemp(prefix=source_db + '-' + str(int(time.time()))[-4:] + '-',
                       dir=abspath('.'))
-    migrate(source_db, target_db, models, mapping_name,
-            excluded_models, target_dir=tempdir, write=args.write)
+    migrate(source_db, target_db, args.relations, mapping_names,
+            excluded, target_dir=tempdir, write=args.write)
     if not args.keepcsv:
         shutil.rmtree(tempdir)
 
 
-def migrate(source_db, target_db, source_tables, mapping_name,
-            excluded_models=None, target_dir=None, write=False):
+def migrate(source_db, target_db, source_tables, mapping_names,
+            excluded=None, target_dir=None, write=False):
     """ The main migration function
     """
     start_time = time.time()
@@ -83,20 +83,23 @@ def migrate(source_db, target_db, source_tables, mapping_name,
         c.execute("select name from ir_module_module where state='installed'")
         target_modules = [m[0] for m in c.fetchall()]
 
-    # we turn the list of wanted models into the full list of required models
+    # we turn the list of wanted tables into the full list of required tables
     print(u'Computing the real list of tables to export...')
     #source_models, _ = get_dependencies('admin', 'admin',
     #                                    source_db, source_models, excluded_models)
     source_tables, m2m_tables = add_related_tables(source_connection, source_tables,
-                                                   excluded_models)
+                                                   excluded)
     print(u'The real list of tables to export is: %s' % ', '.join(source_tables))
 
     # construct the mapping and the csv processor
     # (TODO? autodetect mapping file with source and target db)
     print('Exporting tables as CSV files...')
     filepaths = export_to_csv(source_tables, target_dir, source_connection)
-    mappingfile = join(HERE, 'mappings', mapping_name)
-    mapping = Mapping(target_modules, mappingfile)
+    for i, mapping_name in enumerate(mapping_names):
+        if not exists(mapping_name):
+            mapping_names[i] = join(HERE, 'mappings', mapping_name)
+            LOG.warn('%s not found. Trying %s', mapping_name, mapping_names[i])
+    mapping = Mapping(target_modules, mapping_names)
     processor = CSVProcessor(mapping)
     target_tables = processor.get_target_columns(filepaths).keys()
     print(u'The real list of tables to import is: %s' % ', '.join(target_tables))
@@ -121,7 +124,7 @@ def migrate(source_db, target_db, source_tables, mapping_name,
 
     # import data in the target
     print(u'Trying to import data in the target database...')
-    target_files = [join(target_dir, '%s.target2.csv' % c) for c in target_tables]
+    target_files = [join(target_dir, '%s.target2.csv' % t) for t in target_tables]
     remaining = import_from_csv(target_files, target_connection)
     if remaining:
         print(u'Please improve the mapping by inspecting the errors above')

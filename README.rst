@@ -46,7 +46,7 @@ This tool offers a single ``migrate`` script::
 You should select the source and target DBs, and a selection of the source tables to migrate.
 The tool then takes care of selecting the dependant tables::
 
-    $ sandbox/bin/migrate -s source_dbname -t target_dbname -m res_partner account_move
+    $ sandbox/bin/migrate -s source_dbname -t target_dbname -r res_partner account_move
 
 If you want to inspect the temporary CSV files created, use the ``--keepcsv``
 option. They will be stored in a temporary directory under the current
