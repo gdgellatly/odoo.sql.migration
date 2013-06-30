@@ -12,6 +12,7 @@ from .depending import add_related_tables
 from .depending import get_fk_to_update
 import logging
 from os.path import basename, join, abspath, dirname, exists
+from os import listdir
 
 HERE = dirname(__file__)
 logging.basicConfig(level=logging.DEBUG)
@@ -21,51 +22,60 @@ LOG = logging.getLogger(basename(__file__))
 def main():
     """ Main console script
     """
-    parser = argparse.ArgumentParser(prog=__file__)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-l', '--list',
+                        action='store_true',
+                        default=False,
+                        help=u'List provided mappings')
     parser.add_argument('-s', '--source',
                         default='test',
-                        required=True,
                         help=u'Source db')
     parser.add_argument('-t', '--target',
-                        required=True,
                         help=u'Target db')
     parser.add_argument('-k', '--keepcsv',
                         action='store_true',
                         help=u'Keep csv files in the current directory')
-    parser.add_argument('-r', '--relations', nargs='+',
-                        required=True,
-                        help=u'List of space-separated tables to migrate'
-                        'Example : (res.partner res.users)')
-    parser.add_argument('-x', '--excluded', nargs='+',
-                        required=False,
+    parser.add_argument('-r', '--relation',
+                        nargs='+',
+                        help=u'List of space-separated tables to migrate. '
+                        'Example : res_partner res_users')
+    parser.add_argument('-x', '--excluded',
+                        nargs='+',
                         help=u'List of space-separated tables to exclude'
                         )
-    parser.add_argument('-p', '--paths',
-                        required=False, default='openerp6.1-openerp7.0.yml',
-                        help=u'filename1.yml filename2.yml'
+    parser.add_argument('-p', '--path',
+                        default='openerp6.1-openerp7.0.yml',
+                        help=u'List of mapping files. '
                         'If not found in the specified path, '
-                        'each file is searched in the mappings dir'
-                        'Example: openerp6.1-openerp7.0.yml',
+                        'each file is searched in the "mappings" dir of this tool. '
+                        'Example: openerp6.1-openerp7.0.yml custom.yml',
                         nargs='+'
                         )
     parser.add_argument('-w', '--write',
                         action='store_true', default=False,
-                        help=u'Really write to the target database if migration is successfull'
+                        help=u'Really write to the target database if migration is successful'
                         )
 
     args = parser.parse_args()
-    source_db, target_db = args.source, args.target
-    mapping_names = args.paths if type(args.paths) is list else [args.paths]
+    source_db, target_db, relation = args.source, args.target, args.relation
+    mapping_names = args.path if type(args.path) is list else [args.path]
     excluded = args.excluded or [] + [
         'ir_model'
     ]
+    if args.list:
+        print '\n'.join(listdir(join(HERE, 'mappings')))
+        sys.exit(0)
+
+    if not all([source_db, target_db, relation]):
+        print 'Please provide at least -s, -t and -r options'
+        sys.exit(1)
 
     if args.keepcsv:
         print "Writing CSV files in the current dir"
 
     tempdir = mkdtemp(prefix=source_db + '-' + str(int(time.time()))[-4:] + '-',
                       dir=abspath('.'))
-    migrate(source_db, target_db, args.relations, mapping_names,
+    migrate(source_db, target_db, relation, mapping_names,
             excluded, target_dir=tempdir, write=args.write)
     if not args.keepcsv:
         shutil.rmtree(tempdir)
