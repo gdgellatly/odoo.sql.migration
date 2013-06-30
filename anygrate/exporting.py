@@ -31,7 +31,7 @@ def extract_existing(tables, m2m_tables, discriminators, connection):
         result[table] = []
         with connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
             if table not in discriminators:
-                LOG.warning(u'No discriminator defined for table %s', table)
+                LOG.info(u'No discriminator defined for table %s', table)
                 continue
             columns = discriminators[table]
             id_column = ['id'] if table not in m2m_tables else []
