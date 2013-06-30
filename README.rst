@@ -43,10 +43,11 @@ This tool offers a single ``migrate`` script::
     $ sandbox/bin/migrate -h
 
 
-You should select the source and target DBs, and a selection of the source tables to migrate.
-The tool then takes care of selecting the dependant tables::
+You should specify the source and target DBs, a selection of the source tables
+to migrate, and the mapping files to use.  The tool then takes care of
+selecting the dependant tables::
 
-    $ sandbox/bin/migrate -s source_dbname -t target_dbname -r res_partner account_move
+    $ sandbox/bin/migrate -s source_dbname -t target_dbname -r res_partner account_move -p openerp6.1-openerp7.0.yml custom.yml
 
 If you want to inspect the temporary CSV files created, use the ``--keepcsv``
 option. They will be stored in a temporary directory under the current
@@ -59,9 +60,8 @@ The most important part of the migration process is the YML mapping file, which
 describes how to handle data, table by table and column by column. A default
 mapping file is provided and is being used as a real mapping for a migration
 consisting in migrating two 6.1 databases into a single 7.0 multicompany
-database.  Future versions will allow to select a different mapping file, or to
-use several of them (for instance one for the generic tables, and one for
-custom tables)
+database.  You can mix the default 6.1 to 7.0 file provided, and augment it
+with other custom yml files, they will be merged.
 
 
 Internals
@@ -273,7 +273,10 @@ means: append ``firstname`` to ``name`` coming from the ``table1``, and put it
 in the ``display_name`` cell of the target ``table1`` and ``table2``. The
 target ``name`` cell will contain a copy of the source ``name`` cell.
 
-If the target line is not supposed to have the same *id* as the source line, you can create a new *id* with the newid() function. This function returns a different value at each call and is responsible of incrementing the *id*. Here is an example::
+If the target line is not supposed to have the same *id* as the source line,
+you can create a new *id* with the newid() function. This function returns a
+different value at each call and is responsible of incrementing the *id*. Here
+is an example::
 
     base:
         res_users.id:
