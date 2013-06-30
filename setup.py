@@ -1,6 +1,11 @@
 from setuptools import setup, find_packages
+import sys
 
-version = '0.1'
+version = '0.2'
+
+if sys.version_info[0] != 2 or sys.version_info[1] != 7:
+    print('This tool only works with Python 2.7')
+    sys.exit(1)
 
 setup(
     name='anybox.migration.openerp',

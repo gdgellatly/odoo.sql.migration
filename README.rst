@@ -31,12 +31,12 @@ lines/sec.
 Installation
 ============
 
+This tool only works with **Python 2.7**!
+
 You can install this tool in a virtualenv or buildout::
 
-    $ hg clone https://bitbucket.org/anybox/anybox.migration.openerp
-    $ cd anybox.migration.openerp
     $ virtualenv sandbox
-    $ sandbox/bin/python setup.py develop
+    $ sandbox/bin/pip install anybox.migration.openerp
 
 
 Usage
