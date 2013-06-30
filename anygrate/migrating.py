@@ -55,7 +55,7 @@ def main():
 
     args = parser.parse_args()
     source_db, target_db = args.source, args.target
-    mapping_names = args.paths if len(args.paths) < 2 else [args.paths]
+    mapping_names = args.paths if type(args.paths) is list else [args.paths]
     excluded = args.excluded or [] + [
         'ir_model'
     ]
