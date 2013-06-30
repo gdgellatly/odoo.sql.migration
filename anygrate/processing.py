@@ -231,9 +231,11 @@ class CSVProcessor(object):
                             target_row['id'] = int(target_row['id']) + self.mapping.last_id
                             # handle deferred records
                             if table in self.mapping.deferred:
-                                self.updatewriters[table].writerow(
-                                    {k: v for k, v in target_row.iteritems()
-                                     if k == 'id' or k in self.mapping.deferred[table]})
+                                upd_row = {k: v for k, v in target_row.iteritems()
+                                           if k == 'id'
+                                           or (k in self.mapping.deferred[table] and v != '')}
+                                if len(upd_row) > 1:
+                                    self.updatewriters[table].writerow(upd_row)
                                 for k in self.mapping.deferred[table]:
                                     if k in target_row:
                                         del target_row[k]
