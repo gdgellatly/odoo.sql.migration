@@ -9,7 +9,7 @@ setup(
     author_email='contact@anybox.fr',
     packages=find_packages(),
     license='GPLv3+',
-    description='Quick OpenERP migration tool',
+    description='Fast OpenERP migration tool',
     long_description=open('README.rst').read() + open('CHANGES.rst').read(),
     url="https://bitbucket.org/anybox/anybox.migration.openerp/overview",
     include_package_data=True,

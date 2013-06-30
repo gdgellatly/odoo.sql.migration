@@ -18,11 +18,15 @@ priority order:
  - Migrating data from a legacy business application (Access, Delphi, etc.)
  - Migrating from Dolibarr to OpenERP
 
-The principle of this tool is to export CSV data from an old application
-(only OpenERP for now), then to process CSV files in order to import them into a
+The principle of this tool is to export CSV data from an old application (only
+OpenERP for now), then to process CSV files in order to import them into a
 freshly installed OpenERP database. This is a completely different strategy
 than the in-place migration of OpenERP or OpenUpgrade. It also requires some
-treatment after the migration, such as recreating internal sequences.
+treatment after the migration, such as recreating internal sequences.  Import
+and export are done with the PostgreSQL-specific COPY command, and results in
+extremely fast exports and imports. Combined with a pure in-memory Python csv
+processing, this tool can often achieve overall migration rates over 1000
+lines/sec.
 
 Installation
 ============
