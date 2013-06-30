@@ -1,55 +1,8 @@
 import xmlrpclib
-import argparse
 import logging
 from os.path import basename
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(basename(__file__))
-
-
-def main():
-
-    """ Main console script
-    """
-    parser = argparse.ArgumentParser(description='Return the dependencies order'
-                                     ' of models give as parameters')
-    parser.add_argument('-m', '--models', nargs='+', help="One or many models",
-                        required=True)
-    parser.add_argument('-df', '--db_name_from',
-                        help="Name of the database to migrate data from",
-                        required=True)
-    parser.add_argument('-dt', '--db_name_to',
-                        help="Name of the database to migrate data to",
-                        required=False)  # Temporary, will be required
-    parser.add_argument('-ut', '--user_to',
-                        help="Name of the user of the database aimed",
-                        required=False)  # Temporay, will be required
-    parser.add_argument('-uf', '--user_from',
-                        help="Name of the user of the database source",
-                        required=True)
-    parser.add_argument('-pf', '--pwd_from',
-                        help="Password of the user of the database source",
-                        required=True)
-    parser.add_argument('-pt', '--pwd_to',
-                        help="Password of the user of the database aimed",
-                        required=False)  # Temporary, will be required
-    parser.add_argument('-x', '--excluded', nargs='+', help="One or many models"
-                        " to exclude", required=False, default=None)
-
-    #args = parser.parse_args()
-    #username_from = args.user_from
-    #username_to = args.user_to
-    #pwd_from = args.pwd_from
-    #pwd_to = args.pwd_to
-    #dbname_from = args.db_name_from
-    #dbname_to = args.db_name_to
-    #models = args.models
-    #excluded_models = args.excluded
-    #ordered_models = get_dependencies(username_from,
-    #pwd_from, dbname_from, models, excluded_models)
-
-
-if __name__ == '__main__':
-    main()
 
 
 def add_related_tables(target_connection, tables,

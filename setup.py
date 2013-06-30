@@ -22,7 +22,6 @@ setup(
     entry_points={
         'console_scripts': [
             'migrate=anygrate.migrating:main',
-            'order=anygrate.depending:main',
         ]
     }
 
