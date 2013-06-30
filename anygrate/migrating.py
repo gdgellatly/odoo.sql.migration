@@ -45,7 +45,8 @@ def main():
                         help=u'filename1.yml filename2.yml'
                         'If not found in the specified path, '
                         'each file is searched in the mappings dir'
-                        'Example: openerp6.1-openerp7.0.yml'
+                        'Example: openerp6.1-openerp7.0.yml',
+                        nargs='+'
                         )
     parser.add_argument('-w', '--write',
                         action='store_true', default=False,
