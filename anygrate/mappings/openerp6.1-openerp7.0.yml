@@ -424,10 +424,46 @@ crm:
     crm_case_categ.*:
     crm_case_categ.object_id: __forget__
     crm_case_channel.*:
+    crm_case_section.*:
+    crm_case_section.__discriminator__:
+        - code
+    crm_case_section.allow_unlink: __forget__
+    crm_case_section.create_uid:
+        crm_case_section.create_uid: __defer__
+    crm_case_section.write_uid:
+        crm_case_section.write_uid: __defer__
+    crm_case_section._:
+        crm_case_section.alias_id: return target_rows['crm_case_section'].get('alias_id') or None
+        mail_alias.id: |
+            i = newid()
+            target_rows['crm_case_section']['alias_id'] = i
+            return i
+        mail_alias.alias_model_id: return sql("select id from ir_model where model='crm.case.section'")[0][0]
+        mail_alias.alias_name: return source_row['name']
+        mail_alias.alias_defaults: return {}
     crm_case_stage.*:
-    crm_lead.*:
+    crm_case_stage._:
+        crm_case_stage.state: return 'draft'
+        crm_case_stage.type: return 'both'
     crm_phonecall.*:
     crm_segmentation.*:
+
+    crm_lead.*:
+    crm_lead.birthdate: __forget__
+    crm_lead.categ_id: __forget__
+    crm_lead.contact_id: __forget__
+    crm_lead.email: __forget__
+    crm_lead.location_id: __forget__
+    crm_lead.birthdate: __forget__
+    crm_lead.categ_id: __forget__
+    crm_lead.contact_id: __forget__
+    crm_lead.email: __forget__
+    crm_lead.location_id: __forget__
+    crm_lead.optin: __forget__
+    crm_lead.optout:
+        crm_lead.opt_out:
+    crm_lead.partner_address_id:
+        crm_lead.partner_id: __fk__ res_partner_address
 
 sale:
     sale_order.*:
