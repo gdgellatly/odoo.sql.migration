@@ -64,6 +64,7 @@ base:
             return i
     res_users.login_date:
         res_users.date:
+    res_users.address_id: __forget__
 
     # Partners
     res_partner.*:
@@ -73,6 +74,8 @@ base:
     res_partner.__discriminator__:
         - name
         - company_id
+    res_partner.user_id:
+        res_partner.user_id: __defer__
     res_partner.create_uid:
         res_partner.create_uid: __defer__
     res_partner.write_uid:
@@ -116,12 +119,16 @@ base:
         - name
     res_company.*:
     res_company.stylesheet_id: __forget__
+    res_company.code: __forget__
+    res_company.pad_index: __forget__
+    res_company.pad_url_template: __forget__
     res_company.logo:
         res_company.logo_web:
     res_company.rml_footer1:
         res_company.rml_footer:
 
     res_bank.*:
+    res_bank.code: __forget__
     res_bank.__discriminator__:
         - name
     res_partner_category.*:
@@ -229,6 +236,7 @@ account:
         res_company.tax_calculation_rounding_method: return 'round_per_line'
 
     account_account_type.*:
+    account_account_type.sign: __forget__
     account_account_type._:
         account_account_type.report_type: |
             return {
@@ -288,7 +296,7 @@ account_analytic_analysis:
         account_analytic_account.type: return 'normal' #now required, default = normal
     account_analytic_account.contact_id: __forget__
     account_analytic_account.id:
-        accound_analytic_account.id:
+        account_analytic_account.id:
 
 
 account_analytic_default:
@@ -338,22 +346,8 @@ account_check_writing:
 
 
 account_followup:
-    account_followup.*:
-    account_followup_followup.*:
-    account_followup_followup.description: __forget__
-    account_followup_followup_line.*:
-    account_followup_followup_line.delay:
-        account_followup_followup_line.delay: source_row['delay'] or 0
-    res_company.follow_up_msg:
-        account_followup_followup.id: |
-            followup_id = newid()
-            line_id = newid()
-            target_rows['account_followup_followup_line']['followup_id'] = followup_id
-            return followup_id
-        account_followup_followup_line.id: |
-            target_rows['account_followup_followup_line']['name'] = u'migrated followup'
-            target_rows['account_followup_followup_line']['description'] = source_row['follow_up_msg']
-            return line_id
+    res_company.follow_up_msg: __forget__
+    res_company.planning_time_mode_id: __forget__
 
 account_payment:
     account_payment.*:
