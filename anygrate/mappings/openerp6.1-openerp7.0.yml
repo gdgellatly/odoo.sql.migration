@@ -209,6 +209,10 @@ account:
     account_invoice_line.name:
         account_invoice_line.name: #cmt changer le type char en text ??
     account_invoice_line.note: __forget__
+    # deprecated account_invoice_layout
+    account_invoice_line.state: __forget__
+    account_invoice_line.sequence: __forget__
+    account_invoice_line.functional_field: __forget__
 
     account_invoice_report.*:
     account_invoice_report.address_contact_id: __forget__
@@ -314,6 +318,40 @@ project:
     account_analytic_journal.*:
     account_analytic_journal.__discriminator__:
         - name
+    project_task.*:
+    project_project.*:
+    project_task.type_id: __forget__
+    project_project.warn_customer: __forget__
+    project_project.warn_footer: __forget__
+    project_project.warn_header: __forget__
+    project_project.warn_manager: __forget__
+    project_project._:
+        mail_alias.id: |
+            i = newid()
+            target_rows['project_project']['alias_id'] = i
+            return i
+        mail_alias.alias_model_id: return sql("select id from ir_model where model='project.project'")[0][0]
+        mail_alias.alias_name: return 'project' + str(source_row['id'])
+        mail_alias.alias_defaults: return {}
+        project_project.alias_model: return 'truc'
+        project_project.alias_id: return target_rows['project_project'].get('alias_id') or None
+        project_project.privacy_visibility: return 'followers'
+        project_project.state: return 'open'
+
+    # deprecated module project_planning
+    project_task.planning_line_id: __forget__
+    # deprecated module project_scrum
+    project_task.product_backlog_id: __forget__
+    project_task.sprint_id: __forget__
+    project_project.product_owner_id: __forget__
+    project_project.reply_to: __forget__
+    project_project.scrum: __forget__
+    project_project.sprint_size: __forget__
+
+project_mrp:
+    procurement_order.task_id:
+        procurement_order.task_id: __defer__
+        procurement_order.sale_line_id: __defer__
 
 account_asset:
     account_asset.*:
@@ -379,10 +417,23 @@ analytic_user_function:
         analytic_user_funct_grid.id:
         analytic_user_funct_grid.price:     #NEW required: required (float)
 
+crm:
+    crm_case.*:
+    crm_case_categ.*:
+    crm_case_categ.object_id: __forget__
+    crm_case_channel.*:
+    crm_case_stage.*:
+    crm_lead.*:
+    crm_phonecall.*:
+    crm_segmentation.*:
 
 sale:
     sale_order.*:
     sale_order.partner_order_id: __forget__
+    sale_order.partner_shipping_id:
+        sale_order.partner_shipping_id: __fk__ res_partner_address
+    sale_order.partner_invoice_id:
+        sale_order.partner_invoice_id: __fk__ res_partner_address
     sale_shop.*:
     sale_shop.__discriminator__:
         - name
