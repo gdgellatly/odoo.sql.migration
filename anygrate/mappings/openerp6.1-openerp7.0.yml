@@ -390,6 +390,11 @@ sale:
     sale_order_line.notes: __forget__
     sale_shop.shop_registry: __forget__
 
+sale_crm:
+    sale_order.categ_id: # m2o turned into a m2m
+        sale_order_category_rel.category_id: return source_row['categ_id']
+        sale_order_category_rel.order_id: return source_row['id']
+
 stock:
     stock_move.*:
     stock_move.sale_line_id:

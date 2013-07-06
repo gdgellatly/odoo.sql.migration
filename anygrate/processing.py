@@ -238,6 +238,11 @@ class CSVProcessor(object):
                                 for k in self.mapping.deferred[table]:
                                     if k in target_row:
                                         del target_row[k]
+                        # don't write incomplete m2m
+                        if ('id' not in target_row
+                                and len(target_row) == 2
+                                and not all(target_row.values())):
+                            continue
                         # otherwise write the target csv line
                         self.writers[table].writerow(target_row)
 
