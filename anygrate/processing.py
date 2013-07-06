@@ -199,12 +199,11 @@ class CSVProcessor(object):
                     # FIXME refactor and merge with the code in postprocess
                     for key, value in discriminator_values.items():
                         fk_table = self.fk2update.get(table + '.' + key)
-                        if not fk_table:
-                            continue
-                        value = int(value)
-                        if value in self.fk_mapping.get(fk_table, []):
-                            discriminator_values[key] = str(
-                                self.fk_mapping[fk_table].get(value, value))
+                        if value and fk_table:
+                            value = int(value)
+                            if value in self.fk_mapping.get(fk_table, []):
+                                discriminator_values[key] = str(
+                                    self.fk_mapping[fk_table].get(value, value))
                     if (discriminators
                             and 'id' in target_row
                             and all(discriminator_values.values())
