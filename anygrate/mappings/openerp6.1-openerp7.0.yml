@@ -268,6 +268,8 @@ account:
     account_move_line.*:
     account_move_line.company_id:
         account_move_line.company_id: __fk__ res_company  # (related with store)
+    account_move_line.period_id:
+        account_move_line.period_id: __fk__ account_period  # (related with store)
     account_payment_term.*:
     account_payment_term.__discriminator__:
         - name
