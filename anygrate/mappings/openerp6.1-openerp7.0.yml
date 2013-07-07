@@ -144,6 +144,9 @@ base:
     res_partner_category_rel.*:
     res_groups_implied_rel.*:
 
+auth_ldap:
+    res_company_ldap.*:
+
 procurement:
     procurement_order.*:
 

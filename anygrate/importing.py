@@ -23,7 +23,7 @@ def import_from_csv(filepaths, connection):
                 LOG.warn(u'Missing CSV for table %s', filepath.rsplit('.', 2)[0])
                 continue
             with open(filepath) as f:
-                columns = ','.join(csv.reader(f).next())
+                columns = ','.join(['"%s"' % c for c in csv.reader(f).next()])
                 f.seek(0)
                 copy = ("COPY %s (%s) FROM STDOUT WITH CSV HEADER NULL ''"
                         % (basename(filepath).rsplit('.', 2)[0], columns))
