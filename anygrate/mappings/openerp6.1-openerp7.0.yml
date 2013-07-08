@@ -167,7 +167,7 @@ mail:
             i = newid()
             target_rows['res_users']['alias_id'] = i
             return i
-        mail_alias.alias_model_id: return sql("select id from ir_model where model='res.users'")[0][0]
+        mail_alias.alias_model_id: return sql('target', "select id from ir_model where model='res.users'")[0][0]
         mail_alias.alias_name: return source_row['login']
         mail_alias.alias_defaults: return {}
     mail_alias.__discriminator__:
@@ -335,10 +335,10 @@ project:
             i = newid()
             target_rows['project_project']['alias_id'] = i
             return i
-        mail_alias.alias_model_id: return sql("select id from ir_model where model='project.project'")[0][0]
+        mail_alias.alias_model_id: return sql('target', "select id from ir_model where model='project.project'")[0][0]
         mail_alias.alias_name: return 'project' + str(source_row['id'])
         mail_alias.alias_defaults: return {}
-        project_project.alias_model: return 'truc'
+        project_project.alias_model: return 'project.task'
         project_project.alias_id: return target_rows['project_project'].get('alias_id') or None
         project_project.privacy_visibility: return 'followers'
         project_project.state: return 'open'
@@ -441,7 +441,7 @@ crm:
             i = newid()
             target_rows['crm_case_section']['alias_id'] = i
             return i
-        mail_alias.alias_model_id: return sql("select id from ir_model where model='crm.case.section'")[0][0]
+        mail_alias.alias_model_id: return sql('target', "select id from ir_model where model='crm.case.section'")[0][0]
         mail_alias.alias_name: return source_row['name']
         mail_alias.alias_defaults: return {}
     crm_case_stage.*:

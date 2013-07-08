@@ -98,11 +98,13 @@ class Mapping(object):
         self.new_id += 1
         return self.new_id
 
-    def sql(self, sql):
+    def sql(self, db, sql):
         """ execute an sql statement in the target db and return the value
         This method is available as a function in the mapping
         """
-        with self.target_connection.cursor() as cursor:
+        assert db in ('source', 'target'), u"First arg of sql() should be 'source' or 'target'"
+        connection = self.target_connection if db == 'target' else self.source_connection
+        with connection.cursor() as cursor:
             cursor.execute(sql)
             return cursor.fetchall()
 
