@@ -178,6 +178,7 @@ account:
     account_fiscalyear.*:
     account_fiscalyear.__discriminator__:
         - code
+        - company_id
     account_financial_report.*:
     account_account_financial_report.*:
     account_fiscal_position.*:
