@@ -72,7 +72,6 @@ base:
         res_partner.display_name:
     res_partner.__discriminator__:
         - name
-        - company_id
     res_partner.create_uid:
         res_partner.create_uid: __defer__
     res_partner.write_uid:
