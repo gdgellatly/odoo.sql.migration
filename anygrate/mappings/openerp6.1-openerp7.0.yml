@@ -73,7 +73,6 @@ base:
         res_partner.display_name:
     res_partner.__discriminator__:
         - name
-        - company_id
     res_partner.user_id:
         res_partner.user_id: __defer__
     res_partner.create_uid:
@@ -189,6 +188,7 @@ account:
     account_fiscalyear.*:
     account_fiscalyear.__discriminator__:
         - code
+        - company_id
     account_financial_report.*:
     account_account_financial_report.*:
     account_fiscal_position.*:
