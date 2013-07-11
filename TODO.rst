@@ -1,2 +1,1 @@
 - explain needed actions after migration
-- explain field size limit

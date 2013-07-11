@@ -421,6 +421,20 @@ Here is an example::
             (...)
             mail_alias.alias_model_id: return sql('target', "select id from ir_model where model='res.users'")[0][0]
 
+Field size limit
+----------------
+
+When running migration, you may encounter a ``csv.Error: field larger than
+field limit``. This is due to the csv module limiting the csv field size to
+128k by default. If this is not enough for your migration, you can increase the
+limit by inserting a direct call to ``csv.field_size_limit()``.
+
+For example::
+
+    module:
+        table1.column1:
+            table2.column2: import csv; csv.field_size_limit(262144); return source_row['column1']
+
 
 
 Understanding errors
