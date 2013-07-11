@@ -153,8 +153,7 @@ base:
                 model = sql('source', "select osv from wkf where id=(%s)", (wkf_id,))[0][0]
                 j = sql('target', "select id from wkf where osv=(%s)", (model,))[0][0]
                 self.fk_mapping['wkf'][wkf_id] = j
-            else:
-                return self.fk_mapping['wkf'][wkf_id]
+            return self.fk_mapping['wkf'][wkf_id]
     wkf_instance.uid:
         wkf_instance.uid: __fk__ res_users
     wkf_instance.uid.res_id:
@@ -162,7 +161,17 @@ base:
             table = source_row['res_type'].replace('.', '_')
             res_id = source_row['res_id']
             return self.fk_mapping.get(table, {}).get(res_id, res_id)
-    
+
+    wkf_workitem.*:
+    wkf_workitem.act_id:    
+        wkf_workitem.act_id: |
+            self.fk_mapping.setdefault('wkf_activity', {})
+            act_id = source_row['act_id']
+            if act_id not in self.fk_mapping['wkf_activity']:
+                wf, act = sql('source', "select w.name, a.name from wkf w, wkf_activity a where a.wkf_id=w.id and a.id=(%s)", (act_id,))[0]
+                j = sql('target', "select a.id from wkf w, wkf_activity a where w.name=(%s) and a.wkf_id=w.id and a.name=(%s)", (wf, act))[0][0]
+                self.fk_mapping['wkf_activity'][act_id] = j
+            return self.fk_mapping['wkf_activity'][act_id]
     
         
 
