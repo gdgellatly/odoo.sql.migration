@@ -470,6 +470,8 @@ crm:
 
 sale:
     sale_order.*:
+    sale_order.company_id:
+        sale_order.company_id: __fk__ res_company
     sale_order.partner_order_id: __forget__
     sale_order.partner_shipping_id:
         sale_order.partner_shipping_id: __fk__ res_partner_address
