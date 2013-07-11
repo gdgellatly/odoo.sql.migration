@@ -173,6 +173,12 @@ base:
                 self.fk_mapping['wkf_activity'][act_id] = j
             return self.fk_mapping['wkf_activity'][act_id]
     
+    wkf_triggers.*:
+    wkf_triggers.uid.res_id:
+        wkf_triggers.uid.res_id: |
+            table = source_row['model'].replace('.', '_')
+            res_id = source_row['res_id']
+            return self.fk_mapping.get(table, {}).get(res_id, res_id)
         
 
 auth_ldap:
