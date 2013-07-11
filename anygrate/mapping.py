@@ -98,14 +98,14 @@ class Mapping(object):
         self.new_id += 1
         return self.new_id
 
-    def sql(self, db, sql):
+    def sql(self, db, sql, args=()):
         """ execute an sql statement in the target db and return the value
         This method is available as a function in the mapping
         """
         assert db in ('source', 'target'), u"First arg of sql() should be 'source' or 'target'"
         connection = self.target_connection if db == 'target' else self.source_connection
         with connection.cursor() as cursor:
-            cursor.execute(sql)
+            cursor.execute(sql, args)
             return cursor.fetchall()
 
     def get_targets(self, source):
@@ -148,6 +148,7 @@ class Mapping(object):
         """ update the last_id with max of source and target dbs
         """
         self.target_connection = target_connection
+        self.source_connection = source_connection
         for source_table in source_tables:
             with source_connection.cursor() as c:
                 # FIXME the key (id) shouldn't be hardcoded below

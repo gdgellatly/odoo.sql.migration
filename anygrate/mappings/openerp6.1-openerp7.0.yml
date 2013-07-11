@@ -143,6 +143,29 @@ base:
     res_partner_category_rel.*:
     res_groups_implied_rel.*:
 
+    # workflows (we don't migrate workflows, only instances and workitems)
+    wkf_instance.*:
+    wkf_instance.wkf_id:
+        wkf_instance.wkf_id: |
+            self.fk_mapping.setdefault('wkf', {})
+            wkf_id = source_row['wkf_id']
+            if wkf_id not in self.fk_mapping['wkf']:
+                model = sql('source', "select osv from wkf where id=(%s)", (wkf_id,))[0][0]
+                j = sql('target', "select id from wkf where osv=(%s)", (model,))[0][0]
+                self.fk_mapping['wkf'][wkf_id] = j
+            else:
+                return self.fk_mapping['wkf'][wkf_id]
+    wkf_instance.uid:
+        wkf_instance.uid: __fk__ res_users
+    wkf_instance.uid.res_id:
+        wkf_instance.uid.res_id: |
+            table = source_row['res_type'].replace('.', '_')
+            res_id = source_row['res_id']
+            return self.fk_mapping.get(table, {}).get(res_id, res_id)
+    
+    
+        
+
 auth_ldap:
     res_company_ldap.*:
 
