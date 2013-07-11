@@ -176,8 +176,8 @@ can append data to the target DB, not only replace it. In that case you should
 take care of existing data, if the table has constraints (see discriminators
 below)
 
-Splitting one source line to several tables
--------------------------------------------
+Splitting one source line to several tables (table splitting)
+-------------------------------------------------------------
 
 For a single source line coming from a source table, you can feed data in
 several target tables. This can be done just by putting several target lines
@@ -215,6 +215,20 @@ used to migrate one source ``res_users`` line to three different lines: one in
 ``res_users`` + one in ``res_partner`` + one in ``mail_alias``. See the default
 mapping for a real example.
 
+Data moved to another table (table merging)
+-------------------------------------------
+
+When input lines must move to a different table but the target table you want the foreign keys
+pointing to them to be kept so that they point to the new table after
+migration, you should use the ``__moved__`` statement.
+
+The only current situation in OpenERP is for the ``res_partner_address`` data
+moving to the ``res_partner`` table::
+
+    base:
+        res_partner_address.id:
+            res_partner.id: __moved__
+
 Not migrating a column
 ----------------------
 
@@ -226,6 +240,7 @@ statement::
 
 This statement is useful if you defined a wildcard, to prevent from migrating a
 specific column.
+
 
 Transforming data with Python code
 ----------------------------------
@@ -361,6 +376,7 @@ the target of the foreign key is, like in the real example below::
             account_move.company_id: __fk__ res_company
 
 
+
 Handle cyclic dependant tables
 ------------------------------
 
@@ -377,6 +393,35 @@ the column will be updated after all the data is imported::
             res_users.create_uid: __defer__
         res_users.write_uid:
             res_users.write_uid: __defer__
+
+running SQL requests during migration
+-------------------------------------
+
+In case the wanted migration is too complex to be handled by regular
+statements, you can use SQL queries on both the source and target database.
+This should be used in limited cases because the queries will be executed for
+each source cell for which the mapping defines it, and the migration may be
+slowed down, unless you limit the queries with manual caching. (See the
+workflow migration in the mapping).
+
+A simple sql() function is available in the mapping file, and has the following signature::
+
+    sql(db, query, args)
+
+    where:
+    - db is the string 'source' or 'target'
+    - query is the SQL query
+    - args is the arguments to insert in the query
+    The query is actually executed with: cursor.execute(query, args)
+
+Here is an example::
+
+    base:
+        res_users._:
+            (...)
+            mail_alias.alias_model_id: return sql('target', "select id from ir_model where model='res.users'")[0][0]
+
+
 
 Understanding errors
 ====================
