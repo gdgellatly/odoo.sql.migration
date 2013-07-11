@@ -10,6 +10,8 @@ Fast OpenERP migration framework
     you with the best and riskless migration path for your database and custom
     developments.
 
+.. contents::
+
 This tool has been developped with these initial goals in mind, in this
 priority order:
 
@@ -435,6 +437,55 @@ For example::
         table1.column1:
             table2.column2: import csv; csv.field_size_limit(262144); return source_row['column1']
 
+Overall migration process
+=========================
+
+Migrating need several steps described below. If you need, you can easily write
+a small script to automate this full process.
+
+Before migration
+----------------
+
+The different steps before migration are :
+
+- Create a clean target database without demo data, using the latest migrated code
+- Install the expected modules
+- Rename the target company so that its name exactly match the company in the source database
+
+Migration
+---------
+
+The migration consists in running the ``migrate`` script by selecting the
+correct options. If the data in the target database are not the one you expect,
+you must adapt the options and the mapping file to obtain what you want.
+
+Here is a real example ::
+
+    ../bin/migrate -s sourcedb -t targetdb -p openerp6.1-openerp7.0.yml custom.yml
+    -r res_partner account_move res_users pos_order pos_order_line account_move_line
+    account_journal fiche_vae sale_order_line stock_inventory_line account_tax
+    product_supplierinfo wkf_instance wkf_workitem wkf_triggers -w
+
+After migration
+---------------
+
+The ``migrate`` script alone may not be sufficient for your database to be clean
+and usable.  You may have to handle additional corrections such as recreating
+internal sequences.  A small script may be provided in a future version of this tool
+to recreate sequences. It consists in dropping all the ``ir_sequence_*``
+sequences, recomputing the next number of each sequence, then recreate them
+using the ``_create_sequence()`` method of the ``ir.sequence`` object.
+
+You may also need to drop some ``parent_left`` and ``parent_right`` columns
+like this, if you migrating the accounting data::
+
+    psql targetdb -c 'alter table account_account drop parent_left;'
+    psql targetdb -c 'alter table account_account drop parent_right;'
+
+At the end, you should run a final standard update of the database.
+If you're using the `buildout recipe <http://pypi.python.org/pypi/anybox.recipe.openerp>`_ it should look like this::
+
+    ../bin/start_openerp -u all -d targetdb --stop-after-init
 
 
 Understanding errors
