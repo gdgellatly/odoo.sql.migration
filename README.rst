@@ -44,8 +44,8 @@ With virtualenv
     $ sandbox/bin/pip install anybox.migration.openerp
     $ sandbox/bin/migrate -h
 
-Buildout
---------
+With Buildout
+-------------
 
 If you're using Buildout, you may add this tool in a new part like this::
 
