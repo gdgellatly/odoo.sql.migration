@@ -151,8 +151,10 @@ base:
             wkf_id = source_row['wkf_id']
             if wkf_id not in self.fk_mapping['wkf']:
                 model = sql('source', "select osv from wkf where id=(%s)", (wkf_id,))[0][0]
-                j = sql('target', "select id from wkf where osv=(%s)", (model,))[0][0]
-                self.fk_mapping['wkf'][wkf_id] = j
+                target_wkf_id = sql('target', "select id from wkf where osv=(%s)", (model,))
+                self.fk_mapping['wkf'][wkf_id] = target_wkf_id and target_wkf_id[0][0] or ''
+                if not self.fk_mapping['wkf'][wkf_id]:
+                    raise UserWarning('Could not migrate workflow instance: %s' % source_row)
             return self.fk_mapping['wkf'][wkf_id]
     wkf_instance.uid:
         wkf_instance.uid: __fk__ res_users
@@ -169,8 +171,10 @@ base:
             act_id = source_row['act_id']
             if act_id not in self.fk_mapping['wkf_activity']:
                 wf, act = sql('source', "select w.name, a.name from wkf w, wkf_activity a where a.wkf_id=w.id and a.id=(%s)", (act_id,))[0]
-                j = sql('target', "select a.id from wkf w, wkf_activity a where w.name=(%s) and a.wkf_id=w.id and a.name=(%s)", (wf, act))[0][0]
-                self.fk_mapping['wkf_activity'][act_id] = j
+                tartget_act_id = sql('target', "select a.id from wkf w, wkf_activity a where w.name=(%s) and a.wkf_id=w.id and a.name=(%s)", (wf, act))
+                self.fk_mapping['wkf_activity'][act_id] = tartget_act_id and tartget_act_id[0][0] or ''
+                if not self.fk_mapping['wkf_activity'][act_id]:
+                    raise UserWarning('Could not migrate workflow workitem: %s' % source_row)
             return self.fk_mapping['wkf_activity'][act_id]
     
     wkf_triggers.*:
@@ -454,6 +458,7 @@ analytic_contract_hr_expense:
     analytic_contract_hr_expense.*:
 
 
+
 analytic_user_function:
     analytic_user_function.*:
     analytic_user_funct_grid.id:
@@ -614,4 +619,17 @@ purchase:
         purchase_order.partner_id: __fk__ res_partner_address
     purchase_order_line.*:
     purchase_order_line.notes: __forget__
+
+hr:
+    hr_expense_expense.*:
+    hr_employee.*:
+    hr_employee.children: __forget__
+    hr_employee.manager: __forget__
+    hr_employee.photo:
+        hr_employee.image:
+
+resource:
+    resource_resource.*:
+
+
 
