@@ -30,6 +30,7 @@ extremely fast exports and imports. Combined with a pure in-memory Python csv
 processing, this tool can often achieve overall migration rates over 1000
 lines/sec.
 
+
 Installation
 ============
 
@@ -94,6 +95,7 @@ The different internal steps are:
  - Updating possible pre-existing data with incoming data
 
 The processing of CSV files is done using a mapping file written in Yaml.
+
 
 Mapping file
 ============
@@ -437,6 +439,7 @@ For example::
         table1.column1:
             table2.column2: import csv; csv.field_size_limit(262144); return source_row['column1']
 
+
 Overall migration process
 =========================
 
@@ -463,7 +466,7 @@ Here is a real example ::
 
     ../bin/migrate -s sourcedb -t targetdb -p openerp6.1-openerp7.0.yml custom.yml
     -r res_partner account_move res_users pos_order pos_order_line account_move_line
-    account_journal fiche_vae sale_order_line stock_inventory_line account_tax
+    account_journal sale_order_line stock_inventory_line account_tax
     product_supplierinfo wkf_instance wkf_workitem wkf_triggers -w
 
 After migration
@@ -516,20 +519,20 @@ For instance, for the ``res_partner`` table you will find these files:
    foreign keys, that will be used to update the target table after import.
 
 
-
-
 Contribute
 ==========
 
-Authors and contributors:
+Authors and contributors
+------------------------
 
  - Christophe Combelles
  - Florent Jouatte
  - Guy-Clovis Nzouendjou
 
-Code
+Code repository and bug tracker
+-------------------------------
 
- - Code repository and bug tracker: https://bitbucket.org/anybox/anybox.migration.openerp
+See here: https://bitbucket.org/anybox/anybox.migration.openerp
 
 Please don't hesitate to give us feedback, report bugs or contribute the mapping files
 on Bitbucket.
