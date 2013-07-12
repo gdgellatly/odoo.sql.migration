@@ -437,7 +437,10 @@ For example::
 
     module:
         table1.column1:
-            table2.column2: import csv; csv.field_size_limit(262144); return source_row['column1']
+            table2.column2: |
+                import csv
+                csv.field_size_limit(262144)
+                return source_row['column1']
 
 
 Overall migration process
