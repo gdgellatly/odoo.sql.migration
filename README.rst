@@ -36,11 +36,26 @@ Installation
 
 This tool only works with **Python 2.7**!
 
-You can install this tool in a virtualenv or buildout::
+With virtualenv
+---------------
+::
 
     $ virtualenv sandbox
     $ sandbox/bin/pip install anybox.migration.openerp
+    $ sandbox/bin/migrate -h
 
+Buildout
+--------
+
+If you're using Buildout, you may add this tool in a new part like this::
+
+    [migration]
+    recipe = zc.recipe.egg
+    eggs = anybox.migration.openerp
+
+Then, don't forget to add the ``migration`` section in the ``parts`` of the
+``[buildout]`` section. After relaunching ``bin/buildout``, the ``migrate``
+script will appear in the ``bin`` directory of the buildout.
 
 Usage
 =====
