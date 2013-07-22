@@ -547,6 +547,9 @@ stock:
     stock_location.*:
     stock_location.address_id:
         stock_location.partner_id: __fk__ res_partner_address
+    stock_location.__discriminator__:
+        - complete_name
+        - company_id
     stock_warehouse.*:
     stock_warehouse.__discriminator__:
         - name
