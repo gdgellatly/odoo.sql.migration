@@ -82,7 +82,7 @@ base:
     res_users.context_tz:
         res_partner.tz:
     res_partner._:
-        res_partner.is_company: return True if source_row['supplier'] == 't' or source_row['website'] else False
+        res_partner.is_company: return True
         res_partner.notification_email_send: return 'comment'
 
     # addresses
@@ -488,6 +488,8 @@ crm:
         mail_alias.alias_name: return source_row['name']
         mail_alias.alias_defaults: return {}
     crm_case_stage.*:
+    crm_case_stage.__discriminator__:
+        - name
     crm_case_stage._:
         crm_case_stage.state: return 'draft'
         crm_case_stage.type: return 'both'
@@ -495,11 +497,6 @@ crm:
     crm_segmentation.*:
 
     crm_lead.*:
-    crm_lead.birthdate: __forget__
-    crm_lead.categ_id: __forget__
-    crm_lead.contact_id: __forget__
-    crm_lead.email: __forget__
-    crm_lead.location_id: __forget__
     crm_lead.birthdate: __forget__
     crm_lead.categ_id: __forget__
     crm_lead.contact_id: __forget__
