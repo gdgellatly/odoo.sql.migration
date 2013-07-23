@@ -237,7 +237,7 @@ mapping for a real example.
 Data moved to another table (table merging)
 -------------------------------------------
 
-When input lines must move to a different table but the target table you want the foreign keys
+When input lines must move to a different table, you want the foreign keys
 pointing to them to be kept so that they point to the new table after
 migration, you should use the ``__moved__`` statement.
 
@@ -247,6 +247,9 @@ moving to the ``res_partner`` table::
     base:
         res_partner_address.id:
             res_partner.id: __moved__
+
+This statement must be accompanied with a ``__fk__`` statement for all the
+foreign keys pointing to the moved table (See the ``__fk__`` chapter).
 
 Not migrating a column
 ----------------------
@@ -395,6 +398,21 @@ the target of the foreign key is, like in the real example below::
             account_move.company_id: __fk__ res_company
 
 
+Here is another example for the ``crm_lead`` table, which may contain a field
+coming from a ``__moved__`` table. Imagine you want the ``partner_id`` field of
+the CRM leads in OpenERP 7.0 to come from the ``partner_address_id`` field of
+the same table in OpenERP 6.1.  The new field is a foreign key to
+``res_partner``, while the old one was pointing to ``res_partner_address``. You
+can tell this with the following statement::
+
+    crm_lead.partner_address_id:
+        crm_lead.partner_id: __fk__ res_partner_address
+
+However you should also not forget to forget the partner_id field, or you will
+have a conflict an mix data badly if you used a wildcard for the table::
+
+    crm_lead.*:
+    crm_lead.partner_id: __forget__
 
 Handle cyclic dependant tables
 ------------------------------
