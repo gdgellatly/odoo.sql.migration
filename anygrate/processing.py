@@ -21,7 +21,6 @@ class CSVProcessor(object):
         self.updated_values = {}
         self.fk_mapping = {}
         self.lines = 0
-        self.moved_records = {}
 
     def get_target_columns(self, filepaths):
         """ Compute target columns with source columns + mapping
@@ -146,7 +145,6 @@ class CSVProcessor(object):
         source_table = basename(source_filepath).rsplit('.', 1)[0]
         with open(source_filepath, 'rb') as source_csv:
             reader = csv.DictReader(source_csv, delimiter=',')
-            self.is_moved = set()
             # process each csv line
             for source_row in reader:
                 self.lines += 1
@@ -173,7 +171,6 @@ class CSVProcessor(object):
                         # we should save the mapping to correctly fix fks
                         # This can happen in case of semantic change like res.partner.address
                         elif function == '__moved__':
-                            self.is_moved.add(target_table)
                             newid = self.mapping.newid()
                             target_rows[target_table][target_column] = newid
                             self.fk_mapping.setdefault(source_table, {})
@@ -217,12 +214,7 @@ class CSVProcessor(object):
                         self.fk_mapping.setdefault(table, {})
                         # we save the match between source and existing id
                         # to be able to update the fks in the 2nd pass
-                        if table in self.is_moved:
-                            target_row['id'] = existing_id
-                            source_id = int(source_row['id'])
-                            self.fk_mapping[source_table][source_id] = existing_id
-                        else:  # normal
-                            self.fk_mapping[table][int(target_row['id'])] = existing_id
+                        self.fk_mapping[table][int(target_row['id'])] = existing_id
                         self.updatewriters[table].writerow(target_row)
                     else:
                         # offset the id of the line, except for m2m (no id)
@@ -273,9 +265,6 @@ class CSVProcessor(object):
                     if key == 'id' and table in self.fk_mapping:
                         value = int(value)
                         postprocessed_row[key] = self.fk_mapping[table].get(value, value)
-                    # if the record comes from another table, fix it
-                    if value in self.moved_records.get(target_record, []):
-                        postprocessed_row[key] = self.moved_records[table][value]
                 # don't write m2m lines if they exist in the target
                 # FIXME: refactor these 4 lines with those from process_one()?
                 discriminators = self.mapping.discriminators.get(table)
