@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   height="80.000000"
+   id="svg3512"
+   version="1.0"
+   width="80.000000"
+   x="0.0000000"
+   y="0.0000000"
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="anygrate.svg"
+   inkscape:export-filename="/home/dadafkas/projets/anybox/hg/anybox.migration.openerp/anygrate.png"
+   inkscape:export-xdpi="162.16992"
+   inkscape:export-ydpi="162.16992">
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1600"
+     inkscape:window-height="850"
+     id="namedview14"
+     showgrid="false"
+     inkscape:zoom="4.17193"
+     inkscape:cx="-52.437169"
+     inkscape:cy="36.373119"
+     inkscape:window-x="0"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg3512" />
+  <defs
+     id="defs3" />
+  <metadata
+     id="metadata12">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by/3.0/" />
+        <dc:publisher>
+          <cc:Agent
+             rdf:about="http://openclipart.org/">
+            <dc:title></dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title></dc:title>
+        <dc:date></dc:date>
+        <dc:description />
+        <dc:source></dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title></dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag />
+        </dc:subject>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by/3.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="g3095"
+     transform="translate(-1.8124515,16.168527)">
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:#919191;fill-opacity:1;fill-rule:evenodd;stroke:none"
+       id="path2751"
+       d="M 31.211999,27.608692 14.482327,17.697043 23.407496,3.9417017 c 5.976977,-5.4899982 13.269599,1.8797564 16.698477,9.1734653 l -8.893974,14.493525 z" />
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:#919191;fill-opacity:1;fill-rule:evenodd;stroke:none"
+       id="path2742"
+       d="m 52.484372,19.930151 17.07675,9.310976 -8.967476,13.766651 c -6.033229,5.55799 -13.50002,-1.500426 -17.039511,-8.585594 l 8.930237,-14.492033 z" />
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:#d6ef49;fill-opacity:1;fill-rule:evenodd;stroke:none"
+       id="path2752"
+       d="m 41.997532,25.900201 17.716746,0.155099 9.428298,-15.552501 -5.57136,2.90827 -3.872192,-7.1262343 C 58.506116,3.5599791 55.009531,1.1339825 51.91011,1.2542938 L 30.538929,1.4083473 c 4.561435,1.3600528 7.423723,4.8123152 9.85046,9.2783917 l 6.540859,12.037546 -4.932716,3.175916 z" />
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:#d6ef49;fill-opacity:1;fill-rule:evenodd;stroke:none"
+       id="path2743"
+       d="m 41.535831,21.894424 -18.006725,0.313134 -9.465325,15.547862 5.640365,-3.007511 3.988775,6.90876 c 1.232797,2.649263 4.804581,4.943962 7.953626,4.74413 L 53.364962,45.687468 C 48.718964,44.4694 45.784119,41.148422 43.284317,36.818638 l -6.737788,-11.670191 4.989302,-3.254023 z" />
+  </g>
+</svg>
