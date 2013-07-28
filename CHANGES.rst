@@ -1,5 +1,17 @@
 Changes
 =======
+
+0.4 (2013-07-28)
+----------------
+
+- Fixed migration of leads and purchase orders
+- simplified ``__moved__`` statement handling
+- improved workflow migration
+- migrate employees and expenses
+- set suppliers as companies by default
+- how to install in a buildout
+- updated doc
+
 0.3 (2013-07-11)
 ----------------
 
