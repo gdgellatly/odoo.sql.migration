@@ -57,6 +57,13 @@ Then, don't forget to add the ``migration`` section in the ``parts`` of the
 ``[buildout]`` section. After relaunching ``bin/buildout``, the ``migrate``
 script will appear in the ``bin`` directory of the buildout.
 
+Starting from the version 1.7 of the `OpenERP buildout recipe
+<https://pypi.python.org/pypi/anybox.recipe.openerp>`_ You may also install
+this tool directly in your ``[openerp]`` part, just by adding::
+
+    eggs = anybox.migration.openerp
+    scripts = migrate
+
 Usage
 =====
 
