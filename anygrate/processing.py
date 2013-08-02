@@ -21,6 +21,7 @@ class CSVProcessor(object):
         self.updated_values = {}
         self.fk_mapping = {}
         self.lines = 0
+        self.is_moved = set()
 
     def get_target_columns(self, filepaths):
         """ Compute target columns with source columns + mapping
@@ -171,6 +172,7 @@ class CSVProcessor(object):
                         # we should save the mapping to correctly fix fks
                         # This can happen in case of semantic change like res.partner.address
                         elif function == '__moved__':
+                            self.is_moved.add(source_table)
                             newid = self.mapping.newid()
                             target_rows[target_table][target_column] = newid
                             self.fk_mapping.setdefault(source_table, {})
@@ -215,6 +217,14 @@ class CSVProcessor(object):
                         # we save the match between source and existing id
                         # to be able to update the fks in the 2nd pass
                         self.fk_mapping[table][int(target_row['id'])] = existing_id
+
+                        # fix fk to a moved table with existing data
+                        if source_table in self.is_moved:
+                            source_id = int(source_row['id'])
+                            if source_id in self.fk_mapping[source_table]:
+                                target_row['id'] = existing_id
+                                self.fk_mapping[source_table][source_id] = existing_id
+
                         self.updatewriters[table].writerow(target_row)
                     else:
                         # offset the id of the line, except for m2m (no id)
