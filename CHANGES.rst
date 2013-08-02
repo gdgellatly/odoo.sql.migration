@@ -1,6 +1,12 @@
 Changes
 =======
 
+0.5 (2013-08-02)
+----------------
+
+- Fixed foreign keys pointing to a ``__moved__`` table with existing data
+- Updated doc
+
 0.4 (2013-07-28)
 ----------------
 
