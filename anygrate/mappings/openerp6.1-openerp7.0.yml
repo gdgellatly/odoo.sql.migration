@@ -18,6 +18,11 @@ base:
         - code
 
     res_country_state.*:
+    res_country_state.write_uid:
+        res_country_state.write_uid: __defer__
+    res_country_state.create_uid:
+        res_country_state.create_uid: __defer__
+
     res_country_state.__discriminator__:
         - code
 
@@ -37,6 +42,9 @@ base:
     res_users.email: __forget__
     res_users.date: __forget__
     res_users.menu_tips: __forget__
+    res_users.context_department_id: __forget__
+    res_users.context_project_id: __forget__
+    res_users.context_section_id: __forget__
     res_users.user_email:
         res_partner.email:
     res_users.name:
@@ -54,7 +62,6 @@ base:
     res_users.id:
         res_users.id:
         res_users.partner_id:
-        res_partner.notification_email_send: return 'comment'
         res_partner.id: |
             i = newid()
             target_rows['res_users']['partner_id'] = i
@@ -83,12 +90,10 @@ base:
         res_partner.tz:
     res_partner._:
         res_partner.is_company: return True
-        res_partner.notification_email_send: return 'comment'
 
     # addresses
     res_partner_address.id:
         res_partner.id: __moved__
-        res_partner.notification_email_send: return 'comment'
     res_partner_address.create_uid:
         res_partner.create_uid: __defer__
     res_partner_address.write_uid:
@@ -96,12 +101,10 @@ base:
     res_partner_address.*:
         res_partner.*:
     res_partner_address.contact_id: __forget__
-    res_partner_address.x_openupgrade_job_id: __forget__
     res_partner_address.location_id: __forget__
     res_partner_address.country_id:
         res_partner.country_id:
         #adding the new fields with default value
-        res_partner.notification_email_send: return 'comment'
         res_partner.is_company: return False
         res_partner.use_parent_address: return True # make a function which finds the value in the target database
     res_partner_address.name:
@@ -202,6 +205,9 @@ mail:
     res_partner.notification_email_send:
         res_partner.notification_email_send: return 'comment'
 
+    res_partner._:
+        res_partner.notification_email_send: return 'comment'
+
     res_users._:
         res_users.alias_id: return target_rows['res_users'].get('alias_id') or None
         mail_alias.id: |
@@ -211,6 +217,11 @@ mail:
         mail_alias.alias_model_id: return sql('target', "select id from ir_model where model='res.users'")[0][0]
         mail_alias.alias_name: return source_row['login']
         mail_alias.alias_defaults: return {}
+        res_partner.notification_email_send: return 'comment'
+
+    res_partner_address._:
+        res_partner.notification_email_send: return 'comment'
+    
     mail_alias.__discriminator__:
         - alias_name
 
@@ -360,6 +371,16 @@ account_analytic_plans:
 
 account_anglo_saxon:
     account_anglo_saxon.*:
+
+
+account_report_company:
+    res_users.name:
+        res_partner.display_name:
+    res_partner.name:
+        res_partner.display_name:
+    res_partner_address.name:
+        res_partner.display_name: return source_row['name'] or source_row['street'] or source_row['city'] or ('address' + str(source_row['id']))
+
 
 project:
     account_analytic_journal.*:
