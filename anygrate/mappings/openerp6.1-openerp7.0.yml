@@ -289,8 +289,6 @@ account:
         - code
         - company_id
     account_journal.view_id: __forget__
-    account_journal._:
-        account_journal.active: return True
 
     account_move_reconcile.*:
 
