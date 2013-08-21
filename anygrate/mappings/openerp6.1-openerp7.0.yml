@@ -116,6 +116,8 @@ base:
     res_partner_bank.*:
     res_partner_bank.__discriminator__:
         - name
+    res_partner_bank.journal_id:
+        res_partner_bank.journal_id: __defer__
 
     res_company.__discriminator__:
         - name
@@ -238,10 +240,14 @@ account:
     account_period.__discriminator__:
         - name
         - company_id
+
     account_fiscalyear.*:
     account_fiscalyear.__discriminator__:
         - code
         - company_id
+    account_fiscalyear.end_journal_period_id:
+        account_fiscalyear.end_journal_period_id: __defer__
+
     account_financial_report.*:
     account_account_financial_report.*:
     account_fiscal_position.*:
@@ -283,6 +289,8 @@ account:
         - code
         - company_id
     account_journal.view_id: __forget__
+    account_journal._:
+        account_journal.active: return True
 
     account_move_reconcile.*:
 
