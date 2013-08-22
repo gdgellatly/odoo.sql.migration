@@ -36,7 +36,8 @@ base:
         - name
 
     res_country.*:
-    res_country.create_uid: __forget__
+    res_country.create_uid:
+        res_country.create_uid: __defer__
     res_country.__discriminator__:
         - code
 
@@ -50,7 +51,8 @@ base:
         - code
 
     res_currency.*:
-    res_currency.company_id: __forget__
+    res_currency.company_id:
+        res_currency.company_id: __defer__
     res_currency.__discriminator__:
         - name
 
