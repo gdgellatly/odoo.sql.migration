@@ -51,8 +51,7 @@ base:
         - code
 
     res_currency.*:
-    res_currency.company_id:
-        res_currency.company_id: __defer__
+    res_currency.company_id: __forget__
     res_currency.__discriminator__:
         - name
 
@@ -248,7 +247,7 @@ mail:
 
     res_partner_address._:
         res_partner.notification_email_send: return 'comment'
-    
+
     mail_alias.__discriminator__:
         - alias_name
 
