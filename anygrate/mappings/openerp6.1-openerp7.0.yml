@@ -1,5 +1,8 @@
 base:
     ir_sequence.*:
+    ir_sequence.company_id:
+        # force a company_id and assume 1. Will be offset anyway in multicompany case
+        ir_sequence.company_id: return 1
     res_groups.*:
     res_groups.__discriminator__:
         - name
