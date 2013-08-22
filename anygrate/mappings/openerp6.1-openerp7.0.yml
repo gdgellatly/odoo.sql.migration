@@ -1,5 +1,25 @@
 base:
     ir_sequence.*:
+    ir_sequence.__discriminator__:
+        - code
+        - name
+        - company_id
+    ir_sequence.number_next:
+        ir_sequence.number_next: |
+            # don't conflict with the next statement (could be avoided with ordereddict)
+            return target_rows['ir_sequence'].get('number_next', source_row['number_next'])
+    ir_sequence.id:
+        ir_sequence.id: |
+            sequence_name = 'ir_sequence_' + source_row['id'].zfill(3)
+            sequence_exists = sql('source', 'select * from pg_class where relname=(%s)', (sequence_name,))
+            if sequence_exists:
+                last_value = sql('source', 'select last_value from %s' % sequence_name)[0][0]
+                target_rows['ir_sequence']['number_next'] = last_value
+                sequence_id = int(source_row['id']) + self.mapping.last_id
+                sql('target',
+                    "create sequence ir_sequence_%03d increment by %%s start with %%s" % sequence_id,
+                    (int(source_row['number_increment']), last_value))
+            return source_row['id']
     ir_sequence.company_id:
         # force a company_id and assume 1. Will be offset anyway in multicompany case
         ir_sequence.company_id: return 1
@@ -214,7 +234,7 @@ mail:
         res_partner.notification_email_send: return 'comment'
 
     res_users._:
-        res_users.alias_id: return target_rows['res_users'].get('alias_id') or None
+        res_users.alias_id: return target_rows['res_users'].get('alias_id')
         mail_alias.id: |
             i = newid()
             target_rows['res_users']['alias_id'] = i
@@ -411,7 +431,7 @@ project:
         mail_alias.alias_name: return 'project' + str(source_row['id'])
         mail_alias.alias_defaults: return {}
         project_project.alias_model: return 'project.task'
-        project_project.alias_id: return target_rows['project_project'].get('alias_id') or None
+        project_project.alias_id: return target_rows['project_project'].get('alias_id')
         project_project.privacy_visibility: return 'followers'
         project_project.state: return 'open'
 
@@ -509,7 +529,7 @@ crm:
     crm_case_section.write_uid:
         crm_case_section.write_uid: __defer__
     crm_case_section._:
-        crm_case_section.alias_id: return target_rows['crm_case_section'].get('alias_id') or None
+        crm_case_section.alias_id: return target_rows['crm_case_section'].get('alias_id')
         mail_alias.id: |
             i = newid()
             target_rows['crm_case_section']['alias_id'] = i

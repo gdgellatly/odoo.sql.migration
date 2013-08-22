@@ -23,12 +23,11 @@ priority order:
 The principle of this tool is to export CSV data from an old application (only
 OpenERP for now), then to process CSV files in order to import them into a
 freshly installed OpenERP database. This is a completely different strategy
-than the in-place migration of OpenERP or OpenUpgrade. It also requires some
-treatment after the migration, such as recreating internal sequences.  Import
-and export are done with the PostgreSQL-specific COPY command, and results in
-extremely fast exports and imports. Combined with a pure in-memory Python csv
-processing, this tool can often achieve overall migration rates over 1000
-lines/sec.
+than the in-place migration of OpenERP or OpenUpgrade and allows to start over
+from a clean database, while keeping history.  Import and export are done with
+the PostgreSQL-specific COPY command, and results in extremely fast exports and
+imports. Combined with a pure in-memory Python csv processing, this tool can
+often achieve overall migration rates over 1000 lines/sec.
 
 
 Installation
@@ -492,11 +491,14 @@ a small script to automate this full process.
 Before migration
 ----------------
 
-The different steps before migration are :
+The different steps before migration are the following. All of them are
+important for the migration to be successful:
 
 - Create a clean target database without demo data, using the latest migrated code
 - Install the expected modules
 - Rename the target company so that its name exactly match the company in the source database
+- Set the company of all internal sequences by running the following SQL:
+  ``update ir_sequence set company_id=(select id from res_company);``
 
 Migration
 ---------
@@ -515,20 +517,17 @@ Here is a real example ::
 After migration
 ---------------
 
-The ``migrate`` script alone may not be sufficient for your database to be clean
-and usable.  You may have to handle additional corrections such as recreating
-internal sequences.  A small script may be provided in a future version of this tool
-to recreate sequences. It consists in dropping all the ``ir_sequence_*``
-sequences, recomputing the next number of each sequence, then recreate them
-using the ``_create_sequence()`` method of the ``ir.sequence`` object.
-
-You may also need to drop some ``parent_left`` and ``parent_right`` columns
-like this, if you migrating the accounting data::
+The ``migrate`` script alone may not be sufficient for your database to be
+clean and usable.  You may have to handle additional corrections. Please test
+your instance thoroughly!  Since version 0.6 you shouldn't have to manually fix
+the internal sequences, as they are now handled by the mapping file.  However
+one of the required remaining fixes consists in dropping some ``parent_left``
+and ``parent_right`` columns. Here is the example with the accounting module::
 
     psql targetdb -c 'alter table account_account drop parent_left;'
     psql targetdb -c 'alter table account_account drop parent_right;'
 
-At the end, you should run a final standard update of the database.
+At the end, you should run a final global update of the database.
 If you're using the `buildout recipe <http://pypi.python.org/pypi/anybox.recipe.openerp>`_ it should look like this::
 
     ../bin/start_openerp -u all -d targetdb --stop-after-init
@@ -561,6 +560,10 @@ For instance, for the ``res_partner`` table you will find these files:
  - **res_partner.update2.csv** contains the final existing data with fixed
    foreign keys, that will be used to update the target table after import.
 
+If you're going into trouble during the import step with foreign key errors,
+please have a look at this log, as it contains most of the common
+encountered issues to solve:
+https://bitbucket.org/anybox/anybox.migration.openerp/issue/3/foreign-key-constraints
 
 Contribute
 ==========
