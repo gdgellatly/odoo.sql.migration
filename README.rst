@@ -492,7 +492,7 @@ Before migration
 ----------------
 
 The different steps before migration are the following. All of them are
-important for the migration to be successful:
+important for the migration to be successful and should be done on the target db:
 
 - Create a clean target database without demo data, using the latest migrated code
 - Install the expected modules
@@ -520,9 +520,11 @@ After migration
 The ``migrate`` script alone may not be sufficient for your database to be
 clean and usable.  You may have to handle additional corrections. Please test
 your instance thoroughly!  Since version 0.6 you shouldn't have to manually fix
-the internal sequences, as they are now handled by the mapping file.  However
-one of the required remaining fixes consists in dropping some ``parent_left``
-and ``parent_right`` columns. Here is the example with the accounting module::
+the internal sequences, as they are now handled by the mapping file. You may
+just clean them up to remove duplicates (from the menu
+Settings/Technical/Sequences&Identifiers/Sequences).  However one of the
+required remaining fixes consists in dropping some ``parent_left`` and
+``parent_right`` columns. Here is the example with the accounting module::
 
     psql targetdb -c 'alter table account_account drop parent_left;'
     psql targetdb -c 'alter table account_account drop parent_right;'
@@ -531,9 +533,6 @@ At the end, you should run a final global update of the database.
 If you're using the `buildout recipe <http://pypi.python.org/pypi/anybox.recipe.openerp>`_ it should look like this::
 
     ../bin/start_openerp -u all -d targetdb --stop-after-init
-
-You may also remove duplicate internal sequences right from the web interface (menu
-Settings/Technical/Sequences&Identifiers/Sequences).
 
 
 Understanding errors
