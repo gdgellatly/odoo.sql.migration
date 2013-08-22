@@ -1,15 +1,12 @@
 base:
     ir_sequence.*:
-    ir_sequence.__discriminator__:
-        - code
-        - name
-        - company_id
     ir_sequence.number_next:
         ir_sequence.number_next: |
             # don't conflict with the next statement (could be avoided with ordereddict)
             return target_rows['ir_sequence'].get('number_next', source_row['number_next'])
     ir_sequence.id:
         ir_sequence.id: |
+            # we don't merge sequences, it's too painful
             sequence_name = 'ir_sequence_' + source_row['id'].zfill(3)
             sequence_exists = sql('source', 'select * from pg_class where relname=(%s)', (sequence_name,))
             if sequence_exists:

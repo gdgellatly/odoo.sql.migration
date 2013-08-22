@@ -106,7 +106,7 @@ class Mapping(object):
         connection = self.target_connection if db == 'target' else self.source_connection
         with connection.cursor() as cursor:
             cursor.execute(sql, args)
-            return cursor.fetchall() if cursor.rowcount > 0 else ()
+            return cursor.fetchall() if 'select ' in sql.lower() else ()
 
     def get_targets(self, source):
         """ Return the target mapping for a column or table

@@ -497,8 +497,8 @@ important for the migration to be successful:
 - Create a clean target database without demo data, using the latest migrated code
 - Install the expected modules
 - Rename the target company so that its name exactly match the company in the source database
-- Set the company of all internal sequences by running the following SQL:
-  ``update ir_sequence set company_id=(select id from res_company);``
+- Remove the company of all internal sequences by running the following SQL:
+  ``update ir_sequence set company_id=NULL;``. This will allow to remove duplicate after migration.
 
 Migration
 ---------
@@ -531,6 +531,9 @@ At the end, you should run a final global update of the database.
 If you're using the `buildout recipe <http://pypi.python.org/pypi/anybox.recipe.openerp>`_ it should look like this::
 
     ../bin/start_openerp -u all -d targetdb --stop-after-init
+
+You may also remove duplicate internal sequences right from the web interface (menu
+Settings/Technical/Sequences&Identifiers/Sequences).
 
 
 Understanding errors
