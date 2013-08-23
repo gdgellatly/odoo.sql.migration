@@ -4,9 +4,10 @@ Changes
 0.6 (unreleased)
 ----------------
 
-- Handle migration of ir_sequence without needing post-migration script
-- break some dependency loops
-- other mapping improvements
+- Migrate ir_sequence without needing post-migration script
+- Fixed workflow instance and workitem migration
+- Break some dependency loops
+- Other mapping improvements
 
 0.5 (2013-08-02)
 ----------------

@@ -116,6 +116,8 @@ The different internal steps are:
  - Updating possible pre-existing data with incoming data
 
 The processing of CSV files is done using a mapping file written in Yaml.
+Initial versions of the mapping file have been written with the help of the
+OpenUpgrade analysis files.
 
 
 Mapping file

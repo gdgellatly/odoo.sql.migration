@@ -127,7 +127,7 @@ base:
         res_partner.country_id:
         #adding the new fields with default value
         res_partner.is_company: return False
-        res_partner.use_parent_address: return True # make a function which finds the value in the target database
+        res_partner.use_parent_address: return False
     res_partner_address.name:
         res_partner.name: return source_row['name'] or source_row['street'] or source_row['city'] or ('address' + str(source_row['id']))
         res_partner.display_name: return source_row['name'] or source_row['street'] or source_row['city'] or ('address' + str(source_row['id']))
@@ -184,11 +184,11 @@ base:
             return self.fk_mapping['wkf'][wkf_id]
     wkf_instance.uid:
         wkf_instance.uid: __fk__ res_users
-    wkf_instance.uid.res_id:
-        wkf_instance.uid.res_id: |
+    wkf_instance.res_id:
+        wkf_instance.res_id: |
             table = source_row['res_type'].replace('.', '_')
             res_id = source_row['res_id']
-            return self.fk_mapping.get(table, {}).get(res_id, res_id)
+            return self.fk_mapping.get(table, {}).get(res_id, int(res_id) + self.mapping.last_id)
 
     wkf_workitem.*:
     wkf_workitem.act_id:
@@ -197,18 +197,18 @@ base:
             act_id = source_row['act_id']
             if act_id not in self.fk_mapping['wkf_activity']:
                 wf, act = sql('source', "select w.name, a.name from wkf w, wkf_activity a where a.wkf_id=w.id and a.id=(%s)", (act_id,))[0]
-                tartget_act_id = sql('target', "select a.id from wkf w, wkf_activity a where w.name=(%s) and a.wkf_id=w.id and a.name=(%s)", (wf, act))
-                self.fk_mapping['wkf_activity'][act_id] = tartget_act_id and tartget_act_id[0][0] or ''
+                target_act_id = sql('target', "select a.id from wkf w, wkf_activity a where w.name=(%s) and a.wkf_id=w.id and a.name=(%s)", (wf, act))
+                self.fk_mapping['wkf_activity'][act_id] = target_act_id and target_act_id[0][0] or ''
                 if not self.fk_mapping['wkf_activity'][act_id]:
                     raise UserWarning('Could not migrate workflow workitem: %s' % source_row)
             return self.fk_mapping['wkf_activity'][act_id]
 
     wkf_triggers.*:
-    wkf_triggers.uid.res_id:
-        wkf_triggers.uid.res_id: |
+    wkf_triggers.res_id:
+        wkf_triggers.res_id: |
             table = source_row['model'].replace('.', '_')
             res_id = source_row['res_id']
-            return self.fk_mapping.get(table, {}).get(res_id, res_id)
+            return self.fk_mapping.get(table, {}).get(res_id, int(res_id) + self.mapping.last_id)
 
 
 auth_ldap:
@@ -290,7 +290,7 @@ account:
 
     account_invoice_line.*:
     account_invoice_line.name:
-        account_invoice_line.name: #cmt changer le type char en text ??
+        account_invoice_line.name:
     account_invoice_line.note: __forget__
     # deprecated account_invoice_layout
     account_invoice_line.state: __forget__
@@ -380,9 +380,9 @@ account_analytic_analysis:
     account_analytic_analysis.*:
     account_analytic_account.*:
     account_analytic_account._:
-        account_analytic_account.charge_expenses:   # new, boolean
-        account_analytic_account.est_expenses:    # new, float
-        account_analytic_account.type: return 'normal' #now required, default = normal
+        account_analytic_account.charge_expenses:
+        account_analytic_account.est_expenses:
+        account_analytic_account.type: return 'normal'
     account_analytic_account.contact_id: __forget__
     account_analytic_account.id:
         account_analytic_account.id:
@@ -511,7 +511,7 @@ analytic_user_function:
     analytic_user_function.*:
     analytic_user_funct_grid.id:
         analytic_user_funct_grid.id:
-        analytic_user_funct_grid.price:     #NEW required: required (float)
+        analytic_user_funct_grid.price:
 
 crm:
     crm_case.*:
@@ -621,7 +621,7 @@ point_of_sale:
 
     pos_order.id:
         pos_order.id:
-        pos_order.pos_reference:    #new
+        pos_order.pos_reference: #new
     product_product._:
         product_product.available_in_pos: return True
     account_journal.auto_cash: __forget__
@@ -654,9 +654,6 @@ product:
     product_pricelist.__discriminator__:
         - name
     product_supplierinfo.*:
-    product_product.id:
-        product_product.id:
-        product_product.image:  #new, binary
     product_product.message_ids:
         mail_message.message_ids:
     product_product.product_image: __forget__
