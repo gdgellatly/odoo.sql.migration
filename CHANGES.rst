@@ -6,8 +6,8 @@ Changes
 
 - Migrate ir_sequence without needing post-migration script
 - Fixed workflow instance and workitem migration
-- Break some dependency loops
-- Other mapping improvements
+- Major performance improvement (x3) in case of db merging
+- Break some dependency loops and other mapping improvements
 
 0.5 (2013-08-02)
 ----------------

@@ -22,6 +22,8 @@ class CSVProcessor(object):
         self.fk_mapping = {}
         self.lines = 0
         self.is_moved = set()
+        self.existing_records = {}
+        self.existing_records_without_id = {}
 
     def get_target_columns(self, filepaths):
         """ Compute target columns with source columns + mapping
@@ -51,8 +53,18 @@ class CSVProcessor(object):
                                for k, v in self.target_columns.items()}
         return self.target_columns
 
+    def set_existing_data(self, existing_records):
+        """let the existing data be accessible during processing
+        """
+        self.existing_records = existing_records
+        # the same without ids
+        self.existing_records_without_id = {
+            table: [{k: str(v) for k, v in nt.iteritems() if k != 'id'} for nt in existing]
+            for table, existing in existing_records.iteritems()
+        }
+
     def process(self, source_dir, source_filenames, target_dir,
-                target_connection=None, existing_records=None):
+                target_connection=None):
         """ The main processing method
         """
         # compute the target columns
@@ -91,7 +103,7 @@ class CSVProcessor(object):
         LOG.info(u"Processing CSV files...")
         for source_filename in source_filenames:
             source_filepath = join(source_dir, source_filename)
-            self.process_one(source_filepath, target_connection, existing_records)
+            self.process_one(source_filepath, target_connection)
         # close files
         for target_file in target_files.values():
             target_file.close()
@@ -114,7 +126,7 @@ class CSVProcessor(object):
         LOG.info(u"Postprocessing CSV files...")
         for filename in target_filenames.values():
             filepath = join(target_dir, filename)
-            self.postprocess_one(filepath, existing_records)
+            self.postprocess_one(filepath)
         for f in target2_files.values():
             f.close()
 
@@ -133,16 +145,15 @@ class CSVProcessor(object):
             writer.writeheader()
         for filename in update_filenames.values():
             filepath = join(target_dir, filename)
-            self.postprocess_one(filepath, existing_records)
+            self.postprocess_one(filepath)
         # close files
         for f in update2_files.values():
             f.close()
 
     def process_one(self, source_filepath,
-                    target_connection=None, existing_records=None):
+                    target_connection=None):
         """ Process one csv file
         """
-        existing_records = existing_records or {}
         source_table = basename(source_filepath).rsplit('.', 1)[0]
         with open(source_filepath, 'rb') as source_csv:
             reader = csv.DictReader(source_csv, delimiter=',')
@@ -190,9 +201,8 @@ class CSVProcessor(object):
                     discriminators = self.mapping.discriminators.get(table)
                     # if the line exists in the target db, we don't offset and write to update file
                     # (we recognize by matching the dict of discriminator values against existing)
-                    existing = existing_records.get(table, [])
-                    existing_without_id = [{k: str(v) for k, v in nt.iteritems() if k != 'id'}
-                                           for nt in existing]
+                    existing = self.existing_records.get(table, [])
+                    existing_without_id = self.existing_records_without_id.get(table, [])
                     discriminator_values = {d: target_row[d] for d in (discriminators or [])}
                     # before matching existing, we should fix the discriminator_values which are fk
                     # FIXME refactor and merge with the code in postprocess
@@ -200,9 +210,11 @@ class CSVProcessor(object):
                         fk_table = self.fk2update.get(table + '.' + key)
                         if value and fk_table:
                             value = int(value)
+                            # this is BROKEN because it needs the fk_table to be processed before.
                             if value in self.fk_mapping.get(fk_table, []):
                                 discriminator_values[key] = str(
                                     self.fk_mapping[fk_table].get(value, value))
+                    # save the mapping between source id and existing id
                     if (discriminators
                             and 'id' in target_row
                             and all(discriminator_values.values())
@@ -248,10 +260,9 @@ class CSVProcessor(object):
                         # otherwise write the target csv line
                         self.writers[table].writerow(target_row)
 
-    def postprocess_one(self, target_filepath, existing_records=None):
+    def postprocess_one(self, target_filepath):
         """ Postprocess one target csv file
         """
-        existing_records = existing_records or {}
         table = basename(target_filepath).rsplit('.', 2)[0]
         with open(target_filepath, 'rb') as target_csv:
             reader = csv.DictReader(target_csv, delimiter=',')
@@ -278,13 +289,10 @@ class CSVProcessor(object):
                 # don't write m2m lines if they exist in the target
                 # FIXME: refactor these 4 lines with those from process_one()?
                 discriminators = self.mapping.discriminators.get(table)
-                existing = existing_records.get(table, [])
-                existing_without_id = [{k: v for k, v in nt.iteritems() if k != 'id'}
-                                       for nt in existing]
-                discriminator_values = {d: postprocessed_row[d] for d in (discriminators or [])}
-                if ('id' in postprocessed_row
-                        or {k: int(v) for k, v in discriminator_values.iteritems()}
-                        not in existing_without_id):
+                existing_without_id = self.existing_records_without_id.get(table, [])
+                discriminator_values = {d: str(postprocessed_row[d])
+                                        for d in (discriminators or [])}
+                if 'id' in postprocessed_row or discriminator_values not in existing_without_id:
                     self.writers[table].writerow(postprocessed_row)
 
     def update_one(self, filepath, connection):

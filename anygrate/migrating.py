@@ -130,8 +130,8 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     # create migrated csv files from exported csv
     print(u'Migrating CSV files...')
     # FIXME refactor the process() arguments, there are too many of them
-    processor.process(target_dir, filepaths, target_dir,
-                      target_connection, existing_records)
+    processor.set_existing_data(existing_records)
+    processor.process(target_dir, filepaths, target_dir, target_connection)
 
     # import data in the target
     print(u'Trying to import data in the target database...')
