@@ -22,7 +22,7 @@ def extract_existing(tables, m2m_tables, discriminators, connection):
     """ Extract data from the target db,
     focusing only on discriminator columns.
     Extracted data is a dict whose values are lists of named tuples:
-    {'table': [['value', 12}, ...], ...}
+    {'table': [{'value', 12}, ...], ...}
     It means you can get result['table'][0]['column']
     This function is used to get the list of data to update in the target db
     """
@@ -31,7 +31,6 @@ def extract_existing(tables, m2m_tables, discriminators, connection):
         result[table] = []
         with connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
             if table not in discriminators:
-                LOG.info(u'No discriminator defined for table %s', table)
                 continue
             columns = discriminators[table]
             id_column = ['id'] if table not in m2m_tables else []

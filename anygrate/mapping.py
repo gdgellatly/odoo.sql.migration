@@ -3,7 +3,7 @@ import psycopg2
 import yaml
 import logging
 from os.path import basename
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger(basename(__file__))
 
 
@@ -157,7 +157,7 @@ class Mapping(object):
                     maxid = c.fetchone()
                     self.last_id = max(maxid and maxid[0] or 1, self.last_id)
                 except psycopg2.ProgrammingError:
-                    LOG.debug(u'"id" column does not exist in table "%s"', source_table)
+                    # id column does not exist
                     source_connection.rollback()
         for target_table in target_tables:
             with target_connection.cursor() as c:
@@ -167,6 +167,6 @@ class Mapping(object):
                     maxid = c.fetchone()
                     self.last_id = max(maxid and maxid[0] or 1, self.last_id)
                 except psycopg2.ProgrammingError:
-                    LOG.debug(u'"id" column does not exist in table "%s"', target_table)
+                    # id column does not exist
                     target_connection.rollback()
         self.new_id = 10 * self.last_id  # FIXME 10 is arbitrary but should be enough

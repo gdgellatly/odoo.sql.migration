@@ -37,10 +37,11 @@ class CSVProcessor(object):
             for source_column in source_columns + ['_']:
                 mapping = self.mapping.get_targets('%s.%s' % (source_table, source_column))
                 # no mapping found, we warn the user
-                if mapping in (None, '__copy__'):
+                if mapping is None:
                     origin = source_table + '.' + source_column
-                    if source_column != '_':
-                        LOG.warn('No mapping definition found for column %s', origin)
+                    LOG.warn('No mapping definition found for column %s', origin)
+                    continue
+                if mapping == '__copy__':
                     continue
                 elif mapping in (False, '__forget__'):
                     continue
@@ -101,8 +102,7 @@ class CSVProcessor(object):
         for writer in self.updatewriters.values():
             writer.writeheader()
         LOG.info(u"Processing CSV files...")
-        for source_filename in source_filenames:
-            source_filepath = join(source_dir, source_filename)
+        for source_filepath in filepaths:
             self.process_one(source_filepath, target_connection)
         # close files
         for target_file in target_files.values():
@@ -153,6 +153,8 @@ class CSVProcessor(object):
     def process_one(self, source_filepath,
                     target_connection=None):
         """ Process one csv file
+        The fk_mapping should not be read in this method. Only during postprocessing,
+        Because the processing order is not determined (unordered dicts)
         """
         source_table = basename(source_filepath).rsplit('.', 1)[0]
         with open(source_filepath, 'rb') as source_csv:
