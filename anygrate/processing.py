@@ -1,7 +1,7 @@
 import csv
 import logging
 import os
-from os.path import basename, join
+from os.path import basename, join, splitext
 
 HERE = os.path.dirname(__file__)
 logging.basicConfig(level=logging.DEBUG)
@@ -64,12 +64,43 @@ class CSVProcessor(object):
             for table, existing in existing_records.iteritems()
         }
 
+    def reorder_with_discriminators(self, tables):
+        """ Reorder the filepaths based on tables pointed by discriminators
+        (if they are fk)
+        """
+        # get the list of tables pointed by discriminators
+        discriminator_tables = set()
+        for table, columns in self.mapping.discriminators.iteritems():
+            for column in columns:
+                field = table + '.' + column
+                if field in self.fk2update:
+                    discriminator_tables.add(self.fk2update[field])
+        # remove them from the initial tables
+        tables = [t for t in tables if t not in discriminator_tables]
+        # reorder the small set with a very basic algorithm:
+        # put at left those without fk discriminator, right others
+        ordered_tables = []
+        for table in discriminator_tables:
+            for column in self.mapping.discriminators.get(table, ()):
+                field = table + '.' + column
+                if table in ordered_tables:
+                    continue
+                if field in self.fk2update:
+                    ordered_tables.append(table)
+                else:
+                    ordered_tables.insert(0, table)
+        # append the two lists
+        ordered_tables += tables
+        print ordered_tables
+        return ordered_tables
+
     def process(self, source_dir, source_filenames, target_dir,
                 target_connection=None):
         """ The main processing method
         """
         # compute the target columns
         filepaths = [join(source_dir, source_filename) for source_filename in source_filenames]
+        source_tables = [splitext(basename(path))[0] for path in filepaths]
         self.target_columns = self.get_target_columns(filepaths)
         # load discriminator values for target tables
         # TODO
@@ -102,7 +133,13 @@ class CSVProcessor(object):
         for writer in self.updatewriters.values():
             writer.writeheader()
         LOG.info(u"Processing CSV files...")
-        for source_filepath in filepaths:
+        # We should first reorder the processing so that tables pointed to by
+        # discriminator values which are fk be processed first. This is not the
+        # most common case, but otherwise offsetting these values may fail,
+        # leading to unwanted matching and unwanted merge.
+        ordered_tables = self.reorder_with_discriminators(source_tables)
+        ordered_paths = [join(source_dir, table + '.csv') for table in ordered_tables]
+        for source_filepath in ordered_paths:
             self.process_one(source_filepath, target_connection)
         # close files
         for target_file in target_files.values():

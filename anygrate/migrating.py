@@ -103,7 +103,6 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     print(u'The real list of tables to export is: %s' % ', '.join(source_tables))
 
     # construct the mapping and the csv processor
-    # (TODO? autodetect mapping file with source and target db)
     print('Exporting tables as CSV files...')
     filepaths = export_to_csv(source_tables, target_dir, source_connection)
     for i, mapping_name in enumerate(mapping_names):
@@ -117,19 +116,18 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     processor.mapping.update_last_id(source_tables, source_connection,
                                      target_tables, target_connection)
 
-    print('Computing the list of Foreign Keys to update in the exported csv files...')
+    print('Computing the list of Foreign Keys to update in the target csv files...')
     processor.fk2update = get_fk_to_update(target_connection, target_tables)
 
-    # update the list of fk to update with the fake fk given in the mapping
+    # update the list of fk to update with the fake __fk__ given in the mapping
     processor.fk2update.update(processor.mapping.fk2update)
 
     # extract the existing records from the target database
     existing_records = extract_existing(target_tables, m2m_tables,
                                         mapping.discriminators, target_connection)
 
-    # create migrated csv files from exported csv
+    # create migrated csv files from exported csv files
     print(u'Migrating CSV files...')
-    # FIXME refactor the process() arguments, there are too many of them
     processor.set_existing_data(existing_records)
     processor.process(target_dir, filepaths, target_dir, target_connection)
 
