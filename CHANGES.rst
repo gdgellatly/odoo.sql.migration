@@ -1,7 +1,7 @@
 Changes
 =======
 
-0.6 (unreleased)
+0.6 (2013-08-24)
 ----------------
 
 - Migrate ir_sequence without needing post-migration script

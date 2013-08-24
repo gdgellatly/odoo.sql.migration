@@ -91,7 +91,6 @@ class CSVProcessor(object):
                     ordered_tables.insert(0, table)
         # append the two lists
         ordered_tables += tables
-        print ordered_tables
         return ordered_tables
 
     def process(self, source_dir, source_filenames, target_dir,
