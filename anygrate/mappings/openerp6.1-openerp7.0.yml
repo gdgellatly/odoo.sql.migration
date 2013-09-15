@@ -217,6 +217,39 @@ auth_ldap:
 procurement:
     procurement_order.*:
 
+email_template:
+    email_template.*:
+    email_template.body_text: __forget__
+    email_template.date: __forget__
+    email_template.email_bcc: __forget__
+    email_template.from_account: __forget__
+    email_template.headers: __forget__
+    email_template.message_id: __forget__
+    email_template.model_int_name: __forget__
+    email_template.original: __forget__
+    email_template.partner_id: __forget__
+    email_template.references: __forget__
+    email_template.res_id: __forget__
+    email_template.state: __forget__
+    email_template.subtype: __forget__
+    email_template.table_html: __forget__
+    email_template.template_language: __forget__
+    email_template.track_campaign_item: __forget__
+    email_template.user_id: __forget__
+    email_template.model_id:
+        email_template.model_id: |
+            name = sql('source', 'select name from ir_model where id=%s', (source_row['model_id'],))
+            model_id = sql('target', 'select id from ir_model where name=%s', (name[0][0],)) if name and name[0] else None
+            return model_id[0][0] if model_id and model_id[0] else None
+            
+    email_template.ref_ir_value:
+        email_template.ref_ir_value: return None
+    email_template.ref_ir_act_window:
+        email_template.ref_ir_act_window: return None
+    email_template._:
+        email_template.email_recipients: return None
+
+
 mail:
     mail.*:
 
@@ -539,8 +572,8 @@ crm:
     crm_case_stage.__discriminator__:
         - name
     crm_case_stage._:
-        crm_case_stage.state: return 'draft'
-        crm_case_stage.type: return 'both'
+        crm_case_stage.state: return 'open'
+        crm_case_stage.type: return 'opportunity'
     crm_phonecall.*:
     crm_segmentation.*:
 
@@ -553,6 +586,8 @@ crm:
     crm_lead.optin: __forget__
     crm_lead.optout:
         crm_lead.opt_out:
+    crm_lead.state:
+        crm_lead.state: return source_row['state'] or 'cancel'
     crm_lead.partner_id: __forget__
     crm_lead.partner_address_id:
         crm_lead.partner_id: __fk__ res_partner_address
