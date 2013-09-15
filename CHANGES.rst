@@ -4,7 +4,8 @@ Changes
 0.7 (unreleased)
 ----------------
 
-- ...
+- Fixed CRM migration
+- Migrate email_template
 
 0.6 (2013-08-24)
 ----------------
