@@ -189,10 +189,7 @@ base:
     wkf_instance.uid:
         wkf_instance.uid: __fk__ res_users
     wkf_instance.res_id:
-        wkf_instance.res_id: |
-            table = source_row['res_type'].replace('.', '_')
-            res_id = source_row['res_id']
-            return self.fk_mapping.get(table, {}).get(res_id, int(res_id) + self.mapping.last_id)
+        wkf_instance.res_id: __ref__ res_type
 
     wkf_workitem.*:
     wkf_workitem.act_id:
@@ -209,10 +206,7 @@ base:
 
     wkf_triggers.*:
     wkf_triggers.res_id:
-        wkf_triggers.res_id: |
-            table = source_row['model'].replace('.', '_')
-            res_id = source_row['res_id']
-            return self.fk_mapping.get(table, {}).get(res_id, int(res_id) + self.mapping.last_id)
+        wkf_triggers.res_id: __ref__ model
 
 
 auth_ldap:
