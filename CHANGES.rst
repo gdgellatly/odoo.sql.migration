@@ -8,6 +8,7 @@ Changes
 - Migrate email_template
 - Migrate email_message
 - Support references with ``__ref__``
+- Fixed and improved the mapping
 
 0.6 (2013-08-24)
 ----------------

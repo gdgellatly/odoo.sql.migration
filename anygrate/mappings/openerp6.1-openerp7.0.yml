@@ -379,6 +379,7 @@ account:
     account_invoice.address_invoice_id: __forget__
 
     account_invoice_line.*:
+    account_invoice_line_tax.*:
     account_invoice_line.name:
         account_invoice_line.name:
     account_invoice_line.note: __forget__
@@ -441,6 +442,8 @@ account:
     account_move_line.*:
     account_move_line.company_id:
         account_move_line.company_id: __fk__ res_company  # (related with store)
+    account_move_line.journal_id:
+        account_move_line.journal_id: __fk__ account_journal  # (related with store)
     account_move_line.period_id:
         account_move_line.period_id: __fk__ account_period  # (related with store)
     account_payment_term.*:
@@ -571,6 +574,7 @@ account_check_writing:
 account_followup:
     res_company.follow_up_msg: __forget__
     res_company.planning_time_mode_id: __forget__
+    account_followup_print.*:
 
 account_payment:
     account_payment.*:
@@ -578,6 +582,7 @@ account_payment:
 
 account_sequence:
     account_sequence.*:
+    account_sequence_fiscalyear.*:
 
 
 account_test:
@@ -586,6 +591,9 @@ account_test:
 
 account_voucher:
     account_voucher.*:
+    account_voucher._:
+        account_voucher.active:
+    account_voucher_line.*:
 
 
 analytic:
@@ -764,6 +772,9 @@ purchase:
 
 hr:
     hr_expense_expense.*:
+    hr_expense_expense.invoice_id: __forget__
+    hr_expense_expense.ref: __forget__
+    hr_expense_line.*:
     hr_employee.*:
     hr_employee.children: __forget__
     hr_employee.manager: __forget__
