@@ -14,12 +14,13 @@ class CSVProcessor(object):
     """
     def __init__(self, mapping, fk2update=None):
 
-        self.fk2update = fk2update or {}
-        self.mapping = mapping
+        self.fk2update = fk2update or {}  # foreign keys to update during postprocessing
+        self.mapping = mapping  # mapping.Mapping instance
         self.target_columns = {}
         self.writers = {}
         self.updated_values = {}
-        self.fk_mapping = {}
+        self.fk_mapping = {}  # mapping for foreign keys
+        self.ref_mapping = {}  # mapping for references
         self.lines = 0
         self.is_moved = set()
         self.existing_records = {}
@@ -214,6 +215,11 @@ class CSVProcessor(object):
                         if function in (None, '__copy__'):
                             # mapping is None: use identity
                             target_rows[target_table][target_column] = source_row[source_column]
+                        elif type(function) is str and function.startswith('__ref__'):
+                            target_rows[target_table][target_column] = source_row[source_column]
+                            model_column = function.split()[1]
+                            self.ref_mapping[target_record] = model_column
+
                         elif function in (False, '__forget__'):
                             # mapping is False: remove the target column
                             del target_rows[target_table][target_column]
@@ -316,14 +322,19 @@ class CSVProcessor(object):
                         # if the target record is an existing record it should be in the fk_mapping
                         # so we restore the real target id, or offset it if not found
                         value = int(value)
-                        if value in self.fk_mapping.get(fk_table, []):
-                            postprocessed_row[key] = self.fk_mapping[fk_table][value]
-                        else:
-                            postprocessed_row[key] = value + self.mapping.last_id
+                        postprocessed_row[key] = self.fk_mapping.get(fk_table, {}).get(
+                            value, value + self.mapping.last_id)
                     # if we're postprocessing an update we should restore the id as well
                     if key == 'id' and table in self.fk_mapping:
                         value = int(value)
                         postprocessed_row[key] = self.fk_mapping[table].get(value, value)
+                    if target_record in self.ref_mapping:  # manage __ref__
+                        # first find the target table of the reference
+                        value = int(value)
+                        ref_column = self.ref_mapping[target_record]
+                        ref_table = target_row[ref_column].replace('.', '_')
+                        postprocessed_row[key] = self.fk_mapping.get(ref_table, {}).get(
+                            value, value + self.mapping.last_id)
                 # don't write m2m lines if they exist in the target
                 # FIXME: refactor these 4 lines with those from process_one()?
                 discriminators = self.mapping.discriminators.get(table)

@@ -288,7 +288,7 @@ Example from the ``mail`` module::
 
 It means the ``type`` column of the ``mail_message`` table will be filled with
 ``'email'`` strings, whatever data the source column had.
-        
+
 The eventual signature of the function constructed using the Python code block is ::
 
     def mapping_function(self, source_row, target_rows):
@@ -421,6 +421,32 @@ have a conflict an mix data badly if you used a wildcard for the table::
 
     crm_lead.*:
     crm_lead.partner_id: __forget__
+
+Reference fields
+----------------
+
+Sometimes columns define a dynamic reference id to another table, just like a
+foreign key, except that the name of the table is actually stored in another
+column.
+
+=== ================= =======
+id  model              res_id
+=== ================= =======
+1   cr.claim           23
+2   cr.claim           35
+3   base.action.rule   27
+=== ================= =======
+
+In the example above, since the ``res_id`` is not a real foreign key, its value
+won't be fixed to correspond to the target database. In that case you should
+use the ``__ref__`` statement, followed by the name of the column holding the
+table or model name. This statement assumes the model-to-table transformation
+of OpenERP is used (replacing '.' with '_')::
+
+
+    mail_message.res_id:
+        mail_message.res_id: __ref__ model
+
 
 Handle cyclic dependant tables
 ------------------------------

@@ -6,6 +6,8 @@ Changes
 
 - Fixed CRM migration
 - Migrate email_template
+- Migrate email_message
+- Support references with ``__ref__``
 
 0.6 (2013-08-24)
 ----------------
