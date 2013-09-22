@@ -11,7 +11,7 @@ base:
             sequence_exists = sql('source', 'select * from pg_class where relname=(%s)', (sequence_name,))
             if sequence_exists:
                 last_value = sql('source', 'select last_value from %s' % sequence_name)[0][0]
-                target_rows['ir_sequence']['number_next'] = last_value
+                target_rows['ir_sequence']['number_next'] = last_value + 1
                 sequence_id = int(source_row['id']) + self.mapping.last_id
                 sql('target',
                     "create sequence ir_sequence_%03d increment by %%s start with %%s" % sequence_id,
@@ -20,6 +20,10 @@ base:
     ir_sequence.company_id:
         # force a company_id and assume 1. Will be offset anyway in multicompany case
         ir_sequence.company_id: return 1
+
+    ir_mail_server.*:
+    ir_mail_server._:
+        ir_mail_server.active: return False
     res_groups.*:
     res_groups.__discriminator__:
         - name
@@ -219,7 +223,11 @@ procurement:
 
 email_template:
     email_template.*:
-    email_template.body_text: __forget__
+    email_template.__discriminator__:
+        - name
+    email_template.body_html: __forget__
+    email_template.body_text:
+        email_template.body_html: return source_row['body_html'] or source_row['body_text'].replace('\n','<br/>')
     email_template.date: __forget__
     email_template.email_bcc: __forget__
     email_template.from_account: __forget__
@@ -241,7 +249,7 @@ email_template:
             name = sql('source', 'select name from ir_model where id=%s', (source_row['model_id'],))
             model_id = sql('target', 'select id from ir_model where name=%s', (name[0][0],)) if name and name[0] else None
             return model_id[0][0] if model_id and model_id[0] else None
-            
+
     email_template.ref_ir_value:
         email_template.ref_ir_value: return None
     email_template.ref_ir_act_window:
@@ -255,8 +263,59 @@ mail:
 
     mail_message.*:
 
+    mail_message.id:  # split
+        mail_mail.mail_message_id:
+        mail_message.id:
+        mail_message_res_partner_rel.mail_message_id:
+    mail_message.partner_id:  # turned into a m2m
+        mail_message_res_partner_rel.res_partner_id:
     mail_message.type:
         mail_message.type: return 'email'
+    mail_message.email_bcc: __forget__
+    mail_message.ref_id: __forget__
+    mail_message.email_from:
+        mail_mail.email_from:
+        mail_message.email_from:
+    mail_message.email_to:
+        mail_mail.email_to:
+    mail_message.email_cc:
+        mail_mail.email_cc:
+    mail_message.body_text:
+        mail_mail.body_html: return source_row['body_text'] and source_row['body_text'].replace('\n','<br/>') or None
+    mail_message.description:
+        mail_mail.body_html: return source_row['body_text'] and source_row['body_text'].replace('\n','<br/>') or None
+    mail_message.user_id: __forget__
+    #mail_message.user_id:  # TODO try to restore the user_id
+    #    mail_message.author_id:
+    mail_message.references:
+        mail_mail.references:
+    mail_message.history: __forget__  # from 6.0
+    mail_message.server_type: __forget__  # from 6.0
+    mail_message.auto_delete:
+        mail_mail.auto_delete:
+    mail_message.body_html:
+        mail_message.body: return source_row['body_html'] or source_row['body_text'].replace('\n','<br/>')
+        mail_mail.body_html: return source_row['body_html'] or source_row['body_text'].replace('\n','<br/>')
+    mail_message.mail_server_id:
+        mail_mail.mail_server_id:
+    mail_message.headers: __forget__
+    mail_message.subtype: __forget__
+    mail_message.original: __forget__
+    mail_message.state:
+        mail_mail.state:
+    mail_message.reply_to:
+        mail_mail.reply_to:
+
+
+fetchmail:
+    fetchmail_server.*:
+    mail_message.fetchmail_server_id:
+        mail_mail.fetchmail_server_id:
+
+
+
+
+
 
     res_partner.notification_email_send:
         res_partner.notification_email_send: return 'comment'
@@ -591,6 +650,9 @@ crm:
     crm_lead.partner_id: __forget__
     crm_lead.partner_address_id:
         crm_lead.partner_id: __fk__ res_partner_address
+    crm_add_note.*:
+        mail_message.*:
+    crm_add_note.state: __forget__
 
 sale:
     sale_order.*:
