@@ -24,6 +24,12 @@ base:
     ir_mail_server.*:
     ir_mail_server._:
         ir_mail_server.active: return False
+    ir_attachment.*:
+    ir_attachment.name: # name is unique now...
+        ir_attachment.name: return source_row['id'] + ' - ' + source_row['name']
+    ir_attachment.res_id:
+        ir_attachment.res_id: __ref__ res_model
+
     res_groups.*:
     res_groups.__discriminator__:
         - name
@@ -653,9 +659,7 @@ crm:
         crm_lead.opt_out:
     crm_lead.state:
         crm_lead.state: return source_row['state'] or 'cancel'
-    crm_lead.partner_id: __forget__
-    crm_lead.partner_address_id:
-        crm_lead.partner_id: __fk__ res_partner_address
+    crm_lead.partner_address_id: __forget__
     crm_add_note.*:
         mail_message.*:
     crm_add_note.state: __forget__
@@ -764,9 +768,7 @@ product:
 
 purchase:
     purchase_order.*:
-    purchase_order.partner_id: __forget__
-    purchase_order.partner_address_id:
-        purchase_order.partner_id: __fk__ res_partner_address
+    purchase_order.partner_address_id: __forget__
     purchase_order_line.*:
     purchase_order_line.notes: __forget__
 
@@ -780,9 +782,40 @@ hr:
     hr_employee.manager: __forget__
     hr_employee.photo:
         hr_employee.image:
+    hr_department.*:
+
+hr_recruitment:
+    hr_recruitment_source.*:
+    hr_recruitment_stage.*:
+    hr_recruitment_stage._:
+        hr_recruitment_stage.state: return 'draft'  # new
+        hr_recruitment_stage.fold: return False  # new
+    hr_recruitment_degree.*:
+    hr_recruitment_degree.__discriminator__:
+        - name
+    hr_applicant.*:
+    hr_applicant.partner_id: __forget__
+    hr_applicant.partner_address_id:
+        hr_applicant.partner_id: __fk__ res_partner_address
+    hr_job.*:
+    hr_job._:
+        hr_job.alias_id: return target_rows['hr_job'].get('alias_id')
+        mail_alias.id: |
+            i = newid()
+            target_rows['hr_job']['alias_id'] = i
+            return i
+        mail_alias.alias_model_id: return sql('target', "select id from ir_model where model='hr.job'")[0][0]
+        mail_alias.alias_name: return source_row['name'] + '_' + source_row['id']
+        mail_alias.alias_defaults: return {}
+
 
 resource:
     resource_resource.*:
+
+document:  # also see ir_attachment migration
+    ir_attachment.*:
+    ir_attachment.datas: # installing this module disables the 'datas' column
+        ir_attachment.db_datas: return source_row['datas'] or source_row['db_datas']
 
 
 

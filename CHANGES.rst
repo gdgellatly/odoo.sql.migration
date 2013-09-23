@@ -9,6 +9,7 @@ Changes
 - Migrate email_message
 - Support references with ``__ref__``
 - Fixed and improved the mapping
+- Increased the default csv field size limit to 20MB
 
 0.6 (2013-08-24)
 ----------------

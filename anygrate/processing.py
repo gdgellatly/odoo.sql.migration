@@ -7,6 +7,10 @@ HERE = os.path.dirname(__file__)
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(basename(__file__))
 
+# increase the maximum csv field size. Hardcode it for the time being
+# See https://bitbucket.org/anybox/anybox.migration.openerp/issue/2/
+csv.field_size_limit(20971520)
+
 
 class CSVProcessor(object):
     """ Take a csv file, process it with the mapping

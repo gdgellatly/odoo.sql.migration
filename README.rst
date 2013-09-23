@@ -497,8 +497,9 @@ Field size limit
 
 When running migration, you may encounter a ``csv.Error: field larger than
 field limit``. This is due to the csv module limiting the csv field size to
-128k by default. If this is not enough for your migration, you can increase the
-limit by inserting a direct call to ``csv.field_size_limit()``.
+128k by default. The default value has been increased to 20MB. If this is not
+enough for your migration, you can increase the limit by inserting a direct
+call to ``csv.field_size_limit()``.
 
 For example::
 
