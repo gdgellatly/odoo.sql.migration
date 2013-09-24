@@ -30,9 +30,6 @@ base:
     ir_attachment.res_id:
         ir_attachment.res_id: __ref__ res_model
 
-    res_groups.*:
-    res_groups.__discriminator__:
-        - name
 
     res_partner_title.*:
     res_partner_title.create_uid:
@@ -170,14 +167,7 @@ base:
     res_partner_category.__discriminator__:
         - name
 
-    # Tables de jointures
-    res_groups_users_rel.*:
-    res_company_users_rel.*:
-    res_company_users_rel.__discriminator__:
-        - cid
-        - user_id
     res_partner_category_rel.*:
-    res_groups_implied_rel.*:
 
     # workflows (we don't migrate workflows, only instances and workitems)
     wkf_instance.*:
