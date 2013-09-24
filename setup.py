@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys
 
-version = '0.7dev'
+version = '0.7'
 
 if sys.version_info[0] != 2 or sys.version_info[1] != 7:
     print('This tool only works with Python 2.7')
@@ -14,7 +14,7 @@ setup(
     author_email='contact@anybox.fr',
     packages=find_packages(),
     license='GPLv3+',
-    description='Fast OpenERP migration tool',
+    description='Fast OpenERP migration framework',
     long_description=open('README.rst').read() + open('CHANGES.rst').read(),
     url="https://bitbucket.org/anybox/anybox.migration.openerp/overview",
     include_package_data=True,

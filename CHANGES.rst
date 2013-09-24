@@ -1,13 +1,13 @@
 Changes
 =======
 
-0.7 (unreleased)
+0.7 (2013-09-24)
 ----------------
 
 - Fixed CRM migration
 - Migrate email_template
 - Migrate email_message
-- Support references with ``__ref__``
+- Support references with ``__ref__`` statements
 - Fixed and improved the mapping
 - Increased the default csv field size limit to 20MB
 

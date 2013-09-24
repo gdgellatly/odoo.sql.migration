@@ -469,7 +469,7 @@ running SQL requests during migration
 -------------------------------------
 
 In case the wanted migration is too complex to be handled by regular
-statements, you can use SQL queries on both the source and target database.
+statements, you can run SQL queries on both the source and target database.
 This should be used in limited cases because the queries will be executed for
 each source cell for which the mapping defines it, and the migration may be
 slowed down, unless you limit the queries with manual caching. (See the
