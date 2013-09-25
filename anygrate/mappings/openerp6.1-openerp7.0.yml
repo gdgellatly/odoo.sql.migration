@@ -101,6 +101,11 @@ base:
         res_users.date:
     res_users.address_id: __forget__
 
+    res_company_users_rel.*:
+    res_company_users_rel.__discriminator__:
+        - cid
+        - user_id
+
     # Partners
     res_partner.*:
     res_partner.name:
