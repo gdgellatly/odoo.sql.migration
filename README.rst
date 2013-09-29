@@ -27,7 +27,7 @@ than the in-place migration of OpenERP or OpenUpgrade and allows to start over
 from a clean database, while keeping history.  Import and export are done with
 the PostgreSQL-specific COPY command, and results in extremely fast exports and
 imports. Combined with a pure in-memory Python csv processing, this tool can
-often achieve overall migration rates over 1000 lines/sec.
+often achieve overall migration rates over 2000 lines/sec.
 
 
 Installation

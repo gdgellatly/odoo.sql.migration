@@ -1,10 +1,11 @@
 Changes
 =======
 
-0.8 (unreleased)
+0.8 (2013-09-30)
 ----------------
 
-- ...
+- restored mapping for users/company assignment
+- improved message migration
 
 0.7 (2013-09-24)
 ----------------

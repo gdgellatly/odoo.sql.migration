@@ -266,10 +266,10 @@ mail:
         mail_message_res_partner_rel.res_partner_id:
     mail_message.res_id:  # fake fk whose table is given in column "model"
         mail_message.res_id: __ref__ model
-    mail_message.type:
-        mail_message.type: return 'email'
+    mail_message._:
+        mail_message.type: return 'comment'
     mail_message.subject:  # fix subject differing just by a newline characters from the body
-        mail_message.subject: return None if source_row['subject'].split() == source_row['body_text'].split() else source_row['subject']
+        mail_message.subject: return None if source_row['subject'].split()[:10] == source_row['body_text'].split()[:10] else source_row['subject']
     mail_message.email_bcc: __forget__
     mail_message.ref_id: __forget__
     mail_message.email_from:
