@@ -770,8 +770,34 @@ purchase:
 hr:
     hr_expense_expense.*:
     hr_expense_expense.invoice_id: __forget__
+    hr_expense_expense.account_move_id:
+        # Link expense to account move as the intermediate 
+        # invoice step has been removed in 7.0.
+        # XXX This will not work if the expense is invoiced but 
+        #     the invoice is still in draft state, in which
+        #     case the move does not exist yet.
+        hr_expense_expense.account_move_id: |
+            invoice_id = source_row['invoice_id']
+            if invoice_id:
+                r = sql('source', """select m.id from account_invoice i
+                                    left join account_move m on m.id = i.move_id
+                                    where i.id = %s""" % (invoice_id,))
+                return r and r[0][0]
+    hr_expense_expense.journal_id:
+        # Link expense to account journal.
+        hr_expense_expense.journal_id: |
+            invoice_id = source_row['invoice_id']
+            if invoice_id:
+                r = sql('source', """select journal_id from account_invoice
+                                    where id = %s""" % (invoice_id,))
+                return r and r[0][0]
     hr_expense_expense.ref: __forget__
     hr_expense_line.*:
+    hr_expense_line.uom_id:
+        hr_expense_line.uom_id: |
+            # uom_id is required and defaults to Unit(s) in 7.0
+            return source_row['uom_id'] or \
+                sql('source', "select res_id from ir_model_data where module='product' and name='product_uom_unit'")[0][0]
     hr_employee.*:
     hr_employee.children: __forget__
     hr_employee.manager: __forget__
