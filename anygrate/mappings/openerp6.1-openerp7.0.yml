@@ -371,6 +371,7 @@ account:
         account_bank_statement.company_id: __fk__ res_company  # (related with store)
     account_bank_statement.balance_end_cash: __forget__
     account_bank_statement.shop_id: __forget__  # create pos_sessions?
+    account_bank_statement_line.*:
 
     account_chart_template.*:
     account_chart_template.property_reserve_and_surplus_account: __forget__
@@ -551,7 +552,6 @@ account_asset:
 
 account_bank_statement_extensions:
     account_bank_statement_extensions.*:
-    account_bank_statement_line.*:
     account_bank_statement_line.journal_id:
         account.account_bank_statement_extensions:
 
