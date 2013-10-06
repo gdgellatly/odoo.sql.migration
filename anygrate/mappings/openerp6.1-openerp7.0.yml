@@ -792,6 +792,13 @@ hr:
                                     where id = %s""" % (invoice_id,))
                 return r and r[0][0]
     hr_expense_expense.ref: __forget__
+    hr_expense_expense.state:
+        hr_expense_expense.state: |
+            state = source_row['state']
+            if state == 'invoiced':
+                return 'done'
+            else:
+                return state
     hr_expense_line.*:
     hr_expense_line.uom_id:
         hr_expense_line.uom_id: |
