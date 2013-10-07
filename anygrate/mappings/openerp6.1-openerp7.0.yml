@@ -141,7 +141,7 @@ base:
         res_partner.is_company: return False
         res_partner.use_parent_address: return False
     res_partner_address.name:
-        res_partner.name: return source_row['name'] or source_row['street'] or source_row['city'] or ('address' + str(source_row['id']))
+        res_partner.name: return source_row['name'] or ('address' + str(source_row['id']))
         res_partner.display_name: return source_row['name'] or source_row['street'] or source_row['city'] or ('address' + str(source_row['id']))
     res_partner_address.partner_id:
         res_partner.parent_id:
