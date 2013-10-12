@@ -558,6 +558,12 @@ required remaining fixes consists in dropping some ``parent_left`` and
     psql targetdb -c 'alter table account_account drop parent_left;'
     psql targetdb -c 'alter table account_account drop parent_right;'
 
+You might also need to force a recalculation of new or changed related fields
+that are persisted in the database (store=True).  Here is an example with 
+the account_report_company module::
+
+    psql targetdb -c 'alter table account_invoice drop commercial_partner_id;'
+
 At the end, you should run a final global update of the database.
 If you're using the `buildout recipe <http://pypi.python.org/pypi/anybox.recipe.openerp>`_ it should look like this::
 
