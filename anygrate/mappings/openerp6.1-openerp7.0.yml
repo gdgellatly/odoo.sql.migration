@@ -366,6 +366,16 @@ account:
     account_fiscal_position.__discriminator__:
         - name
         - company_id
+    account_fiscal_position_account.*:
+    account_fiscal_position_account.__discriminator__:
+        - position_id
+        - account_dest_id
+        - account_src_id
+    account_fiscal_position_tax.*:
+    account_fiscal_position_tax.__discriminator__:
+        - position_id
+        - tax_dest_id
+        - tax_src_id
     account_bank_statement.*:
     account_bank_statement.company_id:
         account_bank_statement.company_id: __fk__ res_company  # (related with store)
