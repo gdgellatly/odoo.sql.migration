@@ -382,6 +382,7 @@ account:
     account_bank_statement.balance_end_cash: __forget__
     account_bank_statement.shop_id: __forget__  # create pos_sessions?
     account_bank_statement_line.*:
+    account_bank_statement_line_move_rel.*:
 
     account_chart_template.*:
     account_chart_template.property_reserve_and_surplus_account: __forget__
