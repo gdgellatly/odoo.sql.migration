@@ -821,6 +821,10 @@ hr:
     hr_employee.manager: __forget__
     hr_employee.photo:
         hr_employee.image:
+    hr_employee.address_id:
+        hr_employee.address_id: __fk__ res_partner_address
+    hr_employee.address_home_id:
+        hr_employee.address_home_id: __fk__ res_partner_address
     hr_department.*:
 
 hr_recruitment:
