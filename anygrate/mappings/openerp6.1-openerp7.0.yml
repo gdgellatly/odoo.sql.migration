@@ -792,7 +792,7 @@ hr:
             if invoice_id:
                 r = sql('source', """select m.id from account_invoice i
                                     left join account_move m on m.id = i.move_id
-                                    where i.id = %s""" % (invoice_id,))
+                                    where i.id = %s""", (invoice_id,))
                 return r and r[0][0]
     hr_expense_expense.journal_id:
         # Link expense to account journal.
@@ -800,7 +800,7 @@ hr:
             invoice_id = source_row['invoice_id']
             if invoice_id:
                 r = sql('source', """select journal_id from account_invoice
-                                    where id = %s""" % (invoice_id,))
+                                    where id = %s""", (invoice_id,))
                 return r and r[0][0]
     hr_expense_expense.ref: __forget__
     hr_expense_expense.state:
