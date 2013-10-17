@@ -311,11 +311,6 @@ fetchmail:
     mail_message.fetchmail_server_id:
         mail_mail.fetchmail_server_id:
 
-
-
-
-
-
     res_partner.notification_email_send:
         res_partner.notification_email_send: return 'comment'
 
@@ -478,6 +473,9 @@ account:
         - prod_id
         - tax_id
 
+    account_account_consol_rel.*:
+
+
 account_accountant:
     account_accountant.*:
 
@@ -485,13 +483,24 @@ account_accountant:
 account_analytic_analysis:
     account_analytic_analysis.*:
     account_analytic_account.*:
+    account_analytic_account.type:
+        account_analytic_account.type: |
+            type = source_row['type']
+            analytic_account_id = source_row['id']
+            if type == 'normal':
+                r = sql('source', """select id from project_project 
+                                  where analytic_account_id=%s""", 
+                                  (analytic_account_id,))
+                if r:
+                    return 'contract'
+            return type
     account_analytic_account._:
         account_analytic_account.charge_expenses:
         account_analytic_account.est_expenses:
-        account_analytic_account.type: return 'normal'
     account_analytic_account.contact_id: __forget__
     account_analytic_account.id:
         account_analytic_account.id:
+    account_analytic_line.*:
 
 
 account_analytic_default:
@@ -521,7 +530,9 @@ project:
         - name
     project_task.*:
     project_project.*:
-    project_task.type_id: __forget__
+    # TODO: difficulty is mapping task type (=stage) to state 
+    project_task.type_id: __forget__  
+    project_task_parent_rel.*:
     project_project.warn_customer: __forget__
     project_project.warn_footer: __forget__
     project_project.warn_header: __forget__
@@ -537,7 +548,20 @@ project:
         project_project.alias_model: return 'project.task'
         project_project.alias_id: return target_rows['project_project'].get('alias_id')
         project_project.privacy_visibility: return 'followers'
-        project_project.state: return 'open'
+        project_project.state: |
+            analytic_account_id = source_row['analytic_account_id']
+            r = sql('source', """select state from account_analytic_account 
+                              where id=%s""", (analytic_account_id,))
+            return r[0][0]
+    project_user_rel.*:
+    account_analytic_account._:
+        account_analytic_account.use_tasks: |
+            analytic_account_id = source_row['id']
+            r = sql('source', """select count(pt.id) from project_task pt 
+                              left join project_project pp on pp.id = pt.project_id
+                              where pp.analytic_account_id=%s""",
+                              (analytic_account_id,))
+            return r[0][0] and True or False
 
     # deprecated module project_planning
     project_task.planning_line_id: __forget__
@@ -588,8 +612,11 @@ account_followup:
     res_company.planning_time_mode_id: __forget__
     account_followup_print.*:
 
+
 account_payment:
-    account_payment.*:
+    payment_order.*:
+    payment_line.*:
+    payment_mode.*:
 
 
 account_sequence:
@@ -645,6 +672,7 @@ crm:
         mail_alias.alias_model_id: return sql('target', "select id from ir_model where model='crm.case.section'")[0][0]
         mail_alias.alias_name: return source_row['name']
         mail_alias.alias_defaults: return {}
+    sale_member_rel.*:
     crm_case_stage.*:
     crm_case_stage.__discriminator__:
         - name
@@ -766,6 +794,17 @@ product:
     product_pricelist.*:
     product_pricelist.__discriminator__:
         - name
+    product_pricelist_version.*:
+    product_pricelist_version.__discriminator__:
+        - name
+        - pricelist_id
+    product_pricelist_item.*:
+    product_pricelist_item.__discriminator__:
+        - name
+        - price_version_id
+    product_price_type.*:
+    product_price_type.__discriminator__:
+        - name
     product_supplierinfo.*:
     product_product.message_ids:
         mail_message.message_ids:
@@ -827,6 +866,35 @@ hr:
         hr_employee.address_home_id: __fk__ res_partner_address
     hr_department.*:
 
+
+hr_timesheet:
+    hr_analytic_timesheet.*:
+    account_analytic_account._:
+        account_analytic_account.use_timesheets: |
+            analytic_account_id = source_row['id']
+            r = sql('source', """select count(aal.id) from account_analytic_line aal
+                              left join account_analytic_journal aaj on aaj.id = aal.journal_id
+                              where aal.account_id=%s and aaj.type='general'""",
+                              (analytic_account_id,))
+            return r[0][0] and True or False
+
+
+hr_timesheet_sheet:
+    hr_timesheet_sheet_sheet.*:
+
+
+hr_timesheet_invoice:
+    hr_timesheet_invoice_factor.*:
+    hr_timesheet_invoice_factor.__discriminator__:
+        - name
+
+
+hr_holidays:
+    hr_holidays_status.*:
+    hr_holidays.*:
+    hr_holidays.case_id: __forget__
+
+
 hr_recruitment:
     hr_recruitment_source.*:
     hr_recruitment_stage.*:
@@ -852,8 +920,21 @@ hr_recruitment:
         mail_alias.alias_defaults: return {}
 
 
+hr_contract:
+    hr_contract.*:
+    hr_contract.advantages_gross: __forget__  # TODO hr_payroll?
+    hr_contract.advantages_net: __forget__  # TODO hr_payroll?
+    hr_contract_type.*:
+    hr_contract_type.__discriminator__:
+        - name
+
+
 resource:
     resource_resource.*:
+    resource_calendar.*:
+    resource_calendar_leaves.*:
+    resource_calendar_attendance.*:
+
 
 document:  # also see ir_attachment migration
     ir_attachment.*:
