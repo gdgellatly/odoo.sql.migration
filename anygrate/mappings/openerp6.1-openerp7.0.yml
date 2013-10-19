@@ -713,6 +713,8 @@ sale:
     sale_order_line.*:
     sale_order_line.notes: __forget__
     sale_shop.shop_registry: __forget__
+    sale_order_line_invoice_rel.*:
+    sale_order_invoice_rel.*:
 
 sale_crm:
     sale_order.categ_id: # m2o turned into a m2m
