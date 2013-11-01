@@ -367,6 +367,8 @@ account:
         - name
         - company_id
     account_bank_statement.*:
+    account_bank_statement_line.*:
+    account_bank_statement_line_move_rel.*:
     account_bank_statement.company_id:
         account_bank_statement.company_id: __fk__ res_company  # (related with store)
     account_bank_statement.balance_end_cash: __forget__
@@ -543,34 +545,17 @@ project_mrp:
         procurement_order.sale_line_id: __defer__
 
 account_asset:
-    account_asset.*:
+    account_asset_category.*:
+    account_asset_asset.*:
     account_asset_depreciation_line.*:
+    account_asset_history.*:
     account_asset_depreciation_line.depreciation_date:
         account_asset_depreciation_line.depreciation_date: #change type char to date
 
-
-account_bank_statement_extensions:
-    account_bank_statement_extensions.*:
-    account_bank_statement_line.*:
-    account_bank_statement_line.journal_id:
-        account.account_bank_statement_extensions:
-
-
 account_budget:
-    account_budget.*:
-
-
-account_cancel:
-    account_cancel.*:
-
-
-account_chart:
-    account_chart.*:
-
-
-account_check_writing:
-    account_check_writing.*:
-
+    account_budget_post.*:
+    crossovered_budget.*:
+    crossovered_budget_lines.*:
 
 account_followup:
     res_company.follow_up_msg: __forget__
@@ -578,17 +563,13 @@ account_followup:
     account_followup_print.*:
 
 account_payment:
-    account_payment.*:
-
+    payment_mode.*:
+    payment_order.*:
+    payment_line.*:
 
 account_sequence:
     account_sequence.*:
     account_sequence_fiscalyear.*:
-
-
-account_test:
-    account_test.*:
-
 
 account_voucher:
     account_voucher.*:
@@ -598,19 +579,16 @@ account_voucher:
 
 
 analytic:
-    analytic.*:
-
-
-analytic_contract_hr_expense:
-    analytic_contract_hr_expense.*:
-
-
+    account_analytic_account.*:
+    account_analytic_account.contact_id: __forget__
+    account_analytic_account._:
+        account_analytic_account.manager_id: return False
+    account_analytic_line.*:
 
 analytic_user_function:
-    analytic_user_function.*:
     analytic_user_funct_grid.id:
         analytic_user_funct_grid.id:
-        analytic_user_funct_grid.price:
+        analytic_user_funct_grid.price: return 0.0
 
 crm:
     crm_case.*:
