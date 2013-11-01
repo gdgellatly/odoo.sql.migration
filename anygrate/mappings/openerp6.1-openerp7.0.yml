@@ -349,6 +349,8 @@ account:
         - code
         - company_id
     account_period.*:
+    account_period.company_id:
+        account_period.company_id: __fk__ res_company  # (related with store)
     account_period.__discriminator__:
         - name
         - company_id
