@@ -311,11 +311,6 @@ fetchmail:
     mail_message.fetchmail_server_id:
         mail_mail.fetchmail_server_id:
 
-
-
-
-
-
     res_partner.notification_email_send:
         res_partner.notification_email_send: return 'comment'
 
@@ -338,6 +333,7 @@ fetchmail:
 
     mail_alias.__discriminator__:
         - alias_name
+
 
 account:
     account_account.*:
@@ -370,6 +366,8 @@ account:
         - company_id
     account_bank_statement.*:
     account_bank_statement_line.*:
+    account_bank_statement_line.company_id:
+        account_bank_statement_line.company_id: __fk__ res_company  # (related with store)
     account_bank_statement_line_move_rel.*:
     account_bank_statement.company_id:
         account_bank_statement.company_id: __fk__ res_company  # (related with store)
@@ -382,8 +380,12 @@ account:
     account_invoice.*:
     account_invoice.address_contact_id: __forget__
     account_invoice.address_invoice_id: __forget__
+    account_invoice.company_id:
+        account_invoice.company_id: __fk__ res_company  # (related with store)
 
     account_invoice_line.*:
+    account_invoice_line.company_id:
+        account_invoice_line.company_id: __fk__ res_company  # (related with store)
     account_invoice_line_tax.*:
     account_invoice_line.name:
         account_invoice_line.name:
@@ -455,8 +457,11 @@ account:
     account_payment_term.__discriminator__:
         - name
     account_journal_period.*:
+    account_journal_period.company_id:
+        account_journal_period.company_id: __fk__ res_company  # (related with store)
     account_journal_period.__discriminator__:
         - name
+        - company_id
     account_account_tax_default_rel.*:
     account_account_tax_default_rel.__discriminator__:
         - account_id
@@ -470,9 +475,6 @@ account:
         - prod_id
         - tax_id
 
-account_accountant:
-    account_accountant.*:
-
 
 account_analytic_analysis:
     account_analytic_analysis.*:
@@ -484,18 +486,6 @@ account_analytic_analysis:
     account_analytic_account.contact_id: __forget__
     account_analytic_account.id:
         account_analytic_account.id:
-
-
-account_analytic_default:
-    account_analytic_default.*:
-
-
-account_analytic_plans:
-    account_analytic_plans.*:
-
-
-account_anglo_saxon:
-    account_anglo_saxon.*:
 
 
 account_report_company:
@@ -541,10 +531,12 @@ project:
     project_project.scrum: __forget__
     project_project.sprint_size: __forget__
 
+
 project_mrp:
     procurement_order.task_id:
         procurement_order.task_id: __defer__
         procurement_order.sale_line_id: __defer__
+
 
 account_asset:
     account_asset_category.*:
@@ -554,24 +546,29 @@ account_asset:
     account_asset_depreciation_line.depreciation_date:
         account_asset_depreciation_line.depreciation_date: #change type char to date
 
+
 account_budget:
     account_budget_post.*:
     crossovered_budget.*:
     crossovered_budget_lines.*:
+
 
 account_followup:
     res_company.follow_up_msg: __forget__
     res_company.planning_time_mode_id: __forget__
     account_followup_print.*:
 
+
 account_payment:
     payment_mode.*:
     payment_order.*:
     payment_line.*:
 
+
 account_sequence:
     account_sequence.*:
     account_sequence_fiscalyear.*:
+
 
 account_voucher:
     account_voucher.*:
@@ -587,10 +584,12 @@ analytic:
         account_analytic_account.manager_id: return False
     account_analytic_line.*:
 
+
 analytic_user_function:
     analytic_user_funct_grid.id:
         analytic_user_funct_grid.id:
         analytic_user_funct_grid.price: return 0.0
+
 
 crm:
     crm_case.*:
@@ -639,6 +638,7 @@ crm:
         mail_message.*:
     crm_add_note.state: __forget__
 
+
 sale:
     sale_order.*:
     sale_order.company_id:
@@ -657,10 +657,12 @@ sale:
     sale_order_line_invoice_rel.*:
     sale_order_invoice_rel.*:
 
+
 sale_crm:
     sale_order.categ_id: # m2o turned into a m2m
         sale_order_category_rel.category_id: return source_row['categ_id']
         sale_order_category_rel.order_id: return source_row['id']
+
 
 stock:
     stock_move.*:
@@ -693,6 +695,7 @@ stock:
     stock_journal.*:
     stock_journal.__discriminator__:
         - name
+
 
 point_of_sale:
     pos_order.*:
@@ -749,6 +752,7 @@ purchase:
     purchase_order_line.*:
     purchase_order_line.notes: __forget__
 
+
 hr:
     hr_expense_expense.*:
     hr_expense_expense.invoice_id: __forget__
@@ -760,6 +764,7 @@ hr:
     hr_employee.photo:
         hr_employee.image:
     hr_department.*:
+
 
 hr_recruitment:
     hr_recruitment_source.*:
@@ -789,10 +794,10 @@ hr_recruitment:
 resource:
     resource_resource.*:
 
+
 document:  # also see ir_attachment migration
     ir_attachment.*:
     ir_attachment.datas: # installing this module disables the 'datas' column
         ir_attachment.db_datas: return source_row['datas'] or source_row['db_datas']
-
 
 
