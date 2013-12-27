@@ -332,7 +332,7 @@ class CSVProcessor(object):
                     if key == 'id' and table in self.fk_mapping:
                         value = int(value)
                         postprocessed_row[key] = self.fk_mapping[table].get(value, value)
-                    if target_record in self.ref_mapping:  # manage __ref__
+                    if value and target_record in self.ref_mapping:  # manage __ref__
                         # first find the target table of the reference
                         value = int(value)
                         ref_column = self.ref_mapping[target_record]
