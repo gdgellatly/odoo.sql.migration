@@ -4,7 +4,7 @@ Changes
 0.9 (unreleased)
 ----------------
 
-- ...
+- cleaned up and added missing tables
 
 0.8 (2013-09-30)
 ----------------
