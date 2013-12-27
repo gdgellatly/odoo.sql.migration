@@ -925,4 +925,3 @@ document:  # also see ir_attachment migration
         ir_attachment.db_datas: return source_row['datas'] or source_row['db_datas']
 
 
-
