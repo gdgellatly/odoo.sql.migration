@@ -493,7 +493,6 @@ account_analytic_analysis:
     account_analytic_account._:
         account_analytic_account.charge_expenses:
         account_analytic_account.est_expenses:
-    account_analytic_account.type:
         account_analytic_account.type: |
             type = source_row['type']
             analytic_account_id = source_row['id']
