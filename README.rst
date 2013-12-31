@@ -611,6 +611,7 @@ Authors and contributors
  - Christophe Combelles
  - Florent Jouatte
  - Guy-Clovis Nzouendjou
+ - Stéphane Bidoul
 
 Code repository and bug tracker
 -------------------------------

@@ -1,10 +1,12 @@
 Changes
 =======
 
-0.9 (unreleased)
+0.9 (2013-12-31)
 ----------------
 
 - cleaned up and added missing tables
+- Many mapping improvements, fixes and cleanup
+- Added mapping for HR migration
 
 0.8 (2013-09-30)
 ----------------
