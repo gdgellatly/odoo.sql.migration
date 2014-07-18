@@ -18,8 +18,8 @@ priority order:
 
  - **Merging** 2 different OpenERP databases into a single multicompany db
  - **Migrating** from OpenERP 6.1 to 7.0
- - Migrating data from a legacy business application (Access, Delphi, etc.)
- - Migrating from Dolibarr to OpenERP
+ - Migrating data from a legacy business application such as Access, Delphi, etc. (not yet implemented)
+ - Migrating from Dolibarr to OpenERP (not yet implemented)
 
 The principle of this tool is to export CSV data from an old application (only
 OpenERP for now), then to process CSV files in order to import them into a
@@ -329,7 +329,7 @@ in the ``display_name`` cell of the target ``table1`` and ``table2``. The
 target ``name`` cell will contain a copy of the source ``name`` cell.
 
 If the target line is not supposed to have the same *id* as the source line,
-you can create a new *id* with the newid() function. This function returns a
+you can create a new *id* with the ``newid()`` function. This function returns a
 different value at each call and is responsible of incrementing the *id*. Here
 is an example::
 
@@ -349,6 +349,13 @@ is an example::
 Each ``res_users`` line will generate a new ``res_partner`` line with a new
 *id*, while the ``res_users`` *id* will be the same as the source. (Actually it
 will not be the same, because an offset is applied to all ids).
+
+For very advanced users, the ``self`` variable of the function correspond to
+the CSVProcessor instance, because the function is executed from inside this
+processor by passing self, so you can access all the internal registries of the
+processor. You can find an example in the provided mapping, around the
+statements used for the workflow migration. But you have to understand how and
+when these registries are used to be able to use this feature. 
 
 Feeding a new column
 --------------------
