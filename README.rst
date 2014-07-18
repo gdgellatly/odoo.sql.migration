@@ -1,14 +1,15 @@
-================================
-Fast OpenERP migration framework
-================================
+=====================================
+Fast OpenERP/Odoo migration framework
+=====================================
 
 .. warning:: Reminder
-    This tool is complex and highly experimental and is distributed in the hope
-    that it **might** be useful, but WITHOUT ANY WARRANTY of FITNESS FOR A
-    PARTICULAR PURPOSE. In particular, if you're using OpenERP for your company,
-    you should consider purchasing an OpenERP Enterprise contract that will provide
-    you with the best and riskless migration path for your database and custom
-    developments.
+    This tool is distributed in the hope that it **might** be useful, but
+    WITHOUT ANY WARRANTY of FITNESS FOR A PARTICULAR PURPOSE. In particular, if
+    you're using OpenERP or Odoo for your company, you should consider purchasing an
+    Odoo Enterprise contract that will provide you with the best and riskless
+    migration path for your database and custom developments.
+    Otherwise you can `contact us <https://anybox.fr/demande-openerp>`_ for
+    migration services.
 
 .. contents::
 
