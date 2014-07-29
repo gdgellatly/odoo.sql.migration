@@ -246,9 +246,11 @@ mapping for a real example.
 Data moved to another table (table merging)
 -------------------------------------------
 
-When input lines must move to a different table, you want the foreign keys
-pointing to them to be kept so that they point to the new table after
-migration, you should use the ``__moved__`` statement.
+When input lines must move to a different table, you should use the
+``__moved__`` statement against its ``id`` column.  It will allow all the
+foreign keys pointing to them to be converted so that they point to the new
+table after migration. This statement is not able to move a column from a table
+to another table. (FIXME: needed for Odoo v7→v8 migration).
 
 The only current situation in OpenERP is for the ``res_partner_address`` data
 moving to the ``res_partner`` table::
