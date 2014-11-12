@@ -377,7 +377,12 @@ WHERE
     def update_from_temp(cursor, table, orig_table, columns, pkey):
         update_command = "UPDATE {1} SET {2} USING {0} WHERE {1}.{3}={0}.{3}".format(table, orig_table, columns, pkey)
         cursor.execute(update_command)
-        cursor.execute('RELEASE SAVEPOINT savepoint; SAVEPOINT savepoint')
+        try:
+            cursor.execute('RELEASE SAVEPOINT savepoint')
+        except Exception:
+            pass
+        finally:
+            cursor.execute('SAVEPOINT savepoint')
         return
 
     def update_one(self, filepath, connection):
@@ -396,7 +401,7 @@ WHERE
                 update_csv.seek(0)
                 pkey = self.setup_temp_table(cursor, table, orig_table)
                 LOG.info('Temp table for %s successfully created', orig_table)
-                columns = ','.join(["orig_table.%s=COALESCE(table.%s, orig_table.%s)" % c
+                columns = ','.join(["orig_table.{0}=COALESCE(table.{0}, orig_table.{0})".format(c)
                                     for c in csv.reader(update_csv).next() if c != pkey])
         if has_data:
             try:

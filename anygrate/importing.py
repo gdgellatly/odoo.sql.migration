@@ -12,11 +12,16 @@ MISSING_COLUMN = 'of relation "%s" does not exist'
 def get_dependency_tree(scratch_dict):
     remaining = scratch_dict.keys()
     # depends on nothing  - go to front
-    res = [remaining.pop(remaining.index(r)) for r in scratch_dict.keys() if not scratch_dict[r]]
-    add_at_end = ([remaining.pop(remaining.index(r)) for r in list(remaining)
-                   if r not in remaining])
+    res = [r for r in remaining if not scratch_dict[r]]
+    remaining = [r for r in remaining if r not in res]
+    # nothing depends on it
+    add_at_end = [r for r in remaining if r not in scratch_dict.values()]
+    remaining = [r for r in remaining if r not in add_at_end]
+    if not remaining:
+        return res + add_at_end
+
     while remaining:
-        ins_list = list[remaining]
+        ins_list = list(remaining)
         [res.insert(remaining.pop(remaining.index(r)), res.index(scratch_dict[key]) + 1)
          for key in ins_list if scratch_dict[key] in r]
         if len(ins_list) == len(remaining):
@@ -24,8 +29,7 @@ def get_dependency_tree(scratch_dict):
                 ['%s->%s' % (k, v) for k, v in scratch_dict.items() if k in remaining]))
             res.extend(remaining)
             break
-    res.extend(add_at_end)
-    return res
+    return res + add_at_end
 
 
 def import_from_csv(filepaths, connection):
@@ -35,7 +39,7 @@ def import_from_csv(filepaths, connection):
     # waiting for a pure sql implementation of get_dependencies
     remaining = list(filepaths)
     cursor = connection.cursor()
-    cursor.execute('RELEASE SAVEPOINT savepoint; SAVEPOINT savepoint')
+    cursor.execute('SAVEPOINT savepoint')
     cursor.close()
     tbl_file_map = {k: basename(k).rsplit('.', 2)[0] for k in remaining}
     missing_columns = []
@@ -57,7 +61,12 @@ def import_from_csv(filepaths, connection):
                 try:
                     cursor = connection.cursor()
                     cursor.copy_expert(copy, f)
-                    cursor.execute('RELEASE SAVEPOINT savepoint; SAVEPOINT savepoint')
+                    try:
+                        cursor.execute('RELEASE SAVEPOINT savepoint')
+                    except Exception:
+                        pass
+                    finally:
+                        cursor.execute('SAVEPOINT savepoint')
                     LOG.info('Succesfully imported %s' % basename(filepath))
                     del dependency_helper[tbl_file_map[basename(filepath)]]
                     remaining.remove(filepath)
