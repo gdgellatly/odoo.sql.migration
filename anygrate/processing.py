@@ -384,22 +384,22 @@ WHERE
         """ Apply updates in the target db with update file
         """
         table = basename(filepath).rsplit('.', 2)[0]
+        orig_table = table[:-5]
         has_data = False
-
         cursor = connection.cursor()
 
         with open(filepath, 'rb') as update_csv:
-            columns = ','.join(["orig_table.%s=COALESCE(table.%s, orig_table.%s)" % c for c in csv.reader(update_csv).next() if c != pkey])
-            update_csv.seek(0)
             reader = csv.DictReader(update_csv, delimiter=',')
             LOG.info('Trying Bulk Update')
             if reader:
                 has_data = True
-        if has_data:
-            try:
-                orig_table = table[:-5]
+                update_csv.seek(0)
                 pkey = self.setup_temp_table(cursor, table, orig_table)
                 LOG.info('Temp table for %s successfully created', orig_table)
+                columns = ','.join(["orig_table.%s=COALESCE(table.%s, orig_table.%s)" % c
+                                    for c in csv.reader(update_csv).next() if c != pkey])
+        if has_data:
+            try:
                 remaining = import_from_csv([filepath], connection)
                 if remaining:
                     raise Exception
