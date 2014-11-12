@@ -11,7 +11,7 @@ MISSING_COLUMN = 'of relation "%s" does not exist'
 
 def get_dependency_tree(scratch_dict, tbl_file_map):
     remaining = scratch_dict.keys()
-    tbl_file_map = {v: k for k, v in tbl_file_map if v in remaining}
+    tbl_file_map = {v: k for k, v in tbl_file_map.items() if v in remaining}
     # depends on nothing  - go to front
     res = [r for r in remaining if not scratch_dict[r]]
     remaining = [r for r in remaining if r not in res]
