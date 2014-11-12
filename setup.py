@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys
 
-version = '0.10dev'
+version = '0.10dev-ff'
 
 if sys.version_info[0] != 2 or sys.version_info[1] != 7:
     print('This tool only works with Python 2.7')

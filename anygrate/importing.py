@@ -5,6 +5,28 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(basename(__file__))
 
+FK_VIOLATION = 'violates foreign key constraint'
+MISSING_COLUMN = 'of relation "%s" does not exist'
+
+
+def get_dependency_tree(scratch_dict):
+    remaining = scratch_dict.keys()
+    # depends on nothing  - go to front
+    res = [remaining.pop(remaining.index(r)) for r in scratch_dict.keys() if not scratch_dict[r]]
+    add_at_end = ([remaining.pop(remaining.index(r)) for r in list(remaining)
+                   if r not in remaining])
+    while remaining:
+        ins_list = list[remaining]
+        [res.insert(remaining.pop(remaining.index(r)), res.index(scratch_dict[key]) + 1)
+         for key in ins_list if scratch_dict[key] in r]
+        if len(ins_list) == len(remaining):
+            LOG.critical('Cyclic Dependency Detected\n Map: %s' % '\n'.join(
+                ['%s->%s' % (k, v) for k, v in scratch_dict.items() if k in remaining]))
+            res.extend(remaining)
+            break
+    res.extend(add_at_end)
+    return res
+
 
 def import_from_csv(filepaths, connection):
     """ Import the csv file using postgresql COPY
@@ -13,11 +35,16 @@ def import_from_csv(filepaths, connection):
     # waiting for a pure sql implementation of get_dependencies
     remaining = list(filepaths)
     cursor = connection.cursor()
-    cursor.execute('SAVEPOINT savepoint')
+    cursor.execute('RELEASE SAVEPOINT savepoint; SAVEPOINT savepoint')
     cursor.close()
+    tbl_file_map = {k: basename(k).rsplit('.', 2)[0] for k in remaining}
+    missing_columns = []
+    if len(remaining) > 1:
+        dependency_helper = dict.fromkeys(tbl_file_map.values())
     while len(remaining) > 0:
-        LOG.info(u'BRUTE FORCE LOOP')
-        paths = list(remaining)
+        LOG.info(u'NOT SUCH A BRUTE FORCE LOOP')
+        paths = get_dependency_tree(dependency_helper)
+        LOG.info(u'MAYBE THIS IS THE BEST PATH')
         for filepath in paths:
             if not exists(filepath):
                 LOG.warn(u'Missing CSV for table %s', filepath.rsplit('.', 2)[0])
@@ -30,18 +57,41 @@ def import_from_csv(filepaths, connection):
                 try:
                     cursor = connection.cursor()
                     cursor.copy_expert(copy, f)
-                    cursor.execute('SAVEPOINT savepoint')
+                    cursor.execute('RELEASE SAVEPOINT savepoint; SAVEPOINT savepoint')
                     LOG.info('Succesfully imported %s' % basename(filepath))
+                    del dependency_helper[tbl_file_map[basename(filepath)]]
                     remaining.remove(filepath)
                 except Exception, e:
+                    tbl = tbl_file_map[basename(filepath)]
+                    msg = e.message
                     LOG.warn('Error importing file %s:\n%s',
-                             basename(filepath), e.message)
+                             basename(filepath), msg)
+                    if FK_VIOLATION in msg:
+                        last = msg.rfind('"')
+                        first = msg.rfind('"', 0, last) + 1
+                        dependency_helper[tbl] = msg[first:last]
+                    elif MISSING_COLUMN % tbl in msg:
+                        first = msg('"') + 1
+                        last = msg('"', first)
+                        col = msg[first:last]
+                        LOG.warn('Missing columns cause dependent tables to fail'
+                                 ' making you think you have cyclic dependencies when you don\'t')
+                        missing_columns.append('    {0}.{1}:\n'
+                                               '        {0}.{1}: __forget__'.format(tbl, col))
                     cursor = connection.cursor()
                     cursor.execute('ROLLBACK TO savepoint')
                     cursor.close()
         if len(paths) == len(remaining):
             LOG.error('\n\n***\n* Could not import remaining tables : %s :-( \n***\n'
                       % ', '.join([basename(f).rsplit('.', 2)[0] for f in remaining]))
+            if missing_columns:
+                LOG.error('The following columns were missing:\n %s \n'
+                          ' Fix these first as they cause dependent tables to fail. '
+                          'You should fully review the table schemas, work out the applicable '
+                          'module and adjust your mapping or installation as appropriate '
+                          'as only the first missing column is shown. To forget them they are '
+                          'displayed in the YAML syntax needed'
+                          % '\n'.join(missing_columns))
             # don't permit update for non imported files
             for update_file in [filename.replace('.target2.csv', '.update2.csv')
                                 for filename in remaining]:
