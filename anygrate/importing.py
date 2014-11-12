@@ -102,7 +102,7 @@ def import_from_csv(filepaths, connection):
                           'displayed in the YAML syntax needed'
                           % '\n'.join(missing_columns))
             # don't permit update for non imported files
-            for update_file in [filename.replace('.target2.csv', '.update2.csv')
+            for update_file in [filename.replace('.target2.csv', '_temp.update2.csv')
                                 for filename in remaining]:
                 rename(update_file, update_file + '.disabled')
             break
