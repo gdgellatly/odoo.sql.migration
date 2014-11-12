@@ -9,8 +9,9 @@ FK_VIOLATION = 'violates foreign key constraint'
 MISSING_COLUMN = 'of relation "%s" does not exist'
 
 
-def get_dependency_tree(scratch_dict):
+def get_dependency_tree(scratch_dict, tbl_file_map):
     remaining = scratch_dict.keys()
+    tbl_file_map = {v: k for k, v in tbl_file_map if v in remaining}
     # depends on nothing  - go to front
     res = [r for r in remaining if not scratch_dict[r]]
     remaining = [r for r in remaining if r not in res]
@@ -18,7 +19,7 @@ def get_dependency_tree(scratch_dict):
     add_at_end = [r for r in remaining if r not in scratch_dict.values()]
     remaining = [r for r in remaining if r not in add_at_end]
     if not remaining:
-        return res + add_at_end
+        return [tbl_file_map[r] for r in res + add_at_end]
 
     while remaining:
         ins_list = list(remaining)
@@ -29,7 +30,7 @@ def get_dependency_tree(scratch_dict):
                 ['%s->%s' % (k, v) for k, v in scratch_dict.items() if k in remaining]))
             res.extend(remaining)
             break
-    return res + add_at_end
+    return [tbl_file_map[r] for r in res + add_at_end]
 
 
 def import_from_csv(filepaths, connection):
@@ -47,7 +48,7 @@ def import_from_csv(filepaths, connection):
         dependency_helper = dict.fromkeys(tbl_file_map.values())
     while len(remaining) > 0:
         LOG.info(u'NOT SUCH A BRUTE FORCE LOOP')
-        paths = get_dependency_tree(dependency_helper)
+        paths = get_dependency_tree(dependency_helper, tbl_file_map)
         LOG.info(u'MAYBE THIS IS THE BEST PATH')
         for filepath in paths:
             if not exists(filepath):
