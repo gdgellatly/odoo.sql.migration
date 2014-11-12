@@ -371,11 +371,11 @@ WHERE
         if pkey:
             idx_command = "CREATE INDEX {0}_id_idx ON {0}({1});".format(table_name, pkey[0])
             cursor.execute(idx_command)
-        return pkey[0]
+        return pkey and pkey[0] or None
 
     @staticmethod
     def update_from_temp(cursor, table, orig_table, columns, pkey):
-        update_command = "UPDATE {1} SET {2} USING {0} WHERE {1}.{3}={0}.{3}".format(table, orig_table, columns, pkey)
+        update_command = "UPDATE {1} SET {2} FROM {0} WHERE {1}.{3}={0}.{3}".format(table, orig_table, columns, pkey)
         cursor.execute(update_command)
         try:
             cursor.execute('RELEASE SAVEPOINT savepoint')
@@ -395,21 +395,25 @@ WHERE
 
         with open(filepath, 'rb') as update_csv:
             reader = csv.DictReader(update_csv, delimiter=',')
-            LOG.info('Trying Bulk Update')
-            if reader:
+          #  LOG.info('Trying Bulk Update')
+            for x in reader:
                 has_data = True
                 update_csv.seek(0)
                 pkey = self.setup_temp_table(cursor, table, orig_table)
-                LOG.info('Temp table for %s successfully created', orig_table)
-                columns = ','.join(["orig_table.{0}=COALESCE(table.{0}, orig_table.{0})".format(c)
-                                    for c in csv.reader(update_csv).next() if c != pkey])
+                if not pkey:
+                    LOG.error('Can\'t import data without primary key')
+                else:
+                    LOG.info('Temp table for %s successfully created', orig_table)
+                    columns = ','.join(["{0}=COALESCE({2}.{0}, {1}.{0})".format(c, orig_table, table)
+                                        for c in csv.reader(update_csv).next() if c != pkey])
+                break
         if has_data:
             try:
                 remaining = import_from_csv([filepath], connection)
                 if remaining:
                     raise Exception
                 self.update_from_temp(cursor, table, orig_table, columns, pkey)
-                LOG.info(u'Successfully updated table %s', table)
+               # LOG.info(u'Successfully updated table %s', table)
             except Exception, e:
                 LOG.warn('Error updating table %s:\n%s', table, e.message)
                 cursor = connection.cursor()

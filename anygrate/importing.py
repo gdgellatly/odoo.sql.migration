@@ -22,9 +22,9 @@ def get_dependency_tree(scratch_dict, tbl_file_map):
         return [tbl_file_map[r] for r in res + add_at_end]
 
     while remaining:
-        ins_list = list(remaining)
-        [res.insert(remaining.pop(remaining.index(r)), res.index(scratch_dict[key]) + 1)
-         for key in ins_list if scratch_dict[key] in r]
+        ins_list = remaining[:]
+        [res.insert(res.index(scratch_dict[key]) + 1, remaining.pop(remaining.index(key)))
+         for key in ins_list if scratch_dict[key] in res]
         if len(ins_list) == len(remaining):
             LOG.critical('Cyclic Dependency Detected\n Map: %s' % '\n'.join(
                 ['%s->%s' % (k, v) for k, v in scratch_dict.items() if k in remaining]))
@@ -46,9 +46,12 @@ def import_from_csv(filepaths, connection):
     missing_columns = []
     dependency_helper = dict.fromkeys(tbl_file_map.values())
     while len(remaining) > 0:
-        LOG.info(u'NOT SUCH A BRUTE FORCE LOOP')
-        paths = get_dependency_tree(dependency_helper, tbl_file_map)
-        LOG.info(u'MAYBE THIS IS THE BEST PATH')
+        if len(remaining) == 1:
+            paths = remaining
+        else:
+            LOG.info(u'NOT SUCH A BRUTE FORCE LOOP')
+            paths = [r for r in get_dependency_tree(dependency_helper, tbl_file_map) if r in remaining]
+            LOG.info(u'MAYBE THIS IS THE BEST PATH: %s' % '->'.join(paths))
         for filepath in paths:
             if not exists(filepath):
                 LOG.warn(u'Missing CSV for table %s', filepath.rsplit('.', 2)[0])
@@ -68,10 +71,9 @@ def import_from_csv(filepaths, connection):
                     finally:
                         cursor.execute('SAVEPOINT savepoint')
                     LOG.info('Succesfully imported %s' % basename(filepath))
-                    del dependency_helper[tbl_file_map[basename(filepath)]]
                     remaining.remove(filepath)
                 except Exception, e:
-                    tbl = tbl_file_map[basename(filepath)]
+                    tbl = tbl_file_map[filepath]
                     msg = e.message
                     LOG.warn('Error importing file %s:\n%s',
                              basename(filepath), msg)
@@ -90,7 +92,7 @@ def import_from_csv(filepaths, connection):
                     cursor = connection.cursor()
                     cursor.execute('ROLLBACK TO savepoint')
                     cursor.close()
-        if len(paths) == len(remaining):
+        if len(filepaths) > 1 and len(paths) == len(remaining):
             LOG.error('\n\n***\n* Could not import remaining tables : %s :-( \n***\n'
                       % ', '.join([basename(f).rsplit('.', 2)[0] for f in remaining]))
             if missing_columns:
@@ -107,5 +109,6 @@ def import_from_csv(filepaths, connection):
                 rename(update_file, update_file + '.disabled')
             break
     else:
-        LOG.info('\n\n***\n* Successfully imported all csv files!! :-)\n***\n')
+        if len(filepaths) > 1:
+            LOG.info('\n\n***\n* Successfully imported all csv files!! :-)\n***\n')
     return remaining
