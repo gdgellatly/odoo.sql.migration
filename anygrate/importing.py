@@ -44,8 +44,7 @@ def import_from_csv(filepaths, connection):
     cursor.close()
     tbl_file_map = {k: basename(k).rsplit('.', 2)[0] for k in remaining}
     missing_columns = []
-    if len(remaining) > 1:
-        dependency_helper = dict.fromkeys(tbl_file_map.values())
+    dependency_helper = dict.fromkeys(tbl_file_map.values())
     while len(remaining) > 0:
         LOG.info(u'NOT SUCH A BRUTE FORCE LOOP')
         paths = get_dependency_tree(dependency_helper, tbl_file_map)
@@ -108,5 +107,5 @@ def import_from_csv(filepaths, connection):
                 rename(update_file, update_file + '.disabled')
             break
     else:
-            LOG.info('\n\n***\n* Successfully imported all csv files!! :-)\n***\n')
+        LOG.info('\n\n***\n* Successfully imported all csv files!! :-)\n***\n')
     return remaining
