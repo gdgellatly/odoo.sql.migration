@@ -1,6 +1,7 @@
 import sys
 import time
 import psycopg2
+
 import shutil
 import argparse
 from tempfile import mkdtemp
@@ -10,6 +11,7 @@ from .mapping import Mapping
 from .processing import CSVProcessor
 from .depending import add_related_tables
 from .depending import get_fk_to_update
+from .sql_commands import drop_constraints, get_management_connection, create_new_db
 import logging
 from os.path import basename, join, abspath, dirname, exists
 from os import listdir
@@ -53,8 +55,13 @@ def main():
                         )
     parser.add_argument('-w', '--write',
                         action='store_true', default=False,
-                        help=u'Really write to the target database if migration is successful'
+                        help=u'Really write to the target database if migration is successful.'
                         )
+    parser.add_argument('-n', '--newdb',
+                        help=u'Create a new database based on target. Existing db of same name will be dropped')
+    parser.add_argument('-f' '--dropfk',
+                        action='store_true', default=False,
+                        help=u'Drops foreign key constraints on tables and adds back after import')
 
     args = parser.parse_args()
     source_db, target_db, relation = args.source, args.target, args.relation
@@ -76,17 +83,21 @@ def main():
     tempdir = mkdtemp(prefix=source_db + '-' + str(int(time.time()))[-4:] + '-',
                       dir=abspath('.'))
     migrate(source_db, target_db, relation, mapping_names,
-            excluded, target_dir=tempdir, write=args.write)
+            excluded, target_dir=tempdir, write=args.write,
+            new_db=args.newdb, drop_fk=args.dropfk)
     if not args.keepcsv:
         shutil.rmtree(tempdir)
 
 
 def migrate(source_db, target_db, source_tables, mapping_names,
-            excluded=None, target_dir=None, write=False):
+            excluded=None, target_dir=None, write=False,
+            new_db=False, drop_fk=False):
     """ The main migration function
     """
     start_time = time.time()
     source_connection = psycopg2.connect("dbname=%s" % source_db)
+    if new_db:
+        target_db = create_new_db(source_db, target_db, new_db)
     target_connection = psycopg2.connect("dbname=%s" % target_db)
 
     # Get the list of modules installed in the target db
@@ -130,7 +141,10 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     print(u'Migrating CSV files...')
     processor.set_existing_data(existing_records)
     processor.process(target_dir, filepaths, target_dir, target_connection)
-
+    # drop foreign key constraints
+    if drop_fk:
+        print(u'Dropping Foreign Key Constraints in target tables')
+        drop_fk = drop_constraints(db=target_db, tables=target_tables)
     # import data in the target
     print(u'Trying to import data in the target database...')
     target_files = [join(target_dir, '%s.target2.csv' % t) for t in target_tables]
@@ -153,7 +167,20 @@ def migrate(source_db, target_db, source_tables, mapping_names,
         print(u'Finished, and transaction committed !! \o/')
     else:
         target_connection.rollback()
+        if new_db:
+            target_connection.close()
+            mgmt_connection = get_management_connection(db=source_db)
+            with mgmt_connection.cursor() as m:
+                # Note we use new_db here instead of target just in case
+                m.execute('DROP DATABASE %s IF EXISTS;', (new_db,))
+            mgmt_connection.close()
         print(u'Finished \o/ Use --write to really write to the target database')
+    if drop_fk:
+        print(u'Restoring Foriegn Key Constraints')
+        mgmt_connection = get_management_connection(db=target_db)
+        with mgmt_connection.cursor() as m:
+            m.execute(drop_fk)
+        mgmt_connection.close()
 
     seconds = time.time() - start_time
     lines = processor.lines
