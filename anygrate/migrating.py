@@ -67,8 +67,11 @@ def main():
                         action='store_true', default=False,
                         help=u'Turns it up to 11. '
                              u'Drops foreign key constraints on tables and adds back after import.'
-                             u' Auto creates new database if -n not specified'
-                             u' Uses tmpfs for csv\'s (requires passwordless sudo')
+                             u' Auto creates new database if -n not specified')
+    parser.add_argument('--tmpfs',
+                        action='store_true', default=False,
+                        help=u' Uses tmpfs for csv\'s (requires passwordless sudo')
+
 
     args = parser.parse_args()
     source_db, target_db, relation = args.source, args.target, args.relation
@@ -100,7 +103,7 @@ def main():
 
     tempdir = mkdtemp(prefix=source_db + '_' + identifier + '_',
                       dir=abspath('.'))
-    if args.quick:
+    if args.tmpfs:
         import subprocess
         subprocess.call(['sudo /bin/mount -t tmpfs -o size=6G tmpfs {0}'.format(tempdir)], shell=True)
     identifier = basename(normpath(tempdir))
