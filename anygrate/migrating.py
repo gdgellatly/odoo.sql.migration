@@ -11,7 +11,7 @@ from .mapping import Mapping
 from .processing import CSVProcessor
 from .depending import add_related_tables
 from .depending import get_fk_to_update
-from .sql_commands import drop_constraints, get_management_connection, create_new_db
+from .sql_commands import drop_constraints, get_management_connection, create_new_db, kill_db_connections
 import logging
 from os.path import basename, join, abspath, dirname, exists
 from os import listdir
@@ -59,7 +59,7 @@ def main():
                         )
     parser.add_argument('-n', '--newdb',
                         help=u'Create a new database based on target. Existing db of same name will be dropped')
-    parser.add_argument('-f' '--dropfk',
+    parser.add_argument('-f', '--dropfk',
                         action='store_true', default=False,
                         help=u'Drops foreign key constraints on tables and adds back after import')
 
@@ -120,7 +120,7 @@ def migrate(source_db, target_db, source_tables, mapping_names,
         if not exists(mapping_name):
             mapping_names[i] = join(HERE, 'mappings', mapping_name)
             LOG.warn('%s not found. Trying %s', mapping_name, mapping_names[i])
-    mapping = Mapping(target_modules, mapping_names)
+    mapping = Mapping(target_modules, mapping_names, drop_fk=drop_fk)
     processor = CSVProcessor(mapping)
     target_tables = processor.get_target_columns(filepaths).keys()
     print(u'The real list of tables to import is: %s' % ', '.join(target_tables))
@@ -144,7 +144,14 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     # drop foreign key constraints
     if drop_fk:
         print(u'Dropping Foreign Key Constraints in target tables')
+        target_connection.close()
+        mgmt_connection = get_management_connection(source_db)
+        with mgmt_connection.cursor() as m:
+            kill_db_connections(m, target_db)
+        mgmt_connection.close()
         drop_fk = drop_constraints(db=target_db, tables=target_tables)
+        target_connection = psycopg2.connect("dbname=%s" % target_db)
+
     # import data in the target
     print(u'Trying to import data in the target database...')
     target_files = [join(target_dir, '%s.target2.csv' % t) for t in target_tables]
@@ -167,20 +174,26 @@ def migrate(source_db, target_db, source_tables, mapping_names,
         print(u'Finished, and transaction committed !! \o/')
     else:
         target_connection.rollback()
-        if new_db:
-            target_connection.close()
-            mgmt_connection = get_management_connection(db=source_db)
-            with mgmt_connection.cursor() as m:
-                # Note we use new_db here instead of target just in case
-                m.execute('DROP DATABASE %s IF EXISTS;', (new_db,))
-            mgmt_connection.close()
         print(u'Finished \o/ Use --write to really write to the target database')
-    if drop_fk:
-        print(u'Restoring Foriegn Key Constraints')
-        mgmt_connection = get_management_connection(db=target_db)
-        with mgmt_connection.cursor() as m:
-            m.execute(drop_fk)
-        mgmt_connection.close()
+    target_connection.close()
+
+    # Note we check here again just in case
+    if all([(n.isalnum() or n == '_' for n in target_db)]):
+        #First kill any connections
+        s_mgmt_connection = get_management_connection(db=source_db)
+        with s_mgmt_connection.cursor() as s:
+            kill_db_connections(s, target_db)
+        if new_db and not write:
+            kill_db_connections(s, target_db)
+            s.execute('DROP DATABASE IF EXISTS {0};'.format(target_db))
+            print(u'Target Database dropped')
+        elif drop_fk:
+            print(u'Restoring Foreign Key Constraints')
+            t_mgmt_connection = get_management_connection(db=target_db)
+            with t_mgmt_connection.cursor() as t:
+                t.execute(drop_fk)
+            t_mgmt_connection.close()
+        s_mgmt_connection.close()
 
     seconds = time.time() - start_time
     lines = processor.lines

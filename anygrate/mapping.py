@@ -16,7 +16,7 @@ class Mapping(object):
     target_connection = None
     fk2update = None
 
-    def __init__(self, modules, filenames):
+    def __init__(self, modules, filenames, drop_fk=False):
         """ Open the file and compute the mapping
         """
         self.fk2update = {}
@@ -59,9 +59,10 @@ class Mapping(object):
                     continue
                 if function == '__defer__':
                     self.mapping[incolumn][outcolumn] = '__copy__'
-                    table, column = outcolumn.split('.')
-                    self.deferred.setdefault(table, set())
-                    self.deferred[table].add(column)
+                    if not drop_fk:
+                        table, column = outcolumn.split('.')
+                        self.deferred.setdefault(table, set())
+                        self.deferred[table].add(column)
                     continue
                 if function.startswith('__fk__ '):
                     if len(function.split()) != 2:
