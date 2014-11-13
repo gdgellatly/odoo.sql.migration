@@ -45,7 +45,7 @@ def reorder_filepath(scratch_dict, tbl_file_map):
     return [tbl_file_map[r] for r in res + add_at_end]
 
 
-def csv_file_importer(filepath, connection, table_name=False):
+def csv_file_importer(filepath, connection, table_name=False, pkey=False):
     if not exists(filepath):
         LOG.warn(u'Missing CSV for table %s', filepath.rsplit('.', 2)[0])
         return -1, ""
@@ -61,6 +61,7 @@ def csv_file_importer(filepath, connection, table_name=False):
             cursor = connection.cursor()
             cursor.copy_expert(copy, f)
             make_savepoint(cursor)
+
             res = (0,  basename(filepath))
         except Exception, e:
             msg = e.message
@@ -71,13 +72,12 @@ def csv_file_importer(filepath, connection, table_name=False):
                 first = msg.rfind('"', 0, last) + 1
                 res = (1, msg[first:last])
             elif MISSING_COLUMN % table_name in msg:
-                first = msg('"') + 1
-                last = msg('"', first)
+                first = msg.find('"') + 1
+                last = msg.find('"', first)
                 col = msg[first:last]
                 LOG.warn('Missing columns cause dependent tables to fail'
                          ' making you think you have cyclic dependencies when you don\'t')
-                res = (2, '    {0}.{1}:\n'
-                          '        {0}.{1}: __forget__'.format(table_name, col))
+                res = (2, '{0}.{1}: __forget__'.format(table_name, col))
             else:
                 res = (99, "WTF")
             cursor = connection.cursor()
@@ -97,43 +97,48 @@ def import_from_csv(filepaths, connection, drop_fk=False):
     cursor.close()
     tbl_file_map = {k: basename(k).rsplit('.', 2)[0] for k in remaining}
     missing_columns = []
-    known_fk_deps = dict.fromkeys(tbl_file_map.values())
+    # known_fk_deps = dict.fromkeys(tbl_file_map.values())
     while len(remaining) > 0:
-        paths = remaining
+        print remaining
+        paths = remaining[:]
         if drop_fk:
             LOG.info(u'No Foreign Key constraints so straight import :)')
-        elif len(remaining) == len(filepaths):
+        else: #if len(remaining) == len(filepaths):
             LOG.info(u'BRUTE FORCE LOOP')
-        else:
-            paths = [r for r in reorder_filepath(known_fk_deps, tbl_file_map) if r in remaining]
-            LOG.info(u'MAYBE THIS IS THE BEST PATH: %s' % '->'.join(paths))
+        # else:
+        #     paths = [r for r in reorder_filepath(known_fk_deps, tbl_file_map) if r in remaining]
+        #     LOG.info(u'MAYBE THIS IS THE BEST PATH: %s' % '->'.join(paths))
         for filepath in paths:
-            tbl = tbl_file_map.get(basename(filepath))
+            tbl = tbl_file_map.get(filepath)
             error_code = csv_file_importer(filepath, connection, table_name=tbl)
             if error_code:
                 if error_code[0] == 0:
                     LOG.info(u'Succesfully imported %s' % error_code[1])
-                    del known_fk_deps[tbl]
+                    # try:
+                    #     del known_fk_deps[tbl]
+                    # except KeyError:
+                    #     LOG.error(u'The key %s was not found in the table map'.format(tbl))
                     remaining.remove(filepath)
 
-                if error_code[0] == 1:
-                    known_fk_deps[tbl] = error_code[1]
+                elif error_code[0] == 1:
+                    pass  # known_fk_deps[tbl] = error_code[1]
                 elif error_code[0] == 2:
                     missing_columns.append(error_code[1])
                 else:
                     LOG.critical(u'An unknown error occurred importing csv file')
 
-        if len(paths) == len(remaining):
+        if remaining and len(paths) == len(remaining):
             LOG.error('\n\n***\n* Could not import remaining tables : %s :-( \n***\n'
                       % ', '.join([basename(f).rsplit('.', 2)[0] for f in remaining]))
             if missing_columns:
-                LOG.error('The following columns were missing:\n %s \n'
+                missing_columns = set(missing_columns)
+                LOG.error('\nThe following columns were missing:\n{0}\n{1}\n{0}\n'
                           ' Fix these first as they cause dependent tables to fail. '
                           'You should fully review the table schemas, work out the applicable '
                           'module and adjust your mapping or installation as appropriate '
                           'as only the first missing column is shown. To forget them they are '
-                          'displayed in the YAML syntax needed'
-                          % '\n'.join(missing_columns))
+                          'displayed in the YAML syntax needed'.format('-'*79, '\n'.join(missing_columns)))
+
             # don't permit update for non imported files
             for update_file in [filename.replace('.target2.csv', '.update2.csv')
                                 for filename in remaining]:

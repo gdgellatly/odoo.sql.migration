@@ -13,7 +13,7 @@ from .depending import add_related_tables
 from .depending import get_fk_to_update
 from .sql_commands import drop_constraints, get_management_connection, create_new_db, kill_db_connections
 import logging
-from os.path import basename, join, abspath, dirname, exists
+from os.path import basename, join, abspath, dirname, exists, normpath
 from os import listdir
 
 HERE = dirname(__file__)
@@ -61,7 +61,13 @@ def main():
                         help=u'Create a new database based on target. Existing db of same name will be dropped')
     parser.add_argument('-f', '--dropfk',
                         action='store_true', default=False,
-                        help=u'Drops foreign key constraints on tables and adds back after import')
+                        help=u'Drops foreign key constraints on tables and adds back after import.'
+                             u' Must be used with --newdb or -n')
+    parser.add_argument('-q', '--quick',
+                        action='store_true', default=False,
+                        help=u'Turns it up to 11. '
+                             u'Drops foreign key constraints on tables and adds back after import.'
+                             u' Auto creates new database if -n not specified')
 
     args = parser.parse_args()
     source_db, target_db, relation = args.source, args.target, args.relation
@@ -70,21 +76,37 @@ def main():
         'ir_model'
     ]
     if args.list:
-        print '\n'.join(listdir(join(HERE, 'mappings')))
+        print(u'\n'.join(listdir(join(HERE, 'mappings'))))
         sys.exit(0)
 
     if not all([source_db, target_db, relation]):
-        print 'Please provide at least -s, -t and -r options'
+        print(u'Please provide at least -s, -t and -r options')
         sys.exit(1)
 
     if args.keepcsv:
-        print "Writing CSV files in the current dir"
+        print(u"Writing CSV files in the current dir")
 
-    tempdir = mkdtemp(prefix=source_db + '-' + str(int(time.time()))[-4:] + '-',
+    identifier = str(int(time.time()))[-4:]
+
+    if args.quick:
+        args.dropfk = True
+
+    if args.dropfk and not (args.newdb or args.quick):
+        print(u'Due to the dangers of being unable to roll back if an error occurs\n'
+              u'and the dangers of not correctly recording constraints this option\n'
+              u'is only valid with the -n flag')
+        sys.exit(1)
+
+    tempdir = mkdtemp(prefix=source_db + '_' + identifier + '_',
                       dir=abspath('.'))
+    identifier = basename(normpath(tempdir))
+    if args.quick and not args.newdb:
+        args.newdb = identifier.lower()
+    print(u'The identifier for this migration is "{0}"'.format(identifier))
     migrate(source_db, target_db, relation, mapping_names,
             excluded, target_dir=tempdir, write=args.write,
             new_db=args.newdb, drop_fk=args.dropfk)
+    print(u'The identifier for this migration is "{0}"'.format(identifier))
     if not args.keepcsv:
         shutil.rmtree(tempdir)
 
@@ -109,9 +131,22 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     print(u'Computing the real list of tables to export...')
     #source_models, _ = get_dependencies('admin', 'admin',
     #                                    source_db, source_models, excluded_models)
+    if drop_fk:
+        print(u'Normally you would get a list of dependencies here but we don\'t care'
+              u' as we are dropping the constraints')
     source_tables, m2m_tables = add_related_tables(source_connection, source_tables,
-                                                   excluded)
-    print(u'The real list of tables to export is: %s' % ', '.join(source_tables))
+                                                   excluded, show_log=not drop_fk)
+    source_tables.sort()
+    col_width = max([len(tbl) for tbl in source_tables]) + 3
+    max_cols = 80 / col_width
+    split_tables = []
+    offset = 0
+    while offset < len(source_tables):
+        split_tables.append(
+            ''.join([tbl.ljust(col_width) for tbl in source_tables[offset:offset+max_cols]]))
+        offset += max_cols
+
+    print(u'The real list of tables to export is:\n%s' % '\n'.join(split_tables))
 
     # construct the mapping and the csv processor
     print('Exporting tables as CSV files...')

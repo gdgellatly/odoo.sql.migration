@@ -7,7 +7,6 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(basename(__file__))
 
-from .importing import csv_file_importer
 
 def get_management_connection(db='postgres'):
     mgmt_connection = psycopg2.connect("dbname=%s" % db)
@@ -31,9 +30,7 @@ def create_new_db(source_db, target_db, new_db):
     with mgmt_connection.cursor() as m:
 
         # CREATE won't accept parameterised inputs but need to sanitize psycopg2 gives no easy way
-        # TODO: Actually find a better way of doing this
-        if not all([n.isalnum() or n == '_' for n in new_db + target_db]):
-            print
+        if not validate_identifiers(new_db + target_db):
             sys.exit(1)
         kill_db_connections(m, new_db)
         kill_db_connections(m, target_db)
@@ -41,7 +38,10 @@ def create_new_db(source_db, target_db, new_db):
         m.execute(drop_command)
     mgmt_connection.commit()
     with mgmt_connection.cursor() as m:
+
         print(u'Creating New Database')
+        kill_db_connections(m, new_db)
+        kill_db_connections(m, target_db)
         create_command = "CREATE DATABASE {0} TEMPLATE {1};".format(new_db, target_db)
         m.execute(create_command)
         print(u'New Database Created')
@@ -104,7 +104,7 @@ WHERE
         pkey = cursor.fetchone()
         if pkey:
             pkey = pkey[0]
-            idx_command = "CREATE INDEX {0}_id_idx ON {0}({1});".format(temp_table, pkey[0])
+            idx_command = "CREATE INDEX {0}_id_idx ON {0}({1});".format(temp_table, pkey)
             cursor.execute(idx_command)
         else:
             pkey = None
@@ -121,6 +121,7 @@ def validate_identifiers(name, log_error=True):
     :param log_error:
     :return: True or False
     """
+    # TODO: Actually find a better way of doing this
     if not name.isalnum():
         if not all([l.isalnum() or l == '_' for l in name]):
             log_error and LOG.error(
@@ -131,20 +132,23 @@ def validate_identifiers(name, log_error=True):
 
 def make_savepoint(c, name='savepoint'):
     if validate_identifiers(name):
-        try:
-            c.execute('RELEASE SAVEPOINT savepoint')
-        except Exception, e:
-            LOG.debug("%s", e.message)
-        finally:
-            c.execute('SAVEPOINT savepoint')
+        #commented as when it fails it still blows up
+        # try:
+        #     c.execute('RELEASE SAVEPOINT savepoint')
+        # except Exception, e:
+        #     LOG.debug("%s", e.message)
+        # finally:
+        c.execute('SAVEPOINT {0}'.format(name))
 
 
 def upsert(filepath, connection, temp_table, orig_table, columns, pkey):
+    from .importing import csv_file_importer
+    error_code = (4, "Upsert")
     if all([validate_identifiers(x) for x in [temp_table, orig_table]]):
-        csv_file_importer(filepath, connection, table_name=temp_table)
+        error_code = csv_file_importer(filepath, connection, table_name=temp_table, pkey=pkey)
         update_command = "UPDATE {1} SET {2} FROM {0} WHERE {1}.{3}={0}.{3}".format(
             temp_table, orig_table, columns, pkey)
         with connection.cursor() as c:
             c.execute(update_command)
             make_savepoint(c)
-    return
+    return error_code

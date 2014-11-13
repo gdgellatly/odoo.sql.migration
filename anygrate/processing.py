@@ -2,7 +2,6 @@ import csv
 import logging
 import os
 from os.path import basename, join, splitext
-from .importing import import_from_csv
 from .sql_commands import upsert, setup_temp_table
 
 HERE = os.path.dirname(__file__)
@@ -31,6 +30,7 @@ class CSVProcessor(object):
         self.is_moved = set()
         self.existing_records = {}
         self.existing_records_without_id = {}
+        self.filtered_columns = {}
 
     def get_target_columns(self, filepaths):
         """ Compute target columns with source columns + mapping
@@ -242,10 +242,15 @@ class CSVProcessor(object):
                         else:
                             # mapping is supposed to be a function
                             result = function(self, source_row, target_rows)
+                            if result == '__forget_row__':
+                                target_rows[target_table]['__forget_row__'] = True
                             target_rows[target_table][target_column] = result
 
                 # offset all ids except existing data and choose to write now or update later
+                # forget any rows that are being filtered
                 for table, target_row in target_rows.items():
+                    if '__forget_row__' in target_row:
+                        continue
                     if not any(target_row.values()):
                         continue
                     discriminators = self.mapping.discriminators.get(table)
@@ -317,6 +322,7 @@ class CSVProcessor(object):
         with open(target_filepath, 'rb') as target_csv:
             reader = csv.DictReader(target_csv, delimiter=',')
             for target_row in reader:
+                filtered = False
                 postprocessed_row = {}
                 # fix the foreign keys of the line
                 for key, value in target_row.items():
@@ -347,9 +353,9 @@ class CSVProcessor(object):
                 existing_without_id = self.existing_records_without_id.get(table, [])
                 discriminator_values = {d: str(postprocessed_row[d])
                                         for d in (discriminators or [])}
-                if 'id' in postprocessed_row or discriminator_values not in existing_without_id:
+                if not_filtered and ('id' in postprocessed_row or
+                            discriminator_values not in existing_without_id):
                     self.writers[table].writerow(postprocessed_row)
-
 
     def update_one(self, filepath, connection):
         """ Apply updates in the target db with update file
@@ -369,18 +375,16 @@ class CSVProcessor(object):
                     LOG.error(u'Can\'t import data without primary key')
                     has_data = False
                 else:
-                    LOG.info(u'Temp table for %s successfully created', orig_table)
+                    # LOG.info(u'Temp table for %s successfully created', orig_table)
                     columns = ','.join(["{0}=COALESCE({2}.{0}, {1}.{0})".format(c, orig_table, temp_table)
                                         for c in csv.reader(update_csv).next() if c != pkey])
                 break
         if has_data:
             try:
-                remaining = import_from_csv([filepath], connection)
-
                 error_code = upsert(filepath, connection, temp_table, orig_table, columns, pkey)
                 if error_code[0]:
                     raise Exception
-                LOG.info(u'Successfully updated table %s', temp_table)
+                LOG.info(u'Successfully updated table %s', orig_table)
             except Exception, e:
                 LOG.warn('Error updating table %s:\n%s', temp_table, e.message)
                 cursor = connection.cursor()

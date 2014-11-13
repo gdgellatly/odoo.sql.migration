@@ -7,9 +7,10 @@ LOG = logging.getLogger(basename(__file__))
 
 def add_related_tables(target_connection, tables,
                        excluded_tables, path=None,
-                       seen=None, related_tables=None):
+                       seen=None, related_tables=None, show_log=False):
     res, related_tables = get_sql_dependencies(target_connection, tables,
-                                               tables, tables, excluded_tables)
+                                               tables, tables, excluded_tables,
+                                               show_log=show_log)
     res += related_tables
     return res, related_tables
 
@@ -27,7 +28,7 @@ def add_related_models(username, pwd, dbname, models,
 
 def get_sql_dependencies(target_connection, tables, initial_tables,
                          real_tables, excluded_tables, path=None, seen=None,
-                         related_tables=None):
+                         related_tables=None, show_log=False):
     """ Given a list of PSQL tables, return the full list of dependant tables,
     ordered by dependencies. Warning are displayed if there are dependency loops
     Set excluded_models to None if there is no table to exclude.
@@ -89,7 +90,7 @@ def get_sql_dependencies(target_connection, tables, initial_tables,
                     for foreign_key in foreign_keys:
                         tbl = foreign_key[0]
                         if tbl in path:
-                            LOG.warn('Dependency LOOP: '
+                            show_log and LOG.warn('Dependency LOOP: '
                                      '%s has a m2o to %s which is one of its '
                                      'ancestors (path=%r)',
                                      table, tbl, path)
@@ -148,7 +149,8 @@ WHERE TABLE_NAME = '%s';""" % tbl
                                                            path=path+(table,),
                                                            excluded_tables=excluded_tables,
                                                            seen=seen,
-                                                           related_tables=related_tables)
+                                                           related_tables=related_tables,
+                                                           show_log=show_log)
             res += results
         for t in m2m:
             results, related_tables = get_sql_dependencies(target_connection,
@@ -158,7 +160,8 @@ WHERE TABLE_NAME = '%s';""" % tbl
                                                            path=path+(table,),
                                                            excluded_tables=excluded_tables,
                                                            seen=seen,
-                                                           related_tables=related_tables)
+                                                           related_tables=related_tables,
+                                                           show_log=show_log)
             res += results
 
         if table not in related_tables and table not in excluded_tables:
