@@ -163,7 +163,7 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     # execute deferred updates for preexisting data
     print(u'Updating pre-existing data...')
     for table in target_tables:
-        filepath = join(target_dir, table + '_temp.update2.csv')
+        filepath = join(target_dir, table + '.update2.csv')
         if not exists(filepath):
             LOG.warn(u'Not updating %s as it was not imported', table)
             continue

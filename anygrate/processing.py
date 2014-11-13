@@ -3,6 +3,7 @@ import logging
 import os
 from os.path import basename, join, splitext
 from .importing import import_from_csv
+from .sql_commands import upsert, setup_temp_table
 
 HERE = os.path.dirname(__file__)
 logging.basicConfig(level=logging.DEBUG)
@@ -174,7 +175,7 @@ class CSVProcessor(object):
 
         # POSTPROCESS update filenames and files
         update2_filenames = {
-            table: join(target_dir, table + '_temp.update2.csv')
+            table: join(target_dir, table + '.update2.csv')
             for table in self.target_columns
         }
         update2_files = {
@@ -349,75 +350,41 @@ class CSVProcessor(object):
                 if 'id' in postprocessed_row or discriminator_values not in existing_without_id:
                     self.writers[table].writerow(postprocessed_row)
 
-    @staticmethod
-    def setup_temp_table(cursor, table_name, orig_table_name):
-        create_command = "CREATE TEMP TABLE {0} AS SELECT * FROM {1} LIMIT 0".format(table_name, orig_table_name)
-        cursor.execute(create_command)
-        # We need to find the primary key using accepted postgres method
-        cursor.execute('''
-SELECT
-  pg_attribute.attname,
-  format_type(pg_attribute.atttypid, pg_attribute.atttypmod)
-FROM pg_index, pg_class, pg_attribute, pg_namespace
-WHERE
-  pg_class.oid = %s::regclass AND
-  indrelid = pg_class.oid AND
-  nspname = 'public' AND
-  pg_class.relnamespace = pg_namespace.oid AND
-  pg_attribute.attrelid = pg_class.oid AND
-  pg_attribute.attnum = any(pg_index.indkey)
- AND indisprimary;''', (orig_table_name,))
-        pkey = cursor.fetchone()
-        if pkey:
-            idx_command = "CREATE INDEX {0}_id_idx ON {0}({1});".format(table_name, pkey[0])
-            cursor.execute(idx_command)
-        return pkey and pkey[0] or None
-
-    @staticmethod
-    def update_from_temp(cursor, table, orig_table, columns, pkey):
-        update_command = "UPDATE {1} SET {2} FROM {0} WHERE {1}.{3}={0}.{3}".format(table, orig_table, columns, pkey)
-        cursor.execute(update_command)
-        try:
-            cursor.execute('RELEASE SAVEPOINT savepoint')
-        except Exception:
-            pass
-        finally:
-            cursor.execute('SAVEPOINT savepoint')
-        return
 
     def update_one(self, filepath, connection):
         """ Apply updates in the target db with update file
         """
-        table = basename(filepath).rsplit('.', 2)[0]
-        orig_table = table[:-5]
+        orig_table = basename(filepath).rsplit('.', 2)[0]
+        temp_table = "{0}_temp".format(orig_table)
         has_data = False
         cursor = connection.cursor()
 
         with open(filepath, 'rb') as update_csv:
             reader = csv.DictReader(update_csv, delimiter=',')
-          #  LOG.info('Trying Bulk Update')
-            for x in reader:
+            for x in reader: # lame way to check if it has lines - Note: try while reader:
                 has_data = True
                 update_csv.seek(0)
-                pkey = self.setup_temp_table(cursor, table, orig_table)
+                pkey = setup_temp_table(cursor, temp_table, orig_table)
                 if not pkey:
-                    LOG.error('Can\'t import data without primary key')
+                    LOG.error(u'Can\'t import data without primary key')
+                    has_data = False
                 else:
-                    LOG.info('Temp table for %s successfully created', orig_table)
-                    columns = ','.join(["{0}=COALESCE({2}.{0}, {1}.{0})".format(c, orig_table, table)
+                    LOG.info(u'Temp table for %s successfully created', orig_table)
+                    columns = ','.join(["{0}=COALESCE({2}.{0}, {1}.{0})".format(c, orig_table, temp_table)
                                         for c in csv.reader(update_csv).next() if c != pkey])
                 break
         if has_data:
             try:
                 remaining = import_from_csv([filepath], connection)
-                if remaining:
+
+                error_code = upsert(filepath, connection, temp_table, orig_table, columns, pkey)
+                if error_code[0]:
                     raise Exception
-                self.update_from_temp(cursor, table, orig_table, columns, pkey)
-               # LOG.info(u'Successfully updated table %s', table)
+                LOG.info(u'Successfully updated table %s', temp_table)
             except Exception, e:
-                LOG.warn('Error updating table %s:\n%s', table, e.message)
+                LOG.warn('Error updating table %s:\n%s', temp_table, e.message)
                 cursor = connection.cursor()
                 cursor.execute('ROLLBACK TO savepoint')
                 cursor.close()
         else:
-            LOG.info(u'Nothing to update in table %s', table)
+            LOG.info(u'Nothing to update in table %s', orig_table)
