@@ -145,7 +145,7 @@ def upsert(filepath, connection, temp_table, orig_table, columns, pkey):
     from .importing import csv_file_importer
     error_code = (4, "Upsert")
     if all([validate_identifiers(x) for x in [temp_table, orig_table]]):
-        error_code = csv_file_importer(filepath, connection, table_name=temp_table, pkey=pkey)
+        error_code = csv_file_importer(filepath, connection, table=temp_table)
         update_command = "UPDATE {1} SET {2} FROM {0} WHERE {1}.{3}={0}.{3}".format(
             temp_table, orig_table, columns, pkey)
         with connection.cursor() as c:

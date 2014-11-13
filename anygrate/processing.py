@@ -353,8 +353,8 @@ class CSVProcessor(object):
                 existing_without_id = self.existing_records_without_id.get(table, [])
                 discriminator_values = {d: str(postprocessed_row[d])
                                         for d in (discriminators or [])}
-                if not_filtered and ('id' in postprocessed_row or
-                            discriminator_values not in existing_without_id):
+                if ('id' in postprocessed_row or
+                        discriminator_values not in existing_without_id):
                     self.writers[table].writerow(postprocessed_row)
 
     def update_one(self, filepath, connection):

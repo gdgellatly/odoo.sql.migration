@@ -67,7 +67,8 @@ def main():
                         action='store_true', default=False,
                         help=u'Turns it up to 11. '
                              u'Drops foreign key constraints on tables and adds back after import.'
-                             u' Auto creates new database if -n not specified')
+                             u' Auto creates new database if -n not specified'
+                             u' Uses tmpfs for csv\'s (requires passwordless sudo')
 
     args = parser.parse_args()
     source_db, target_db, relation = args.source, args.target, args.relation
@@ -99,10 +100,15 @@ def main():
 
     tempdir = mkdtemp(prefix=source_db + '_' + identifier + '_',
                       dir=abspath('.'))
+    if args.quick:
+        import subprocess
+        subprocess.call(['sudo /bin/mount -t tmpfs -o size=6G tmpfs {0}'.format(tempdir)], shell=True)
     identifier = basename(normpath(tempdir))
     if args.quick and not args.newdb:
         args.newdb = identifier.lower()
-    print(u'The identifier for this migration is "{0}"'.format(identifier))
+    print(u'The identifier for this migration is "{0}"\n'
+          u'The database will be "{1}"'.format(
+          identifier, args.write and args.newdb or (args.write and target_db or 'left alone')))
     migrate(source_db, target_db, relation, mapping_names,
             excluded, target_dir=tempdir, write=args.write,
             new_db=args.newdb, drop_fk=args.dropfk)
@@ -136,17 +142,9 @@ def migrate(source_db, target_db, source_tables, mapping_names,
               u' as we are dropping the constraints')
     source_tables, m2m_tables = add_related_tables(source_connection, source_tables,
                                                    excluded, show_log=not drop_fk)
-    source_tables.sort()
-    col_width = max([len(tbl) for tbl in source_tables]) + 3
-    max_cols = 80 / col_width
-    split_tables = []
-    offset = 0
-    while offset < len(source_tables):
-        split_tables.append(
-            ''.join([tbl.ljust(col_width) for tbl in source_tables[offset:offset+max_cols]]))
-        offset += max_cols
 
-    print(u'The real list of tables to export is:\n%s' % '\n'.join(split_tables))
+
+    print(u'The real list of tables to export is:\n%s' % '\n'.join(make_a_nice_list(source_tables)))
 
     # construct the mapping and the csv processor
     print('Exporting tables as CSV files...')
@@ -158,7 +156,7 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     mapping = Mapping(target_modules, mapping_names, drop_fk=drop_fk)
     processor = CSVProcessor(mapping)
     target_tables = processor.get_target_columns(filepaths).keys()
-    print(u'The real list of tables to import is: %s' % ', '.join(target_tables))
+    print(u'The real list of tables to import is:\n%s' % '\n'.join(make_a_nice_list(target_tables)))
     processor.mapping.update_last_id(source_tables, source_connection,
                                      target_tables, target_connection)
 
@@ -235,3 +233,17 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     rate = lines / seconds
     print(u'Migrated %s lines in %s seconds (%s lines/s)'
           % (processor.lines, int(seconds), int(rate)))
+
+
+def make_a_nice_list(l, cols=140):
+    l = l[:]
+    l.sort()
+    col_width = max([len(elem) for elem in l]) + 1
+    max_cols = cols / col_width
+    nice_list = []
+    offset = 0
+    while offset < len(l):
+        nice_list.append(
+            ''.join([elem.ljust(col_width) for elem in l[offset:offset+max_cols]]))
+        offset += max_cols
+    return nice_list
