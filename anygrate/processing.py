@@ -2,6 +2,7 @@ import csv
 import logging
 import os
 from os.path import basename, join, splitext
+from .sql_commands import upsert, setup_temp_table
 
 HERE = os.path.dirname(__file__)
 logging.basicConfig(level=logging.DEBUG)
@@ -29,18 +30,20 @@ class CSVProcessor(object):
         self.is_moved = set()
         self.existing_records = {}
         self.existing_records_without_id = {}
+        self.filtered_columns = {}
 
     def get_target_columns(self, filepaths):
         """ Compute target columns with source columns + mapping
         """
         if self.target_columns:
             return self.target_columns
+        get_targets = self.mapping.get_targets
         for filepath in filepaths:
             source_table = basename(filepath).rsplit('.', 1)[0]
             with open(filepath) as f:
                 source_columns = csv.reader(f).next()
             for source_column in source_columns + ['_']:
-                mapping = self.mapping.get_targets('%s.%s' % (source_table, source_column))
+                mapping = get_targets('%s.%s' % (source_table, source_column))
                 # no mapping found, we warn the user
                 if mapping is None:
                     origin = source_table + '.' + source_column
@@ -198,6 +201,7 @@ class CSVProcessor(object):
         Because the processing order is not determined (unordered dicts)
         """
         source_table = basename(source_filepath).rsplit('.', 1)[0]
+        get_targets = self.mapping.get_targets
         with open(source_filepath, 'rb') as source_csv:
             reader = csv.DictReader(source_csv, delimiter=',')
             # process each csv line
@@ -207,7 +211,7 @@ class CSVProcessor(object):
                 # process each column (also handle '_' as a possible new column)
                 source_row.update({'_': None})
                 for source_column in source_row:
-                    mapping = self.mapping.get_targets(source_table + '.' + source_column)
+                    mapping = get_targets(source_table + '.' + source_column)
                     if mapping is None:
                         continue
                     # we found a mapping, use it
@@ -240,10 +244,15 @@ class CSVProcessor(object):
                         else:
                             # mapping is supposed to be a function
                             result = function(self, source_row, target_rows)
+                            if result == '__forget_row__':
+                                target_rows[target_table]['__forget_row__'] = True
                             target_rows[target_table][target_column] = result
 
                 # offset all ids except existing data and choose to write now or update later
+                # forget any rows that are being filtered
                 for table, target_row in target_rows.items():
+                    if '__forget_row__' in target_row:
+                        continue
                     if not any(target_row.values()):
                         continue
                     discriminators = self.mapping.discriminators.get(table)
@@ -315,6 +324,7 @@ class CSVProcessor(object):
         with open(target_filepath, 'rb') as target_csv:
             reader = csv.DictReader(target_csv, delimiter=',')
             for target_row in reader:
+                filtered = False
                 postprocessed_row = {}
                 # fix the foreign keys of the line
                 for key, value in target_row.items():
@@ -345,34 +355,42 @@ class CSVProcessor(object):
                 existing_without_id = self.existing_records_without_id.get(table, [])
                 discriminator_values = {d: str(postprocessed_row[d])
                                         for d in (discriminators or [])}
-                if 'id' in postprocessed_row or discriminator_values not in existing_without_id:
+                if ('id' in postprocessed_row or
+                        discriminator_values not in existing_without_id):
                     self.writers[table].writerow(postprocessed_row)
 
     def update_one(self, filepath, connection):
         """ Apply updates in the target db with update file
         """
-        table = basename(filepath).rsplit('.', 2)[0]
+        orig_table = basename(filepath).rsplit('.', 2)[0]
+        temp_table = "{0}_temp".format(orig_table)
         has_data = False
+        cursor = connection.cursor()
+
         with open(filepath, 'rb') as update_csv:
-            cursor = connection.cursor()
             reader = csv.DictReader(update_csv, delimiter=',')
-            for update_row in reader:
+            for x in reader: # lame way to check if it has lines - Note: try while reader:
                 has_data = True
-                items = [(k, v) for k, v in update_row.iteritems() if v != '']
-                columns = ', '.join([i[0] for i in items])
-                values = ', '.join(['%s' for i in items])
-                args = [i[1] for i in items] + [update_row['id']]
-                try:
-                    cursor.execute('UPDATE %s SET (%s)=(%s) WHERE id=%s'
-                                   % (table, columns, values, '%s'), tuple(args))
-                    cursor.execute('SAVEPOINT savepoint')
-                except Exception, e:
-                    LOG.warn('Error updating table %s:\n%s', table, e.message)
-                    cursor = connection.cursor()
-                    cursor.execute('ROLLBACK TO savepoint')
-                    cursor.close()
-                    break
-            if has_data:
-                LOG.info(u'Successfully updated table %s', table)
-            else:
-                LOG.info(u'Nothing to update in table %s', table)
+                update_csv.seek(0)
+                pkey = setup_temp_table(cursor, temp_table, orig_table)
+                if not pkey:
+                    LOG.error(u'Can\'t import data without primary key')
+                    has_data = False
+                else:
+                    # LOG.info(u'Temp table for %s successfully created', orig_table)
+                    columns = ','.join(["{0}=COALESCE({2}.{0}, {1}.{0})".format(c, orig_table, temp_table)
+                                        for c in csv.reader(update_csv).next() if c != pkey])
+                break
+        if has_data:
+            try:
+                error_code = upsert(filepath, connection, temp_table, orig_table, columns, pkey)
+                if error_code[0]:
+                    raise Exception
+                LOG.info(u'Successfully updated table %s', orig_table)
+            except Exception, e:
+                LOG.warn('Error updating table %s:\n%s', temp_table, e.message)
+                cursor = connection.cursor()
+                cursor.execute('ROLLBACK TO savepoint')
+                cursor.close()
+        else:
+            LOG.info(u'Nothing to update in table %s', orig_table)
