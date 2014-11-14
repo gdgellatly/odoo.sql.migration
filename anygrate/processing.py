@@ -37,12 +37,13 @@ class CSVProcessor(object):
         """
         if self.target_columns:
             return self.target_columns
+        get_targets = self.mapping.get_targets
         for filepath in filepaths:
             source_table = basename(filepath).rsplit('.', 1)[0]
             with open(filepath) as f:
                 source_columns = csv.reader(f).next()
             for source_column in source_columns + ['_']:
-                mapping = self.mapping.get_targets('%s.%s' % (source_table, source_column))
+                mapping = get_targets('%s.%s' % (source_table, source_column))
                 # no mapping found, we warn the user
                 if mapping is None:
                     origin = source_table + '.' + source_column
@@ -200,6 +201,7 @@ class CSVProcessor(object):
         Because the processing order is not determined (unordered dicts)
         """
         source_table = basename(source_filepath).rsplit('.', 1)[0]
+        get_targets = self.mapping.get_targets
         with open(source_filepath, 'rb') as source_csv:
             reader = csv.DictReader(source_csv, delimiter=',')
             # process each csv line
@@ -209,7 +211,7 @@ class CSVProcessor(object):
                 # process each column (also handle '_' as a possible new column)
                 source_row.update({'_': None})
                 for source_column in source_row:
-                    mapping = self.mapping.get_targets(source_table + '.' + source_column)
+                    mapping = get_targets(source_table + '.' + source_column)
                     if mapping is None:
                         continue
                     # we found a mapping, use it
