@@ -219,17 +219,14 @@ def migrate(source_db, target_db, source_tables, mapping_names,
         s_mgmt_connection = get_management_connection(db=source_db)
         with s_mgmt_connection.cursor() as s:
             kill_db_connections(s, target_db)
-        if new_db and not write:
-            kill_db_connections(s, target_db)
-            s.execute('DROP DATABASE IF EXISTS {0};'.format(target_db))
-            print(u'Target Database dropped')
-        elif drop_fk:
-            print(u'Restoring Foreign Key Constraints')
-            t_mgmt_connection = get_management_connection(db=target_db)
-            with t_mgmt_connection.cursor() as t:
-                t.execute(drop_fk)
-            t_mgmt_connection.close()
-        s_mgmt_connection.close()
+            if new_db and not write:
+                s.execute('DROP DATABASE IF EXISTS {0};'.format(target_db))
+                print(u'Target Database dropped')
+            elif drop_fk:
+                print(u'Restoring Foreign Key Constraints')
+                t_mgmt_connection = get_management_connection(db=target_db)
+                with t_mgmt_connection.cursor() as t:
+                    t.execute(drop_fk)
 
     seconds = time.time() - start_time
     lines = processor.lines
