@@ -37,6 +37,7 @@ class Mapping(object):
                 continue
             elif full_mapping[module] == '__nothing_to_do__':
                 del full_mapping[module]
+                continue
             for source_column, target_columns in full_mapping[module].items():
             #here we are going over entire dictionary for module, by module, can't we just merge to table dict now
                 if '__' in source_column:
