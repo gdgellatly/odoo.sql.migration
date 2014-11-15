@@ -8,7 +8,7 @@ from ConfigParser import SafeConfigParser
 
 from tempfile import mkdtemp
 from .exporting import export_to_csv, extract_existing
-from .importing import process_target_table
+from .importing import import_from_csv
 from .mapping import Mapping
 from .processing import CSVProcessor
 from .depending import add_related_tables
@@ -23,16 +23,8 @@ logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(basename(__file__))
 
 from collections import namedtuple
-import multiprocessing as mp
-from multiprocessing import Pool
 
-cpu_count = mp.cpu_count() - 2
-
-class Table(namedtuple('table columns tmp_dir')):
-
-
-
-Path = namedtuple('Path', 'model target update target_db suffix')
+Path = ('Path', 'model', )
 
 def main():
     """ Main console script
@@ -172,12 +164,12 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     source_tables, m2m_tables = add_related_tables(source_connection, source_tables,
                                                    excluded, show_log=not drop_fk)
 
-    source_connection.close()
+
     print(u'The real list of tables to export is:\n%s' % '\n'.join(make_a_nice_list(source_tables)))
 
     # construct the mapping and the csv processor
     print('Exporting tables as CSV files...')
-    filepaths = export_to_csv(source_tables, target_dir, source_db)
+    filepaths = export_to_csv(source_tables, target_dir, source_connection)
     for i, mapping_name in enumerate(mapping_names):
         if not exists(mapping_name):
             mapping_names[i] = join(HERE, 'mappings', mapping_name)
@@ -218,10 +210,7 @@ def migrate(source_db, target_db, source_tables, mapping_names,
 
     # import data in the target
     print(u'Trying to import data in the target database...')
-    #we need to combine this part into a multiprocess, one for each table
-    p = Pool(cpu_count)
-    p.map(processor.process_target_table, [(Path(tbl, target, update target_db) target_db) for t in target_tables])
-        p.map(import_from_csv, [(join(target_dir, '%s.target2.csv' % t) for t in target_tables]
+    target_files = [join(target_dir, '%s.target2.csv' % t) for t in target_tables]
     remaining = import_from_csv(target_files, target_connection, drop_fk=drop_fk)
     if remaining:
         print(u'Please improve the mapping by inspecting the errors above')
