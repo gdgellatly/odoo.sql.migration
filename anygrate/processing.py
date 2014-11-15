@@ -1,7 +1,10 @@
 import csv
 import logging
 import os
+import shutil
 from os.path import basename, join, splitext
+from collections import namedtuple
+
 from .sql_commands import upsert, setup_temp_table
 
 HERE = os.path.dirname(__file__)
@@ -11,6 +14,7 @@ LOG = logging.getLogger(basename(__file__))
 # increase the maximum csv field size. Hardcode it for the time being
 # See https://bitbucket.org/anybox/anybox.migration.openerp/issue/2/
 csv.field_size_limit(20971520)
+
 
 
 class CSVProcessor(object):
@@ -37,13 +41,13 @@ class CSVProcessor(object):
         """
         if self.target_columns:
             return self.target_columns
-        get_targets = self.mapping.get_targets
+        get_targets = self.mapping.get_target_column
         for filepath in filepaths:
             source_table = basename(filepath).rsplit('.', 1)[0]
             with open(filepath) as f:
                 source_columns = csv.reader(f).next()
             for source_column in source_columns + ['_']:
-                mapping = get_targets('%s.%s' % (source_table, source_column))
+                mapping = get_targets(source_table, source_column)
                 # no mapping found, we warn the user
                 if mapping is None:
                     origin = source_table + '.' + source_column
@@ -102,7 +106,7 @@ class CSVProcessor(object):
         return ordered_tables
 
     def process(self, source_dir, source_filenames, target_dir,
-                target_connection=None):
+                target_connection=None, del_csv=False):
         """ The main processing method
         """
         # compute the target columns
@@ -148,11 +152,15 @@ class CSVProcessor(object):
         ordered_paths = [join(source_dir, table + '.csv') for table in ordered_tables]
         for source_filepath in ordered_paths:
             self.process_one(source_filepath, target_connection)
+
+        #Delete Files to free up RAM on tmpfs
+        if del_csv:
+            try:
+                map(os.remove, ordered_paths)
+            except os.error:
+                LOG.warning(u"Couldn't remove CSV Files")
         # close files
-        for target_file in target_files.values():
-            target_file.close()
-        for update_file in update_files.values():
-            update_file.close()
+        [f.close() for f in target_files.values() + update_files.values()]
 
         # POSTPROCESS target filenames and files
         target2_filenames = {
@@ -171,8 +179,15 @@ class CSVProcessor(object):
         for filename in target_filenames.values():
             filepath = join(target_dir, filename)
             self.postprocess_one(filepath)
-        for f in target2_files.values():
-            f.close()
+
+        # Delete files to free up RAM on tmpfs
+        if del_csv:
+            try:
+                map(os.remove, target_filenames.values())
+            except os.error:
+                LOG.warning(u"Couldn't remove target CSV Files")
+
+        [f.close() for f in target2_files.values()]
 
         # POSTPROCESS update filenames and files
         update2_filenames = {
@@ -201,7 +216,7 @@ class CSVProcessor(object):
         Because the processing order is not determined (unordered dicts)
         """
         source_table = basename(source_filepath).rsplit('.', 1)[0]
-        get_targets = self.mapping.get_targets
+        get_targets = self.mapping.get_target_column
         with open(source_filepath, 'rb') as source_csv:
             reader = csv.DictReader(source_csv, delimiter=',')
             # process each csv line
@@ -211,7 +226,7 @@ class CSVProcessor(object):
                 # process each column (also handle '_' as a possible new column)
                 source_row.update({'_': None})
                 for source_column in source_row:
-                    mapping = get_targets(source_table + '.' + source_column)
+                    mapping = get_targets(source_table, source_column)
                     if mapping is None:
                         continue
                     # we found a mapping, use it
@@ -359,38 +374,37 @@ class CSVProcessor(object):
                         discriminator_values not in existing_without_id):
                     self.writers[table].writerow(postprocessed_row)
 
-    def update_one(self, filepath, connection):
+    @staticmethod
+    def update_all(filepaths, connection, suffix=""):
         """ Apply updates in the target db with update file
         """
-        orig_table = basename(filepath).rsplit('.', 2)[0]
-        temp_table = "{0}_temp".format(orig_table)
-        has_data = False
-        cursor = connection.cursor()
 
-        with open(filepath, 'rb') as update_csv:
-            reader = csv.DictReader(update_csv, delimiter=',')
-            for x in reader: # lame way to check if it has lines - Note: try while reader:
-                has_data = True
-                update_csv.seek(0)
-                pkey = setup_temp_table(cursor, temp_table, orig_table)
-                if not pkey:
-                    LOG.error(u'Can\'t import data without primary key')
-                    has_data = False
-                else:
-                    # LOG.info(u'Temp table for %s successfully created', orig_table)
-                    columns = ','.join(["{0}=COALESCE({2}.{0}, {1}.{0})".format(c, orig_table, temp_table)
-                                        for c in csv.reader(update_csv).next() if c != pkey])
-                break
-        if has_data:
+        to_update = []
+        upd_record = namedtuple('upd_record', 'path, target, suffix, cols, pkey')
+        for filepath in filepaths:
+            target_table = basename(filepath).rsplit('.', 2)[0]
+            temp_table = target_table + suffix
+            with open(filepath, 'rb') as update_csv, connection.cursor() as c:
+                reader = csv.DictReader(update_csv, delimiter=',')
+                for x in reader: # lame way to check if it has lines - Note: try while reader:
+                    update_csv.seek(0)
+                    pkey = setup_temp_table(c, target_table, suffix=suffix)
+                    if not pkey:
+                        LOG.error(u'Can\'t update data without primary key')
+                    else:
+                        columns = ','.join(["{0}=COALESCE({2}.{0}, {1}.{0})".format(col, target_table, temp_table)
+                                         for col in csv.reader(update_csv).next() if col != pkey])
+                        to_update.append(upd_record(filepath, target_table, suffix, columns, pkey))
+                    break
+        if to_update:
             try:
-                error_code = upsert(filepath, connection, temp_table, orig_table, columns, pkey)
-                if error_code[0]:
+                remaining = upsert(to_update, connection)
+                if remaining:
                     raise Exception
-                LOG.info(u'Successfully updated table %s', orig_table)
             except Exception, e:
                 LOG.warn('Error updating table %s:\n%s', temp_table, e.message)
                 cursor = connection.cursor()
                 cursor.execute('ROLLBACK TO savepoint')
                 cursor.close()
         else:
-            LOG.info(u'Nothing to update in table %s', orig_table)
+            LOG.info(u'Nothing to update')

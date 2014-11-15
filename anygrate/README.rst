@@ -59,7 +59,7 @@ fields, given a source table.
 
 Now we can get the target tables from a source table, given a module:
 
-    >>> mapping.get_targets('res_users')
+    >>> mapping.get_target_table('res_users')
     ['res_users', 'res_partner']
 
 Or the source tables from a target table:
@@ -70,17 +70,17 @@ Or the source tables from a target table:
 And the target tables and fields from a source field:
 
     >>> from pprint import pprint
-    >>> pprint(mapping.get_targets('res_users.login'), width=1)
+    >>> pprint(mapping.get_target_column('res_users', 'login'), width=1)
     {'res_partner.name': <function mapping_function at ...,
      'res_users.login': '__copy__',
      'res_users.name': <function mapping_function at ...}
 
 
-    >>> pprint(mapping.get_targets('res_users.address_id'), width=1)
+    >>> pprint(mapping.get_target_column('res_users', 'address_id'), width=1)
     {'res_partner.id': <function mapping_function at ...}
 
     >>> mapping = Mapping(['base', 'mail'], test_file)
-    >>> pprint(mapping.get_targets('res_users.login'), width=1)
+    >>> pprint(mapping.get_target_column('res_users', 'login'), width=1)
     {'mail_alias.alias': <function mapping_function at ...,
      'res_partner.name': <function mapping_function at ...,
      'res_users.login': '__copy__',
@@ -90,18 +90,18 @@ And the target tables and fields from a source field:
 
 This means the 'name' column is unchanged:
 
-    >>> mapping.get_targets('res_partner.name')
+    >>> mapping.get_target_column('res_partner', 'name')
     {'res_partner.name': '__copy__'}
 
 this means: the 'date' column is just renamed to login_date, and data is just copied:
 
-    >>> mapping.get_targets('res_partner.date')
+    >>> mapping.get_target_column('res_partner', 'date')
     {'res_partner.login_date': '__copy__'}
 
 We can add a target column without specifying a source column:
 
-    >>> mapping.get_targets('res_partner._')
-    >>> mapping.get_targets('res_users._')
+    >>> mapping.get_target_column('res_partner', '_')
+    >>> mapping.get_target_column('res_users', '_')
     {'res_users.foobar': <function mapping_function at ...>}
 
 
@@ -109,17 +109,17 @@ We can use wildcards in the mappings to avoid filling every column:
 
     >>> wildcard = Mapping(['base'], join(testdir, 'wildcard.yml'))
     >>> partial_wildcard = Mapping(['base'], join(testdir, 'partial_wildcard.yml'))
-    >>> wildcard.get_targets('foo.bar')
+    >>> wildcard.get_target_column('foo', 'bar')
     {'foo.bar': None}
-    >>> partial_wildcard.get_targets('res_users.password')
+    >>> partial_wildcard.get_target_column('res_users', 'password')
     {'res_users.password': <function mapping_function at ...>}
-    >>> partial_wildcard.get_targets('res_users.plop')
+    >>> partial_wildcard.get_target_column('res_users', 'plop')
     {'res_users.plop': None}
-    >>> partial_wildcard.get_targets('res_partner_address.plop')
+    >>> partial_wildcard.get_target_column('res_partner_address', 'plop')
     {'res_partner.plop': None}
-    >>> partial_wildcard.get_targets('res_partner_address.name')
+    >>> partial_wildcard.get_target_column('res_partner_address', 'name')
     {'res_partner.name': <function mapping_function at ...>}
-    >>> partial_wildcard.get_targets('res_partner_address.street2')
+    >>> partial_wildcard.get_target_column('res_partner_address', 'street2')
     {}
 
 Discriminator mapping

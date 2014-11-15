@@ -83,9 +83,9 @@ SELECT
     return add_command
 
 
-def setup_temp_table(cursor, temp_table, orig_table):
-    if validate_identifiers(temp_table + orig_table):
-        create_command = "CREATE TEMP TABLE {0} AS SELECT * FROM {1} LIMIT 0".format(temp_table, orig_table)
+def setup_temp_table(cursor, target_table, suffix=""):
+    if validate_identifiers(target_table):
+        create_command = "CREATE TEMP TABLE {0}{1} AS SELECT * FROM {0} LIMIT 0".format(target_table, suffix)
         cursor.execute(create_command)
         # We need to find the primary key using accepted postgres method
         cursor.execute('''
@@ -100,11 +100,11 @@ WHERE
   pg_class.relnamespace = pg_namespace.oid AND
   pg_attribute.attrelid = pg_class.oid AND
   pg_attribute.attnum = any(pg_index.indkey)
- AND indisprimary;''', (orig_table,))
+ AND indisprimary;''', (target_table,))
         pkey = cursor.fetchone()
         if pkey:
             pkey = pkey[0]
-            idx_command = "CREATE INDEX {0}_id_idx ON {0}({1});".format(temp_table, pkey)
+            idx_command = "CREATE INDEX {0}_id_idx ON {0}({1});".format(target_table, pkey)
             cursor.execute(idx_command)
         else:
             pkey = None
@@ -131,24 +131,24 @@ def validate_identifiers(name, log_error=True):
 
 
 def make_savepoint(c, name='savepoint'):
-    if validate_identifiers(name):
-        #commented as when it fails it still blows up
-        # try:
-        #     c.execute('RELEASE SAVEPOINT savepoint')
-        # except Exception, e:
-        #     LOG.debug("%s", e.message)
-        # finally:
-        c.execute('SAVEPOINT {0}'.format(name))
+    validate_identifiers(name) and c.execute('SAVEPOINT {0}'.format(name))
+    return
 
 
-def upsert(filepath, connection, temp_table, orig_table, columns, pkey):
-    from .importing import csv_file_importer
-    error_code = (4, "Upsert")
-    if all([validate_identifiers(x) for x in [temp_table, orig_table]]):
-        error_code = csv_file_importer(filepath, connection, table=temp_table)
-        update_command = "UPDATE {1} SET {2} FROM {0} WHERE {1}.{3}={0}.{3}".format(
-            temp_table, orig_table, columns, pkey)
+def upsert(update_list, connection):
+    """
+
+    :param update_list: namedtuple consisting of path, target, suffix, cols, pkey
+    :param connection:
+    """
+    assert all([validate_identifiers(u.target) for u in update_list])
+    from .importing import import_from_csv
+
+    remaining = import_from_csv([u.path for u in update_list], connection, drop_fk=True, suffix=update_list[0].suffix)
+    if remaining:
         with connection.cursor() as c:
-            c.execute(update_command)
+            update_cmd = ";\n".join(["UPDATE {1} SET {3} FROM {1}{2} WHERE {1}.{3}={1}{2}.{3}".format(
+                x) for x in update_list])
+            c.execute(update_cmd)
             make_savepoint(c)
-    return error_code
+    return
