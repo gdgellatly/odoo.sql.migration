@@ -1,6 +1,7 @@
 from os.path import basename, exists
 from os import rename
 import csv
+import psycopg2
 
 from .sql_commands import make_savepoint
 
@@ -48,6 +49,11 @@ def __run_slow_import(filepaths, connection, suffix=''):
                 rename(update_file, update_file + '.disabled')
             break
     return remaining
+
+
+def process_target_table((table, target_db, drop_fk)):
+    connection = psycopg2.connect(database=target_db)
+    __run_fast_import()
 
 
 def __run_fast_import(filepaths, connection, suffix=""):

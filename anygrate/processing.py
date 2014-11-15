@@ -4,6 +4,7 @@ import os
 import shutil
 from os.path import basename, join, splitext
 from collections import namedtuple
+import psycopg2
 
 from .sql_commands import upsert, setup_temp_table
 
@@ -339,7 +340,6 @@ class CSVProcessor(object):
         with open(target_filepath, 'rb') as target_csv:
             reader = csv.DictReader(target_csv, delimiter=',')
             for target_row in reader:
-                filtered = False
                 postprocessed_row = {}
                 # fix the foreign keys of the line
                 for key, value in target_row.items():
@@ -374,7 +374,9 @@ class CSVProcessor(object):
                         discriminator_values not in existing_without_id):
                     self.writers[table].writerow(postprocessed_row)
 
-    @staticmethod
+
+
+        @staticmethod
     def update_all(filepaths, connection, suffix=""):
         """ Apply updates in the target db with update file
         """
