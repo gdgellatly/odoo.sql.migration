@@ -25,7 +25,7 @@ def __run_slow_import(filepaths, connection, suffix=''):
                 try:
                     columns = ','.join(['"%s"' % col for col in csv.reader(f).next()])
                     f.seek(0)
-                    copy = ("COPY %s (%s) FROM STDOUT WITH CSV HEADER NULL ''"
+                    copy = ("""COPY "%s" (%s) FROM STDOUT WITH CSV HEADER NULL ''"""
                             % (table, columns))
                     c.copy_expert(copy, f)
                     make_savepoint(c)

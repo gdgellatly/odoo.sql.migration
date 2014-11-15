@@ -13,7 +13,7 @@ def export_to_csv(tables, dest_dir, connection):
     for table in tables:
         filename = join(dest_dir, table + '.csv')
         with connection.cursor() as cursor, open(filename, 'w') as f:
-            cursor.copy_expert("COPY %s TO STDOUT WITH CSV HEADER NULL ''" % table, f)
+            cursor.copy_expert("""COPY "%s" TO STDOUT WITH CSV HEADER NULL ''""" % table, f)
             csv_filenames.append(filename)
     return csv_filenames
 
