@@ -35,6 +35,8 @@ class Mapping(object):
             if module not in full_mapping: # skip modules not in YAML files
                 LOG.warn('Mapping is not complete: module "%s" is missing!', module)
                 continue
+            elif full_mapping[module] == '__nothing_to_do__':
+                del full_mapping[module]
             for source_column, target_columns in full_mapping[module].items():
             #here we are going over entire dictionary for module, by module, can't we just merge to table dict now
                 if '__' in source_column:
