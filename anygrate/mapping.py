@@ -19,9 +19,12 @@ class Mapping(object):
     def __init__(self, modules, filenames, drop_fk=False):
         """ Open the file and compute the mapping
         """
+        self.target_tables = []
         self.fk2update = {}
-        full_mapping = {}
+        full_mapping = {} # ends up as {'module': {'table': {'column': v}}}
         # load the full mapping file
+        if isinstance(filenames, str):
+            filenames = [filenames]
         for filename in filenames:
             with open(filename) as stream:
                 full_mapping.update(yaml.load(stream))
@@ -29,14 +32,15 @@ class Mapping(object):
         self.mapping = {}
         self.deferred = {}
         for module in modules:
-            if module not in full_mapping:
+            if module not in full_mapping: # skip modules not in YAML files
                 LOG.warn('Mapping is not complete: module "%s" is missing!', module)
                 continue
             for source_column, target_columns in full_mapping[module].items():
+            #here we are going over entire dictionary for module, by module, can't we just merge to table dict now
                 if '__' in source_column:
                     # skip special markers
                     continue
-                if (target_columns in ('__forget__', False)
+                if (target_columns in ('__forget__', False) #if it needs forgetting
                         or self.mapping.get(source_column) == '__forget__'):
                     self.mapping[source_column] = '__forget__'
                     continue
@@ -116,33 +120,40 @@ class Mapping(object):
             cursor.execute(sql, args)
             return cursor.fetchall() if 'select ' in sql.lower() else ()
 
-    def get_targets(self, source):
+    def get_target_column(self, source, column):
         """ Return the target mapping for a column or table
         """
-        if '.' in source:  # asked for a column
-            table, column = source.split('.')
-            mapping = self.mapping.get(source, None)
-            # not found? We look for wildcards
-            if mapping is None:
-                # wildcard, we match the source
-                if '.*' in self.mapping:
-                    return {source: None}
-                # partial wildcard, we match only for the table
-                partial_pattern = '%s.*' % table
-                if partial_pattern in self.mapping:
-                    if self.mapping[partial_pattern]:
-                        return {k.replace('*', column): v
-                                for k, v in self.mapping[partial_pattern].items()}
-                    return {source: None}
-            return mapping
+        # Refactor as never called without column
+        tbl_col = source + '.' + column
+        mapping = self.mapping.get(tbl_col, None)
+        # not found? We look for wildcards
+        if mapping is None:
+            # wildcard, we match the source
 
-        else:  # asked for a table
-            self.target_tables = set()
-            target_fields = [t[1] for t in self.mapping.items() if t[0].split('.')[0] == source]
-            for f in target_fields:
-                self.target_tables.update([c.split('.')[0] for c in f.keys()])
-            self.target_tables = list(self.target_tables)
-            return self.target_tables
+            # partial wildcard, we match only for the table
+            partial_pattern = '%s.*' % source
+            if partial_pattern in self.mapping:
+                if self.mapping[partial_pattern]:
+                    return {k.replace('*', column): v
+                            for k, v in self.mapping[partial_pattern].items()}
+                return {tbl_col: None}
+            elif '.*' in self.mapping:
+                return {tbl_col: None}
+        return mapping
+
+    def get_target_table(self, source):
+        """
+        Not currently used anywhere but left in case
+        Seems a bad use of class
+        :param source:
+        :return:
+        """
+        target_tables = set()
+        target_fields = [t[1] for t in self.mapping.items() if t[0].split('.')[0] == source]
+        for f in target_fields:
+            target_tables.update([c.split('.')[0] for c in f.keys()])
+        self.target_tables = list(target_tables)
+        return self.target_tables
 
     def get_sources(self, target):
         """ Return the source tables given a target table

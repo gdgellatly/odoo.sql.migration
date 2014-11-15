@@ -4,6 +4,8 @@ import psycopg2
 
 import shutil
 import argparse
+from ConfigParser import SafeConfigParser
+
 from tempfile import mkdtemp
 from .exporting import export_to_csv, extract_existing
 from .importing import import_from_csv
@@ -20,11 +22,22 @@ HERE = dirname(__file__)
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(basename(__file__))
 
+from collections import namedtuple
+
+Path = ('Path', 'model', )
 
 def main():
     """ Main console script
     """
     parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config',
+                        default='.last.cfg',
+                        help=u'List of mapping files. '
+                        'If not found in the specified path, '
+                        'each file is searched in the "mappings" dir of this tool. '
+                        'Example: openerp6.1-openerp7.0.yml custom.yml',
+                        nargs='+'
+                        )
     parser.add_argument('-l', '--list',
                         action='store_true',
                         default=False,
@@ -70,10 +83,11 @@ def main():
                              u' Auto creates new database if -n not specified')
     parser.add_argument('--tmpfs',
                         action='store_true', default=False,
-                        help=u' Uses tmpfs for csv\'s (requires passwordless sudo')
+                        help=u' Uses tmpfs for csv\'s (Ubuntu / RHEL and variants')
 
 
     args = parser.parse_args()
+
     source_db, target_db, relation = args.source, args.target, args.relation
     mapping_names = args.path if type(args.path) is list else [args.path]
     excluded = args.excluded or [] + [
@@ -87,7 +101,12 @@ def main():
         print(u'Please provide at least -s, -t and -r options')
         sys.exit(1)
 
-    if args.keepcsv:
+    if args.tmpfs:
+        print(u'To preserve memory CSV files will be removed during processing')
+        if args.keepcsv:
+            print(u"Specifying --keepcsv doesn't work with --tmpfs")
+            args.keepcsv = False
+    elif args.keepcsv:
         print(u"Writing CSV files in the current dir")
 
     identifier = str(int(time.time()))[-4:]
@@ -101,11 +120,10 @@ def main():
               u'is only valid with the -n flag')
         sys.exit(1)
 
+    temppath = abspath(args.tmpfs and '/dev/shm' or '.')
     tempdir = mkdtemp(prefix=source_db + '_' + identifier + '_',
-                      dir=abspath('.'))
-    if args.tmpfs:
-        import subprocess
-        subprocess.call(['sudo /bin/mount -t tmpfs -o size=6G tmpfs {0}'.format(tempdir)], shell=True)
+                      dir=temppath)
+
     identifier = basename(normpath(tempdir))
     if args.quick and not args.newdb:
         args.newdb = identifier.lower()
@@ -114,7 +132,7 @@ def main():
           identifier, args.write and args.newdb or (args.write and target_db or 'left alone')))
     migrate(source_db, target_db, relation, mapping_names,
             excluded, target_dir=tempdir, write=args.write,
-            new_db=args.newdb, drop_fk=args.dropfk)
+            new_db=args.newdb, drop_fk=args.dropfk, del_csv=args.tmpfs)
     print(u'The identifier for this migration is "{0}"'.format(identifier))
     if not args.keepcsv:
         shutil.rmtree(tempdir)
@@ -122,7 +140,7 @@ def main():
 
 def migrate(source_db, target_db, source_tables, mapping_names,
             excluded=None, target_dir=None, write=False,
-            new_db=False, drop_fk=False):
+            new_db=False, drop_fk=False, del_csv=False):
     """ The main migration function
     """
     start_time = time.time()
@@ -176,7 +194,7 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     # create migrated csv files from exported csv files
     print(u'Migrating CSV files...')
     processor.set_existing_data(existing_records)
-    processor.process(target_dir, filepaths, target_dir, target_connection)
+    processor.process(target_dir, filepaths, target_dir, target_connection, del_csv=del_csv)
     # drop foreign key constraints
     if drop_fk:
         print(u'Dropping Foreign Key Constraints in target tables')
@@ -185,25 +203,29 @@ def migrate(source_db, target_db, source_tables, mapping_names,
         with mgmt_connection.cursor() as m:
             kill_db_connections(m, target_db)
         mgmt_connection.close()
-        drop_fk = drop_constraints(db=target_db, tables=target_tables)
+        add_constraints_sql = drop_constraints(db=target_db, tables=target_tables)
+        if not add_constraints_sql:
+            drop_fk = False
         target_connection = psycopg2.connect("dbname=%s" % target_db)
 
     # import data in the target
     print(u'Trying to import data in the target database...')
     target_files = [join(target_dir, '%s.target2.csv' % t) for t in target_tables]
-    remaining = import_from_csv(target_files, target_connection)
+    remaining = import_from_csv(target_files, target_connection, drop_fk=drop_fk)
     if remaining:
         print(u'Please improve the mapping by inspecting the errors above')
         sys.exit(1)
 
     # execute deferred updates for preexisting data
     print(u'Updating pre-existing data...')
+    filepaths = []
     for table in target_tables:
         filepath = join(target_dir, table + '.update2.csv')
-        if not exists(filepath):
+        if exists(filepath):
+            filepaths.append(filepath)
+        else:
             LOG.warn(u'Not updating %s as it was not imported', table)
-            continue
-        processor.update_one(filepath, target_connection)
+    processor.update_all(filepaths, target_connection, suffix="_temp")
 
     if write:
         target_connection.commit()
@@ -226,7 +248,7 @@ def migrate(source_db, target_db, source_tables, mapping_names,
                 print(u'Restoring Foreign Key Constraints')
                 t_mgmt_connection = get_management_connection(db=target_db)
                 with t_mgmt_connection.cursor() as t:
-                    t.execute(drop_fk)
+                    t.execute(add_constraints_sql)
 
     seconds = time.time() - start_time
     lines = processor.lines
@@ -235,7 +257,7 @@ def migrate(source_db, target_db, source_tables, mapping_names,
           % (processor.lines, int(seconds), int(rate)))
 
 
-def make_a_nice_list(l, cols=140):
+def make_a_nice_list(l, cols=100):
     l = l[:]
     l.sort()
     col_width = max([len(elem) for elem in l]) + 1
