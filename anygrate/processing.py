@@ -339,7 +339,6 @@ class CSVProcessor(object):
         with open(target_filepath, 'rb') as target_csv:
             reader = csv.DictReader(target_csv, delimiter=',')
             for target_row in reader:
-                filtered = False
                 postprocessed_row = {}
                 # fix the foreign keys of the line
                 for key, value in target_row.items():
@@ -359,14 +358,14 @@ class CSVProcessor(object):
                         postprocessed_row[key] = self.fk_mapping[table].get(value, value)
                     if value and target_record in self.ref_mapping:  # manage __ref__
                         # first find the target table of the reference
-                        value = int(value)
                         ref_column = self.ref_mapping[target_record]
-                        if ref_column == key: # like ir_values
+                        if ref_column == key: # like ir_property
                             ref_table, fk_value = value.split(',')
                             ref_table = ref_table.replace('.', '_')
                             postprocessed_row[key] = value.replace(fk_value, self.fk_mapping.get(ref_table, {}).get(
                                 fk_value, fk_value + self.mapping.last_id))
                         else:
+                            value = int(value)
                             ref_table = target_row[ref_column].replace('.', '_')
                             postprocessed_row[key] = self.fk_mapping.get(ref_table, {}).get(
                                 value, value + self.mapping.last_id)

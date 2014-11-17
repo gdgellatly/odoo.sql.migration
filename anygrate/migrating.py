@@ -210,6 +210,10 @@ def migrate(source_db, target_db, source_tables, mapping_names,
         add_constraints_sql = drop_constraints(db=target_db, tables=target_tables)
         if not add_constraints_sql:
             drop_fk = False
+        else:
+            with open('add_constraints.sql', 'w') as f:
+                f.write(add_constraints_sql)
+
         target_connection = psycopg2.connect("dbname=%s" % target_db)
 
     # import data in the target
@@ -252,7 +256,10 @@ def migrate(source_db, target_db, source_tables, mapping_names,
                 print(u'Restoring Foreign Key Constraints')
                 t_mgmt_connection = get_management_connection(db=target_db)
                 with t_mgmt_connection.cursor() as t:
-                    t.execute(add_constraints_sql)
+                    try:
+                        t.execute(add_constraints_sql)
+                    except Exception, e:
+                        LOG.error('Error Restoring Constraints: A copy has been saved in add_constraints.sql\n%s' % e.message)
 
     seconds = time.time() - start_time
     lines = processor.lines
