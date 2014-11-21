@@ -14,6 +14,7 @@ class Mapping(object):
     last_id = 1
     new_id = 1
     target_connection = None
+    source_connection = None
     fk2update = None
 
     def __init__(self, modules, filenames, drop_fk=False):

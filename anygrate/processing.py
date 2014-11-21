@@ -88,7 +88,7 @@ class CSVProcessor(object):
                 if field in self.fk2update:
                     discriminator_tables.add(self.fk2update[field])
         # remove them from the initial tables
-        tables = [t for t in tables if t not in discriminator_tables]
+        tables = [t for t in tables if t not in list(discriminator_tables) + ['ir_property']]
         # reorder the small set with a very basic algorithm:
         # put at left those without fk discriminator, right others
         ordered_tables = []
@@ -103,6 +103,7 @@ class CSVProcessor(object):
                     ordered_tables.insert(0, table)
         # append the two lists
         ordered_tables += tables
+        ordered_tables.append('ir_property')
         return ordered_tables
 
     def process(self, source_dir, source_filenames, target_dir,
@@ -361,9 +362,11 @@ class CSVProcessor(object):
                         ref_column = self.ref_mapping[target_record]
                         if ref_column == key: # like ir_property
                             ref_table, fk_value = value.split(',')
+                            fk_id = int(fk_value)
                             ref_table = ref_table.replace('.', '_')
-                            postprocessed_row[key] = value.replace(fk_value, self.fk_mapping.get(ref_table, {}).get(
-                                fk_value, fk_value + self.mapping.last_id))
+                            new_fk_id = self.fk_mapping.get(ref_table, {}).get(
+                                fk_id, fk_id + self.mapping.last_id)
+                            postprocessed_row[key] = value.replace(fk_value, str(new_fk_id))
                         else:
                             value = int(value)
                             ref_table = target_row[ref_column].replace('.', '_')
