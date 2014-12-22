@@ -1,6 +1,5 @@
 import sys
 import time
-import psycopg2
 
 import shutil
 import argparse
@@ -13,7 +12,8 @@ from .mapping import Mapping
 from .processing import CSVProcessor
 from .depending import add_related_tables
 from .depending import get_fk_to_update
-from .sql_commands import drop_constraints, get_management_connection, create_new_db, kill_db_connections
+from .sql_commands import drop_constraints, get_management_connection, get_db_connection, create_new_db, kill_db_connections
+
 import logging
 from os.path import basename, join, abspath, dirname, exists, normpath
 from os import listdir
@@ -145,10 +145,10 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     """ The main migration function
     """
     start_time = time.time()
-    source_connection = psycopg2.connect("dbname=%s" % source_db)
+    source_connection = get_db_connection(dsn="dbname=%s" % source_db)
     if new_db:
         target_db = create_new_db(source_db, target_db, new_db)
-    target_connection = psycopg2.connect("dbname=%s" % target_db)
+    target_connection = get_db_connection(dsn="dbname=%s" % target_db)
 
     # Get the list of modules installed in the target db
     with target_connection.cursor() as c:
@@ -186,7 +186,7 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     with open('import.txt', 'w') as f:
         f.write('\n'.join(make_a_nice_list(target_tables)))
     processor.mapping.set_database_ids(source_tables, source_connection,
-                                     target_tables, target_connection)
+                                       target_tables, target_connection)
 
     print('Computing the list of Foreign Keys to update in the target csv files...')
     processor.fk2update = get_fk_to_update(target_connection, target_tables)
@@ -217,7 +217,7 @@ def migrate(source_db, target_db, source_tables, mapping_names,
             with open('add_constraints.sql', 'w') as f:
                 f.write(add_constraints_sql)
 
-        target_connection = psycopg2.connect("dbname=%s" % target_db)
+        target_connection = get_db_connection(dsn="dbname=%s" % target_db)
 
     # import data in the target
     print(u'Trying to import data in the target database...')
@@ -264,7 +264,7 @@ def migrate(source_db, target_db, source_tables, mapping_names,
                     except Exception, e:
                         LOG.error('Error Restoring Constraints: A copy has been saved in add_constraints.sql\n%s' % e.message)
         print(u'Updating next database_ids')
-        target_connection = psycopg2.connect("dbname=%s" % target_db)
+        target_connection = get_db_connection(dsn="dbname=%s" % target_db)
         mapping.update_database_sequences(target_connection)
 
     seconds = time.time() - start_time
