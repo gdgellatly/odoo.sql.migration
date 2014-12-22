@@ -1,8 +1,10 @@
 from os.path import basename, exists
 from os import rename
 import csv
+from multiprocessing import Pool
+from functools import partial
 
-from .sql_commands import make_savepoint
+from .sql_commands import make_savepoint, get_db_connection
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -50,10 +52,9 @@ def __run_slow_import(filepaths, connection, suffix=''):
     return remaining
 
 
-def __run_fast_import(filepaths, connection, suffix=""):
-    LOG.info(u'No Foreign Key constraints so straight import :)')
-    for filepath in sorted(filepaths):
-        table = basename(filepath).rsplit('.', 2)[0] + suffix
+def __run_fast_import(filepath, dsn=None, suffix=""):
+    table = basename(filepath).rsplit('.', 2)[0] + suffix
+    with get_db_connection(dsn=dsn) as connection:
         with open(filepath) as f, connection.cursor() as c:
             columns = ','.join(['"%s"' % col for col in csv.reader(f).next()])
             f.seek(0)
@@ -61,7 +62,6 @@ def __run_fast_import(filepaths, connection, suffix=""):
                     % (table, columns))
             c.copy_expert(copy, f)
         LOG.info(u"SUCCESS importing %s" % table)
-    return []
 
 
 def import_from_csv(filepaths, connection, drop_fk=False, suffix=''):
@@ -71,8 +71,11 @@ def import_from_csv(filepaths, connection, drop_fk=False, suffix=''):
     with connection.cursor() as c:
         make_savepoint(c)
     if drop_fk:
+        LOG.info(u'No Foreign Key constraints so straight import :)')
+        p = Pool(8)  # arbitrary convert to variable
         try:
-            return __run_fast_import(filepaths, connection, suffix=suffix)
+            p.map(partial(__run_fast_import, dsn=connection.dsn, suffix=suffix), sorted(filepaths))
+            return []
         except Exception, e:
             msg = e.message
             LOG.error('Fast Import Error: %s', msg)

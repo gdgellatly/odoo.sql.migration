@@ -5,17 +5,25 @@ from os.path import basename
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(basename(__file__))
 
+from multiprocessing import Pool
+from functools import partial
+
+from .sql_commands import get_db_connection
+
+
+def __export_to_csv(table, dsn=None, dest_dir=None):
+    with get_db_connection(dsn=dsn) as connection:
+        filename = join(dest_dir, table + '.csv')
+        with connection.cursor() as cursor, open(filename, 'w') as f:
+            cursor.copy_expert("""COPY "%s" TO STDOUT WITH CSV HEADER NULL ''""" % table, f)
+    return filename
+
 
 def export_to_csv(tables, dest_dir, connection):
     """ Export data using postgresql COPY
     """
-    csv_filenames = []
-    for table in tables:
-        filename = join(dest_dir, table + '.csv')
-        with connection.cursor() as cursor, open(filename, 'w') as f:
-            cursor.copy_expert("""COPY "%s" TO STDOUT WITH CSV HEADER NULL ''""" % table, f)
-            csv_filenames.append(filename)
-    return csv_filenames
+    p = Pool(8)
+    return p.map(partial(__export_to_csv(dsn=connection.dsn, dest_dir=dest_dir)), tables)
 
 
 def extract_existing(tables, m2m_tables, discriminators, connection):

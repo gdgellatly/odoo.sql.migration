@@ -14,6 +14,10 @@ def get_management_connection(db='postgres'):
     return mgmt_connection
 
 
+def get_db_connection(dsn=None):
+    return psycopg2.connect(dsn=dsn)
+
+
 def kill_db_connections(cursor, datname):
     cursor.execute("""SELECT pg_terminate_backend(pg_stat_activity.pid)
                     FROM pg_stat_activity
