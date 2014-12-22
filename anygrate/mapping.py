@@ -203,7 +203,12 @@ class Mapping(object):
         with target_conn.cursor as t:
             for table in self.max_target_id.iterkeys():
                 try:
-                    t.execute('UPDATE %s_id_seq SET last_value = (SELECT max(id) from %s);' % (table, table))
+                    t.execute("SELECT 1 from pg_class "
+                              "WHERE relname=%s || '_id_seq'", tuple(table,))
+                    res = t.fetchone()
+                    if res and res[0]:
+                        t.execute("UPDATE %s_id_seq SET last_value = "
+                                  "(SELECT max(id) from %s);" % (table, table))
                 except psycopg2.ProgrammingError:
                     target_conn.rollback()
 
