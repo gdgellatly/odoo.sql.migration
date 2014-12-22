@@ -16,7 +16,6 @@ LOG = logging.getLogger(basename(__file__))
 csv.field_size_limit(20971520)
 
 
-
 class CSVProcessor(object):
     """ Take a csv file, process it with the mapping
     and output a new csv file
