@@ -331,7 +331,7 @@ in the ``display_name`` cell of the target ``table1`` and ``table2``. The
 target ``name`` cell will contain a copy of the source ``name`` cell.
 
 If the target line is not supposed to have the same *id* as the source line,
-you can create a new *id* with the ``newid()`` function. This function returns a
+you can create a new *id* with the ``newid(target_table)`` function. This function returns a
 different value at each call and is responsible of incrementing the *id*. Here
 is an example::
 
@@ -341,7 +341,7 @@ is an example::
             res_users.partner_id:
             res_partner.notification_email_send: return 'comment'
             res_partner.id: |
-                i = newid()
+                i = newid('res_partner')
                 target_rows['res_users']['partner_id'] = i
                 target_rows['res_partner']['id'] = i
                 target_rows['res_partner']['name'] = source_row['name']
