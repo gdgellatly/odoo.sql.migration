@@ -91,7 +91,7 @@ base:
         res_users.id:
         res_users.partner_id:
         res_partner.id: |
-            i = newid()
+            i = newid('res_partner')
             target_rows['res_users']['partner_id'] = i
             target_rows['res_partner']['id'] = i
             target_rows['res_partner']['name'] = source_row['name']
@@ -320,7 +320,7 @@ fetchmail:
     res_users._:
         res_users.alias_id: return target_rows['res_users'].get('alias_id')
         mail_alias.id: |
-            i = newid()
+            i = newid('mail_alias')
             target_rows['res_users']['alias_id'] = i
             return i
         mail_alias.alias_model_id: return sql('target', "select id from ir_model where model='res.users'")[0][0]
@@ -532,7 +532,7 @@ project:
     project_project.warn_manager: __forget__
     project_project._:
         mail_alias.id: |
-            i = newid()
+            i = newid('mail_alias')
             target_rows['project_project']['alias_id'] = i
             return i
         mail_alias.alias_model_id: return sql('target', "select id from ir_model where model='project.project'")[0][0]
@@ -642,7 +642,7 @@ crm:
     crm_case_section._:
         crm_case_section.alias_id: return target_rows['crm_case_section'].get('alias_id')
         mail_alias.id: |
-            i = newid()
+            i = newid('mail_alias')
             target_rows['crm_case_section']['alias_id'] = i
             return i
         mail_alias.alias_model_id: return sql('target', "select id from ir_model where model='crm.case.section'")[0][0]
@@ -895,7 +895,7 @@ hr_recruitment:
     hr_job._:
         hr_job.alias_id: return target_rows['hr_job'].get('alias_id')
         mail_alias.id: |
-            i = newid()
+            i = newid('mail_alias')
             target_rows['hr_job']['alias_id'] = i
             return i
         mail_alias.alias_model_id: return sql('target', "select id from ir_model where model='hr.job'")[0][0]

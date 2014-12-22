@@ -11,8 +11,9 @@ class Mapping(object):
     """ Stores the mapping and offers a simple API
     """
 
-    last_id = 1
-    new_id = 1
+    max_target_id = {}
+    max_source_id = {}
+    new_id = {}
     target_connection = None
     source_connection = None
     fk2update = None
@@ -107,12 +108,12 @@ class Mapping(object):
                 for key, value in mapping.items()
                 if '__discriminator__' in key})
 
-    def newid(self):
-        """ increment the global stored last_id
+    def newid(self, target_table):
+        """ increment the global stored new_id for table
         This method is available as a function in the mapping
         """
-        self.new_id += 1
-        return self.new_id
+        self.new_id[target_table] += 1
+        return self.new_id[target_table]
 
     def sql(self, db, sql, args=()):
         """ execute an sql statement in the target db and return the value
@@ -167,8 +168,10 @@ class Mapping(object):
                             if target in [c.split('.')[0]
                                           for c in type(t[1]) is dict and t[1].keys() or ()]}))
 
-    def update_last_id(self, source_tables, source_connection, target_tables, target_connection):
-        """ update the last_id with max of source and target dbs
+    def set_database_ids(self, source_tables, source_connection,
+                       target_tables, target_connection):
+        """ create mapping of the max id with
+        max of source and target dbs
         """
         self.target_connection = target_connection
         self.source_connection = source_connection
@@ -178,7 +181,8 @@ class Mapping(object):
                 try:
                     c.execute('select max(id) from %s' % source_table)
                     maxid = c.fetchone()
-                    self.last_id = max(maxid and maxid[0] or 1, self.last_id)
+                    maxid = maxid and maxid[0]
+                    self.max_source_id[source_table] = maxid or 0
                 except psycopg2.ProgrammingError:
                     # id column does not exist
                     source_connection.rollback()
@@ -188,8 +192,18 @@ class Mapping(object):
                 try:
                     c.execute('select max(id) from %s' % target_table)
                     maxid = c.fetchone()
-                    self.last_id = max(maxid and maxid[0] or 1, self.last_id)
+                    maxid = maxid and maxid[0] or 0
+                    self.max_target_id[target_table] = maxid
+                    self.new_id[target_table] = maxid + self.max_source_id.get(target_table, 0)
                 except psycopg2.ProgrammingError:
                     # id column does not exist
                     target_connection.rollback()
-        self.new_id = 10 * self.last_id  # FIXME 10 is arbitrary but should be enough
+
+    def update_database_sequences(self, target_conn):
+        with target_conn.cursor as t:
+            for table in self.max_target_id.iterkeys():
+                try:
+                    t.execute('UPDATE %s_id_seq SET last_value = (SELECT max(id) from %s);' % (table, table))
+                except psycopg2.ProgrammingError:
+                    target_conn.rollback()
+

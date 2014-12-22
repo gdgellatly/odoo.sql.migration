@@ -166,7 +166,8 @@ def migrate(source_db, target_db, source_tables, mapping_names,
                                                    excluded, show_log=not drop_fk)
 
 
-    print(u'The real list of tables to export is:\n%s' % '\n'.join(make_a_nice_list(source_tables)))
+    print(u'The real list of tables to export is:\n%s' % '\n'.join(
+        make_a_nice_list(source_tables)))
     with open('export.txt', 'w') as f:
         f.write('\n'.join(make_a_nice_list(source_tables)))
 
@@ -180,10 +181,11 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     mapping = Mapping(target_modules, mapping_names, drop_fk=drop_fk)
     processor = CSVProcessor(mapping)
     target_tables = processor.get_target_columns(filepaths).keys()
-    print(u'The real list of tables to import is:\n%s' % '\n'.join(make_a_nice_list(target_tables)))
+    print(u'The real list of tables to import is:\n%s' % '\n'.join(
+        make_a_nice_list(target_tables)))
     with open('import.txt', 'w') as f:
         f.write('\n'.join(make_a_nice_list(target_tables)))
-    processor.mapping.update_last_id(source_tables, source_connection,
+    processor.mapping.set_database_ids(source_tables, source_connection,
                                      target_tables, target_connection)
 
     print('Computing the list of Foreign Keys to update in the target csv files...')
@@ -261,6 +263,9 @@ def migrate(source_db, target_db, source_tables, mapping_names,
                         t.execute(add_constraints_sql)
                     except Exception, e:
                         LOG.error('Error Restoring Constraints: A copy has been saved in add_constraints.sql\n%s' % e.message)
+        print(u'Updating next database_ids')
+        target_connection = psycopg2.connect("dbname=%s" % target_db)
+        mapping.update_database_sequences(target_connection)
 
     seconds = time.time() - start_time
     lines = processor.lines
@@ -269,16 +274,5 @@ def migrate(source_db, target_db, source_tables, mapping_names,
           % (processor.lines, int(seconds), int(rate)))
 
 
-def make_a_nice_list(l, cols=100):
-    # l = l[:]
-    # l.sort()
-    # col_width = max([len(elem) for elem in l]) + 1
-    # max_cols = cols / col_width
-    # nice_list = []
-    # offset = 0
-    # while offset < len(l):
-    #     nice_list.append(
-    #         ''.join([elem.ljust(col_width) for elem in l[offset:offset+max_cols]]))
-    #     offset += max_cols
-    # return nice_list
+def make_a_nice_list(l):
     return sorted(l)
