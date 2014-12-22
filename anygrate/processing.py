@@ -87,12 +87,18 @@ class CSVProcessor(object):
                 field = table + '.' + column
                 if field in self.fk2update:
                     discriminator_tables.add(self.fk2update[field])
+        #special handling to ensure ir.property is last
+        if 'ir_property' in tables:
+            discriminator_tables.add('ir_property')
         # remove them from the initial tables
-        tables = [t for t in tables if t not in list(discriminator_tables) + ['ir_property']]
+        tables = [t for t in tables if t not in discriminator_tables]
         # reorder the small set with a very basic algorithm:
         # put at left those without fk discriminator, right others
         ordered_tables = []
         for table in discriminator_tables:
+            if table == 'ir_property':
+                tables.append(table)
+                continue
             for column in self.mapping.discriminators.get(table, ()):
                 field = table + '.' + column
                 if table in ordered_tables:
@@ -103,7 +109,6 @@ class CSVProcessor(object):
                     ordered_tables.insert(0, table)
         # append the two lists
         ordered_tables += tables
-        ordered_tables.append('ir_property')
         return ordered_tables
 
     def process(self, source_dir, source_filenames, target_dir,

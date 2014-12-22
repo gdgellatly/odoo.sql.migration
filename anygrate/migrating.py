@@ -22,9 +22,10 @@ HERE = dirname(__file__)
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(basename(__file__))
 
-from collections import namedtuple
+# from collections import namedtuple
+#
+# Path = ('Path', 'model', )
 
-Path = ('Path', 'model', )
 
 def main():
     """ Main console script
@@ -280,4 +281,4 @@ def make_a_nice_list(l, cols=100):
     #         ''.join([elem.ljust(col_width) for elem in l[offset:offset+max_cols]]))
     #     offset += max_cols
     # return nice_list
-    return l
+    return sorted(l)
