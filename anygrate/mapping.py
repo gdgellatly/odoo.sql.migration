@@ -19,7 +19,7 @@ class Mapping(object):
     fk2update = None
 
     def __init__(self, modules, filenames, drop_fk=False):
-        """ Open the file and compute the mapping
+        """ Open the file and compute the mappings
         """
         self.target_tables = []
         self.fk2update = {}
@@ -91,6 +91,7 @@ class Mapping(object):
                 if type(function) is not str:
                     raise ValueError('Error in the mapping file: "%s" is invalid in %s'
                                      % (repr(function), outcolumn))
+                #everything to here is special cases
                 function_body += '\n'.join([4*' ' + line for line in function.split('\n')])
                 mapping_function = None
                 exec(compile(function_body, '<' + incolumn + ' → ' + outcolumn + '>', 'exec'),
@@ -113,7 +114,8 @@ class Mapping(object):
         This method is available as a function in the mapping
         """
         self.new_id[target_table] += 1
-        return self.new_id[target_table]
+        new_id = self.new_id[target_table]
+        return new_id
 
     def sql(self, db, sql, args=()):
         """ execute an sql statement in the target db and return the value
@@ -194,17 +196,20 @@ class Mapping(object):
                     maxid = c.fetchone()
                     maxid = maxid and maxid[0] or 0
                     self.max_target_id[target_table] = maxid
-                    self.new_id[target_table] = maxid + self.max_source_id.get(target_table, 0)
+
+                    self.new_id[target_table] = self.max_source_id.get(target_table, 0)
                 except psycopg2.ProgrammingError:
                     # id column does not exist
                     target_connection.rollback()
+        print self.new_id
 
     def update_database_sequences(self, target_conn):
-        with target_conn.cursor as t:
+        with target_conn.cursor() as t:
             for table in self.max_target_id.iterkeys():
                 try:
+
                     t.execute("SELECT 1 from pg_class "
-                              "WHERE relname=%s || '_id_seq'", tuple(table,))
+                              "WHERE relname=%s || '_id_seq'", (table,))
                     res = t.fetchone()
                     if res and res[0]:
                         t.execute("UPDATE %s_id_seq SET last_value = "

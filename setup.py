@@ -21,6 +21,7 @@ setup(
     install_requires=[
         "PyYAML",
         "psycopg2 >= 2.5",
+        "toolz"
     ],
     test_suite='anygrate.test.load_tests',
     entry_points={

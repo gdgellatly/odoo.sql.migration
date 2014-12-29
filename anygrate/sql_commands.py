@@ -117,6 +117,12 @@ WHERE
         return None
 
 
+def drop_temp_table(cursor, target_table, suffix=""):
+    if validate_identifiers(target_table):
+        drop_command = "DROP TABLE {0}{1};".format(target_table, suffix)
+        cursor.execute(drop_command)
+
+
 def validate_identifiers(name, log_error=True):
     """
     This should only be used for non parameterizable
@@ -146,13 +152,13 @@ def upsert(update_list, connection):
     :param connection:
     """
     assert all([validate_identifiers(u.target) for u in update_list])
-    from .importing import import_from_csv
+    from .importing import update_from_csv
 
-    remaining = import_from_csv([u.path for u in update_list], connection, drop_fk=True, suffix=update_list[0].suffix)
-    if remaining:
-        with connection.cursor() as c:
-            update_cmd = ";\n".join(["UPDATE {1} SET {3} FROM {1}{2} WHERE {1}.{3}={1}{2}.{3}".format(
-                x) for x in update_list])
-            c.execute(update_cmd)
-            make_savepoint(c)
+    update_from_csv([u.path for u in update_list], connection, suffix=update_list[0].suffix)
+    with connection.cursor() as c:
+        update_cmd = ";\n".join(["UPDATE {0.target} SET {0.cols} "
+                                 "FROM {0.target}{0.suffix} "
+                                 "WHERE {0.target}.{0.pkey}={0.target}{0.suffix}.{0.pkey}".format(x) for x in update_list])
+        c.execute(update_cmd)
+        make_savepoint(c)
     return

@@ -23,7 +23,7 @@ def export_to_csv(tables, dest_dir, connection):
     """ Export data using postgresql COPY
     """
     p = Pool(8)
-    return p.map(partial(__export_to_csv(dsn=connection.dsn, dest_dir=dest_dir)), tables)
+    return p.map(partial(__export_to_csv, dsn=connection.dsn, dest_dir=dest_dir), tables)
 
 
 def extract_existing(tables, m2m_tables, discriminators, connection):
@@ -35,11 +35,11 @@ def extract_existing(tables, m2m_tables, discriminators, connection):
     This function is used to get the list of data to update in the target db
     """
     result = {}
-    for table in tables:
-        result[table] = []
-        with connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+    with connection.cursor(cursor_factory=psycopg2.extras.DictCursor) as cursor:
+        for table in tables:
             if table not in discriminators:
                 continue
+            result[table] = []
             columns = discriminators[table]
             id_column = ['id'] if table not in m2m_tables else []
             cursor.execute('select %s from %s' % (', '.join(columns + id_column), table))

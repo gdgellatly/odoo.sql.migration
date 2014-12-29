@@ -165,8 +165,7 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     source_tables, m2m_tables = add_related_tables(source_connection, source_tables,
                                                    excluded, show_log=not drop_fk)
 
-
-    print(u'The real list of tables to export is:\n%s' % '\n'.join(
+    LOG.info(u'The real list of tables to export is:\n%s' % '\n'.join(
         make_a_nice_list(source_tables)))
     with open('export.txt', 'w') as f:
         f.write('\n'.join(make_a_nice_list(source_tables)))
@@ -181,7 +180,7 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     mapping = Mapping(target_modules, mapping_names, drop_fk=drop_fk)
     processor = CSVProcessor(mapping)
     target_tables = processor.get_target_columns(filepaths).keys()
-    print(u'The real list of tables to import is:\n%s' % '\n'.join(
+    LOG.info(u'The real list of tables to import is:\n%s' % '\n'.join(
         make_a_nice_list(target_tables)))
     with open('import.txt', 'w') as f:
         f.write('\n'.join(make_a_nice_list(target_tables)))

@@ -31,8 +31,8 @@ class CSVProcessor(object):
         self.ref_mapping = {}  # mapping for references
         self.lines = 0
         self.is_moved = set()
-        self.existing_records = {}
-        self.existing_records_without_id = {}
+        self.existing_target_records = {}
+        self.existing_m2m_records = {}
         self.filtered_columns = {}
 
     def get_target_columns(self, filepaths):
@@ -68,9 +68,10 @@ class CSVProcessor(object):
     def set_existing_data(self, existing_records):
         """let the existing data be accessible during processing
         """
-        self.existing_records = existing_records
+        self.existing_target_records = existing_records
         # the same without ids
-        self.existing_records_without_id = {
+        # WTF?
+        self.existing_m2m_records = {
             table: [{k: str(v) for k, v in nt.iteritems() if k != 'id'} for nt in existing]
             for table, existing in existing_records.iteritems()
         }
@@ -220,54 +221,61 @@ class CSVProcessor(object):
         The fk_mapping should not be read in this method. Only during postprocessing,
         Because the processing order is not determined (unordered dicts)
         """
+        #process one gets a single filepath - good for map
+        #processing needs to go through a number of steps
+
         source_table = basename(source_filepath).rsplit('.', 1)[0]
         get_targets = self.mapping.get_target_column
-        with open(source_filepath, 'rb') as source_csv:
+
+        # here we process the source csv
+        with open(source_filepath, 'rb') as source_csv: #we start with the raw data and open it
             reader = csv.DictReader(source_csv, delimiter=',')
             # process each csv line
-            for source_row in reader:
+            for source_row in reader: # then iterate the rows
                 self.lines += 1
                 target_rows = {}
                 # process each column (also handle '_' as a possible new column)
                 source_row.update({'_': None})
-                for source_column in source_row:
-                    mapping = get_targets(source_table, source_column)
-                    if mapping is None:
+                for source_column in source_row: # dict like {'id': 1, 'create_uid': 1, 'name': 'gay'}
+                    mapping = get_targets(source_table, source_column) #find out where it goes
+                    if mapping is None: # if the column isn't mapped we forget about it
                         continue
                     # we found a mapping, use it
-                    for target_record, function in mapping.items():
+                    for target_record, function in mapping.items(): # This holds what we need to do
                         target_table, target_column = target_record.split('.')
-                        target_rows.setdefault(target_table, {})
-                        if target_column == '_':
+                        target_rows.setdefault(target_table, {}) # create a dictionary for the rows using the table as key
+                        if target_column == '_': # if its a new column to feed we move on, this makes no sense?
                             continue
-                        if function in (None, '__copy__'):
+                        #next we handle special indicators
+                        if function in (None, '__copy__'): # copy it
                             # mapping is None: use identity
                             target_rows[target_table][target_column] = source_row[source_column]
-                        elif type(function) is str and function.startswith('__ref__'):
+                        elif type(function) is str and function.startswith('__ref__'): # use another field
                             target_rows[target_table][target_column] = source_row[source_column]
                             model_column = function.split()[1]
-                            self.ref_mapping[target_record] = model_column
+                            self.ref_mapping[target_record] = model_column # what? for every row, no way, this can be done way earlier
 
-                        elif function in (False, '__forget__'):
+                        elif function in (False, '__forget__'): # for this column we forget about it - obvious - but why do we need to do it every time?
                             # mapping is False: remove the target column
                             del target_rows[target_table][target_column]
                         # in case the id has moved to a new record,
                         # we should save the mapping to correctly fix fks
                         # This can happen in case of semantic change like res.partner.address
                         elif function == '__moved__':
-                            self.is_moved.add(source_table)
-                            newid = self.mapping.newid(target_table)
+                            self.is_moved.add(source_table) # store that it has moved
+                            newid = self.mapping.newid(target_table) # give it a new database_id
                             target_rows[target_table][target_column] = newid
                             self.fk_mapping.setdefault(source_table, {})
-                            self.fk_mapping[source_table][int(source_row[source_column])] \
-                                = newid + self.mapping.max_target_id[target_table]
+                            self.fk_mapping[source_table][int(source_row[source_column])] = newid # so fk_mapping looks like {'mail_alias': {1: 100}
                         else:
                             # mapping is supposed to be a function
-                            result = function(self, source_row, target_rows)
+                            result = function(self, source_row, target_rows) #run the compiled function
                             if result == '__forget_row__':
                                 target_rows[target_table]['__forget_row__'] = True
                             target_rows[target_table][target_column] = result
+                            # here is issue?
 
+                # now our target_row is set write it
                 # offset all ids except existing data and choose to write now or update later
                 # forget any rows that are being filtered
                 for table, target_row in target_rows.items():
@@ -275,39 +283,45 @@ class CSVProcessor(object):
                         continue
                     if not any(target_row.values()):
                         continue
-                    discriminators = self.mapping.discriminators.get(table)
+                    # here we handle collisions with existing data
+                    discriminators = self.mapping.discriminators.get(table) # list of field names
                     # if the line exists in the target db, we don't offset and write to update file
                     # (we recognize by matching the dict of discriminator values against existing)
-                    existing = self.existing_records.get(table, [])
-                    existing_without_id = self.existing_records_without_id.get(table, [])
-                    discriminator_values = {d: target_row[d] for d in (discriminators or [])}
+                    existing = self.existing_target_records.get(table, []) #get all the existing db_values that have an id field (see exporting.py)
+                    existing_without_id = self.existing_m2m_records.get(table, []) #get m2m fields
+                    match_values = {d: target_row[d] for d in (discriminators or [])} # a dict with column: write
+
                     # before matching existing, we should fix the discriminator_values which are fk
                     # FIXME refactor and merge with the code in postprocess
-                    for key, value in discriminator_values.items():
-                        fk_table = self.fk2update.get(table + '.' + key)
+                    # GG Move this, only concerned with foreign keys
+                    for column, value in match_values.items():
+                        fk_table = self.fk2update.get(table + '.' + column)
                         if value and fk_table:
                             value = int(value)
                             # this is BROKEN because it needs the fk_table to be processed before.
                             if value in self.fk_mapping.get(fk_table, []):
-                                discriminator_values[key] = str(
+                                match_values[column] = str(
                                     self.fk_mapping[fk_table].get(value, value))
+
                     # save the mapping between source id and existing id
+
                     if (discriminators
                             and 'id' in target_row
-                            and all(discriminator_values.values())
-                            and discriminator_values in existing_without_id):
-                        # find the id of the existing record in the target
+                            and all(match_values.values())
+                            and match_values in existing_without_id):
+                        # find the id of the existing record in the
+                        # target
                         for i, nt in enumerate(existing):
-                            if discriminator_values == {k: str(v)
+                            if match_values == {k: str(v)
                                                         for k, v in nt.iteritems() if k != 'id'}:
                                 existing_id = existing[i]['id']
                                 break
                         self.fk_mapping.setdefault(table, {})
-                        # we save the match between source and existing id
-                        # to be able to update the fks in the 2nd pass
+                            # we save the match between source and existing id
+                            # to be able to update the fks in the 2nd pass
                         self.fk_mapping[table][int(target_row['id'])] = existing_id
 
-                        # fix fk to a moved table with existing data
+                    # fix fk to a moved table with existing data
                         if source_table in self.is_moved:
                             source_id = int(source_row['id'])
                             if source_id in self.fk_mapping[source_table]:
@@ -318,7 +332,8 @@ class CSVProcessor(object):
                     else:
                         # offset the id of the line, except for m2m (no id)
                         if 'id' in target_row:
-                            target_row['id'] = int(target_row['id']) + self.mapping.max_target_id
+
+                            target_row['id'] = str(int(target_row['id']) + self.mapping.max_target_id[table])
                             # handle deferred records
                             if table in self.mapping.deferred:
                                 upd_row = {k: v for k, v in target_row.iteritems()
@@ -341,6 +356,12 @@ class CSVProcessor(object):
         """ Postprocess one target csv file
         """
         table = basename(target_filepath).rsplit('.', 2)[0]
+        # The overloading of postprocessing is causing foriegn keys to be checked twice for inserts
+        # Not a problem when ids everywhere but now cause false updates
+        if '.target' in target_filepath:
+            upd_fks = False
+        else:
+            upd_fks = True
         with open(target_filepath, 'rb') as target_csv:
             reader = csv.DictReader(target_csv, delimiter=',')
             for target_row in reader:
@@ -357,8 +378,8 @@ class CSVProcessor(object):
                         value = int(value)
                         postprocessed_row[key] = self.fk_mapping.get(fk_table, {}).get(
                             value, value + self.mapping.max_target_id[fk_table])
-                    # if we're postprocessing an update we should restore the id as well
-                    if key == 'id' and table in self.fk_mapping:
+                    # if we're postprocessing an update we should restore the id as well, but only if it is an update
+                    if upd_fks and key == 'id' and table in self.fk_mapping:
                         value = int(value)
                         postprocessed_row[key] = self.fk_mapping[table].get(value, value)
                     if value and target_record in self.ref_mapping:  # manage __ref__
@@ -374,16 +395,23 @@ class CSVProcessor(object):
                         else:
                             value = int(value)
                             ref_table = target_row[ref_column].replace('.', '_')
-                            postprocessed_row[key] = self.fk_mapping.get(ref_table, {}).get(
-                                value, value + self.mapping.max_target_id[ref_table])
+                            try:
+                                postprocessed_row[key] = self.fk_mapping.get(ref_table, {}).get(
+                                    value, value + self.mapping.max_target_id.get(ref_table, 0))
+                            except KeyError:
+                                print u'Key %s\nTable %s\n' % (key, ref_table)
+                                print target_row
+                                raise
+
 
                 # don't write m2m lines if they exist in the target
                 # FIXME: refactor these 4 lines with those from process_one()?
                 discriminators = self.mapping.discriminators.get(table)
-                existing_without_id = self.existing_records_without_id.get(table, [])
+                existing_without_id = self.existing_m2m_records.get(table, [])
+                existing = self.existing_target_records.get(table)
                 discriminator_values = {d: str(postprocessed_row[d])
                                         for d in (discriminators or [])}
-                if ('id' in postprocessed_row or
+                if ('id' in postprocessed_row  or
                         discriminator_values not in existing_without_id):
                     self.writers[table].writerow(postprocessed_row)
 
@@ -410,15 +438,7 @@ class CSVProcessor(object):
                         to_update.append(upd_record(filepath, target_table, suffix, columns, pkey))
                     break
         if to_update:
-            try:
-                remaining = upsert(to_update, connection)
-                if remaining:
-                    raise Exception
-            except Exception, e:
-                LOG.warn('Error updating table %s:\n%s', temp_table, e.message)
-                cursor = connection.cursor()
-                cursor.execute('ROLLBACK TO savepoint')
-                cursor.close()
+            upsert(to_update, connection)
         else:
             LOG.info(u'Nothing to update')
 
