@@ -201,19 +201,18 @@ class Mapping(object):
                 except psycopg2.ProgrammingError:
                     # id column does not exist
                     target_connection.rollback()
-        print self.new_id
 
     def update_database_sequences(self, target_conn):
         with target_conn.cursor() as t:
             for table in self.max_target_id.iterkeys():
-                try:
 
-                    t.execute("SELECT 1 from pg_class "
-                              "WHERE relname=%s || '_id_seq'", (table,))
-                    res = t.fetchone()
-                    if res and res[0]:
-                        t.execute("UPDATE %s_id_seq SET last_value = "
-                                  "(SELECT max(id) from %s);" % (table, table))
-                except psycopg2.ProgrammingError:
-                    target_conn.rollback()
+                t.execute("SELECT 1 from pg_class "
+                          "WHERE relname=%s || '_id_seq'", (table,))
+                res = t.fetchone()
+                if res and res[0]:
+                    t.execute("SELECT max(id) from %s;" % table)
+                    newid = t.fetchone()[0]
+                    if isinstance(newid, int):
+                        t.execute("ALTER SEQUENCE %s_id_seq RESTART WITH %d;" % (table, newid))
+
 

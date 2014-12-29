@@ -22,10 +22,6 @@ HERE = dirname(__file__)
 logging.basicConfig(level=logging.DEBUG)
 LOG = logging.getLogger(basename(__file__))
 
-# from collections import namedtuple
-#
-# Path = ('Path', 'model', )
-
 
 def main():
     """ Main console script

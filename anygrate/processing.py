@@ -183,8 +183,6 @@ class CSVProcessor(object):
         for writer in self.writers.values():
             writer.writeheader()
         LOG.info(u"Postprocessing CSV files...")
-        print self.fk_mapping['res_currency']
-        print self.existing_target_records['res_currency']
         for filename in target_filenames.values():
             filepath = join(target_dir, filename)
             self.postprocess_one(filepath)
