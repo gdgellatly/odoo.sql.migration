@@ -4,6 +4,7 @@ import os
 import shutil
 from os.path import basename, join, splitext
 from collections import namedtuple
+from multiprocessing import Pool
 
 from .sql_commands import upsert, setup_temp_table
 
@@ -30,7 +31,7 @@ class CSVProcessor(object):
         self.fk_mapping = {}  # mapping for foreign keys
         self.ref_mapping = {}  # mapping for references
         self.lines = 0
-        self.is_moved = set()
+        self.is_moved = {}
         self.existing_target_records = {}
         self.existing_m2m_records = {}
         self.filtered_columns = {}
@@ -182,6 +183,8 @@ class CSVProcessor(object):
         for writer in self.writers.values():
             writer.writeheader()
         LOG.info(u"Postprocessing CSV files...")
+        print self.fk_mapping['res_currency']
+        print self.existing_target_records['res_currency']
         for filename in target_filenames.values():
             filepath = join(target_dir, filename)
             self.postprocess_one(filepath)
@@ -237,10 +240,11 @@ class CSVProcessor(object):
                 # process each column (also handle '_' as a possible new column)
                 source_row.update({'_': None})
                 for source_column in source_row: # dict like {'id': 1, 'create_uid': 1, 'name': 'gay'}
-                    mapping = get_targets(source_table, source_column) #find out where it goes
+                    mapping = get_targets(source_table, source_column)
                     if mapping is None: # if the column isn't mapped we forget about it
                         continue
                     # we found a mapping, use it
+                    # for every record we must first process any columns functions to transform the data
                     for target_record, function in mapping.items(): # This holds what we need to do
                         target_table, target_column = target_record.split('.')
                         target_rows.setdefault(target_table, {}) # create a dictionary for the rows using the table as key
@@ -262,18 +266,17 @@ class CSVProcessor(object):
                         # we should save the mapping to correctly fix fks
                         # This can happen in case of semantic change like res.partner.address
                         elif function == '__moved__':
-                            self.is_moved.add(source_table) # store that it has moved
+                            source_table not in self.is_moved and self.is_moved.update({source_table: target_table}) # store that it has moved
                             newid = self.mapping.newid(target_table) # give it a new database_id
                             target_rows[target_table][target_column] = newid
                             self.fk_mapping.setdefault(source_table, {})
-                            self.fk_mapping[source_table][int(source_row[source_column])] = newid # so fk_mapping looks like {'mail_alias': {1: 100}
+                            self.fk_mapping[source_table][int(source_row[source_column])] = newid + self.mapping.max_target_id[target_table] # so fk_mapping looks like {'mail_alias': {1: 100}
                         else:
                             # mapping is supposed to be a function
                             result = function(self, source_row, target_rows) #run the compiled function
                             if result == '__forget_row__':
                                 target_rows[target_table]['__forget_row__'] = True
                             target_rows[target_table][target_column] = result
-                            # here is issue?
 
                 # now our target_row is set write it
                 # offset all ids except existing data and choose to write now or update later
@@ -356,12 +359,6 @@ class CSVProcessor(object):
         """ Postprocess one target csv file
         """
         table = basename(target_filepath).rsplit('.', 2)[0]
-        # The overloading of postprocessing is causing foriegn keys to be checked twice for inserts
-        # Not a problem when ids everywhere but now cause false updates
-        if '.target' in target_filepath:
-            upd_fks = False
-        else:
-            upd_fks = True
         with open(target_filepath, 'rb') as target_csv:
             reader = csv.DictReader(target_csv, delimiter=',')
             for target_row in reader:
@@ -375,11 +372,12 @@ class CSVProcessor(object):
                     if value and fk_table:
                         # if the target record is an existing record it should be in the fk_mapping
                         # so we restore the real target id, or offset it if not found
+                        target_table = self.is_moved.get(fk_table, fk_table)
                         value = int(value)
                         postprocessed_row[key] = self.fk_mapping.get(fk_table, {}).get(
-                            value, value + self.mapping.max_target_id[fk_table])
+                            value, value + self.mapping.max_target_id[target_table])
                     # if we're postprocessing an update we should restore the id as well, but only if it is an update
-                    if upd_fks and key == 'id' and table in self.fk_mapping:
+                    if key == 'id' and table in self.fk_mapping and 'update' in target_filepath:
                         value = int(value)
                         postprocessed_row[key] = self.fk_mapping[table].get(value, value)
                     if value and target_record in self.ref_mapping:  # manage __ref__
@@ -411,7 +409,7 @@ class CSVProcessor(object):
                 existing = self.existing_target_records.get(table)
                 discriminator_values = {d: str(postprocessed_row[d])
                                         for d in (discriminators or [])}
-                if ('id' in postprocessed_row  or
+                if ('id' in postprocessed_row or
                         discriminator_values not in existing_without_id):
                     self.writers[table].writerow(postprocessed_row)
 
