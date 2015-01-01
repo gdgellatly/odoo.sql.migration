@@ -114,8 +114,7 @@ class Mapping(object):
         This method is available as a function in the mapping
         """
         self.new_id[target_table] += 1
-        new_id = self.new_id[target_table]
-        return new_id
+        return self.new_id[target_table]
 
     def sql(self, db, sql, args=()):
         """ execute an sql statement in the target db and return the value
@@ -171,7 +170,7 @@ class Mapping(object):
                                           for c in type(t[1]) is dict and t[1].keys() or ()]}))
 
     def set_database_ids(self, source_tables, source_connection,
-                       target_tables, target_connection):
+                         target_tables, target_connection):
         """ create mapping of the max id with
         max of source and target dbs
         """
@@ -213,6 +212,6 @@ class Mapping(object):
                     t.execute("SELECT max(id) from %s;" % table)
                     newid = t.fetchone()[0]
                     if isinstance(newid, int):
-                        t.execute("ALTER SEQUENCE %s_id_seq RESTART WITH %d;" % (table, newid))
+                        t.execute("ALTER SEQUENCE %s_id_seq RESTART WITH %d;" % (table, newid+1))
 
 

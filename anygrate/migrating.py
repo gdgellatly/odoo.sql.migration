@@ -153,8 +153,6 @@ def migrate(source_db, target_db, source_tables, mapping_names,
 
     # we turn the list of wanted tables into the full list of required tables
     print(u'Computing the real list of tables to export...')
-    #source_models, _ = get_dependencies('admin', 'admin',
-    #                                    source_db, source_models, excluded_models)
     if drop_fk:
         print(u'Normally you would get a list of dependencies here but we don\'t care'
               u' as we are dropping the constraints')
@@ -183,20 +181,22 @@ def migrate(source_db, target_db, source_tables, mapping_names,
     processor.mapping.set_database_ids(source_tables, source_connection,
                                        target_tables, target_connection)
 
-    print('Computing the list of Foreign Keys to update in the target csv files...')
+    print('Computing the list of Foreign Keys '
+          'to update in the target csv files...')
     processor.fk2update = get_fk_to_update(target_connection, target_tables)
 
     # update the list of fk to update with the fake __fk__ given in the mapping
     processor.fk2update.update(processor.mapping.fk2update)
 
     # extract the existing records from the target database
-    existing_records = extract_existing(target_tables, m2m_tables,
-                                        mapping.discriminators, target_connection)
+    existing_records = extract_existing(
+        target_tables, m2m_tables, mapping.discriminators, target_connection)
 
     # create migrated csv files from exported csv files
     print(u'Migrating CSV files...')
     processor.set_existing_data(existing_records)
-    processor.process(target_dir, filepaths, target_dir, target_connection, del_csv=del_csv)
+    processor.process(target_dir, filepaths, target_dir,
+                      target_connection, del_csv=del_csv)
     # drop foreign key constraints
     if drop_fk:
         print(u'Dropping Foreign Key Constraints in target tables')
@@ -205,7 +205,8 @@ def migrate(source_db, target_db, source_tables, mapping_names,
         with mgmt_connection.cursor() as m:
             kill_db_connections(m, target_db)
         mgmt_connection.close()
-        add_constraints_sql = drop_constraints(db=target_db, tables=target_tables)
+        add_constraints_sql = drop_constraints(db=target_db,
+                                               tables=target_tables)
         if not add_constraints_sql:
             drop_fk = False
         else:
@@ -216,8 +217,10 @@ def migrate(source_db, target_db, source_tables, mapping_names,
 
     # import data in the target
     print(u'Trying to import data in the target database...')
-    target_files = [join(target_dir, '%s.target2.csv' % t) for t in target_tables]
-    remaining = import_from_csv(target_files, target_connection, drop_fk=drop_fk)
+    target_files = [join(target_dir, '%s.target2.csv' % t) for
+                    t in target_tables]
+    remaining = import_from_csv(
+        target_files, target_connection, drop_fk=drop_fk)
     if remaining:
         print(u'Please improve the mapping by inspecting the errors above')
         sys.exit(1)
@@ -238,7 +241,8 @@ def migrate(source_db, target_db, source_tables, mapping_names,
         print(u'Finished, and transaction committed !! \o/')
     else:
         target_connection.rollback()
-        print(u'Finished \o/ Use --write to really write to the target database')
+        print(u'Finished \o/ Use --write to really '
+              u'write to the target database')
     target_connection.close()
 
     # Note we check here again just in case
@@ -257,7 +261,9 @@ def migrate(source_db, target_db, source_tables, mapping_names,
                     try:
                         t.execute(add_constraints_sql)
                     except Exception, e:
-                        LOG.error('Error Restoring Constraints: A copy has been saved in add_constraints.sql\n%s' % e.message)
+                        LOG.error('Error Restoring Constraints: A copy has '
+                                  'been saved in add_constraints.sql\n'
+                                  '%s' % e.message)
         print(u'Updating next database_ids')
         target_connection = get_db_connection(dsn="dbname=%s" % target_db)
         mapping.update_database_sequences(target_connection)
