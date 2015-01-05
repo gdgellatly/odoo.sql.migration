@@ -360,6 +360,7 @@ class CSVProcessor(object):
         with open(target_filepath, 'rb') as target_csv:
             reader = csv.DictReader(target_csv, delimiter=',')
             for target_row in reader:
+                write = True
                 postprocessed_row = {}
                 # fix the foreign keys of the line
                 for key, value in target_row.items():
@@ -385,8 +386,11 @@ class CSVProcessor(object):
                             ref_table, fk_value = value.split(',')
                             fk_id = int(fk_value)
                             ref_table = ref_table.replace('.', '_')
-                            new_fk_id = self.fk_mapping.get(ref_table, {}).get(
-                                fk_id, fk_id + self.mapping.max_target_id[ref_table])
+                            try:
+                                new_fk_id = self.fk_mapping.get(ref_table, {}).get(
+                                    fk_id, fk_id + self.mapping.max_target_id[ref_table])
+                            except KeyError:
+                                write = False
                             postprocessed_row[key] = value.replace(fk_value, str(new_fk_id))
                         else:
                             value = int(value)
@@ -407,8 +411,9 @@ class CSVProcessor(object):
                 existing = self.existing_target_records.get(table)
                 discriminator_values = {d: str(postprocessed_row[d])
                                         for d in (discriminators or [])}
-                if ('id' in postprocessed_row or
-                        discriminator_values not in existing_without_id):
+                if (write and
+                        ('id' in postprocessed_row or
+                         discriminator_values not in existing_without_id)):
                     self.writers[table].writerow(postprocessed_row)
 
     @staticmethod
