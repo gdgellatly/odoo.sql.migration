@@ -1,3 +1,9 @@
+This is a work in progress to revive the anybox migration work along with my own customizations.
+
+The original README is left intact below while the work is going on.  The original project was called
+anybox.migration.openerp.  In order to make it more generic it has been renamed odoo-sql-migration.  It's
+initial testing and new mappings will be for a version 7 to 10 migration of a single multicompany instance.
+
 =====================================
 Fast OpenERP/Odoo migration framework
 =====================================
@@ -13,7 +19,7 @@ Fast OpenERP/Odoo migration framework
 
 .. contents::
 
-This tool has been developped with these initial goals in mind, in this
+This tool has been developed with these initial goals in mind, in this
 priority order:
 
  - **Merging** 2 different OpenERP databases into a single multicompany db

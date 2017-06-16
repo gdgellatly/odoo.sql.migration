@@ -1,6 +1,12 @@
 Changes
 =======
 
+0.11 (unreleased)
+-----------------
+- Fork of original anybox project, renamed to odoo.sql.migration
+- Contains many optimisations from previous unpublished forks
+- Intermediate release to signal renewed interest in project and not for production use.
+
 0.10 (unreleased)
 -----------------
 

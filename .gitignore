@@ -139,3 +139,15 @@ ENV/
 # Rope project settings
 .ropeproject
 .idea/
+
+sandbox/
+.*\.swp$
+.*\.pyc$
+.*\#$
+test-.*/
+migration/PyYAML
+migration/anygrate.egg-info/
+migration/psycopg2
+migration/openobject_library-
+odoo.sql.migration.egg-info
+ecox.*

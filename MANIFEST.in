@@ -1,5 +1,5 @@
-recursive-include anygrate *.yml
-recursive-include anygrate *.csv
-recursive-include anygrate *.rst
+recursive-include migration *.yml
+recursive-include migration *.csv
+recursive-include migration *.rst
 include *.rst
 
