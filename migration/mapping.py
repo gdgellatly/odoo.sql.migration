@@ -23,7 +23,8 @@ class Mapping(object):
         """
         self.target_tables = []
         self.fk2update = {}
-        full_mapping = {} # ends up as {'module': {'table': {'column': v}}}
+        self.fkcache = {}
+        full_mapping = {}  # ends up as {'module': {'table': {'column': v}}}
         # load the full mapping file
         if isinstance(filenames, str):
             filenames = [filenames]
@@ -33,14 +34,14 @@ class Mapping(object):
         # filter to keep only wanted modules
         self.mapping = {}
         self.deferred = {}
-        for module in modules:
-            if module not in full_mapping: # skip modules not in YAML files
-                LOG.warn('Mapping is not complete: module "%s" is missing!', module)
+        for addon in modules:
+            if addon not in full_mapping: # skip modules not in YAML files
+                LOG.warn('Mapping is not complete: module "%s" is missing!', addon)
                 continue
-            elif full_mapping[module] == '__nothing_to_do__':
-                del full_mapping[module]
+            elif full_mapping[addon] == '__nothing_to_do__':
+                del full_mapping[addon]
                 continue
-            for source_column, target_columns in full_mapping[module].items():
+            for source_column, target_columns in full_mapping[addon].items():
             #here we are going over entire dictionary for module, by module, can't we just merge to table dict now
                 if '__' in source_column:
                     # skip special markers
@@ -64,8 +65,12 @@ class Mapping(object):
                 self.mapping[incolumn] = {}
                 continue
             for outcolumn, function in targets.items():
+                # TODO Implement dispatcher here
                 if function in ('__copy__', '__moved__', None):
                     continue
+                if type(function) is not str:
+                    raise ValueError('Error in the mapping file: "%s" is invalid in %s'
+                                     % (repr(function), outcolumn))
                 if function == '__defer__':
                     self.mapping[incolumn][outcolumn] = '__copy__'
                     if not drop_fk:
@@ -88,26 +93,30 @@ class Mapping(object):
                     self.mapping[incolumn][outcolumn] = function
                     continue
                 function_body = "def mapping_function(self, source_row, target_rows):\n"
-                if type(function) is not str:
-                    raise ValueError('Error in the mapping file: "%s" is invalid in %s'
-                                     % (repr(function), outcolumn))
+
                 #everything to here is special cases
                 function_body += '\n'.join([4*' ' + line for line in function.split('\n')])
                 mapping_function = None
                 exec(compile(function_body, '<' + incolumn + ' → ' + outcolumn + '>', 'exec'),
                      globals().update({
                          'newid': self.newid,
-                         'sql': self.sql}))
+                         'sql': self.sql,
+                         'fk_lookup': self.fk_lookup}))
                 self.mapping[incolumn][outcolumn] = mapping_function
                 del mapping_function
 
         # build the discriminator mapping
+        # build the stored field mapping.
         self.discriminators = {}
+        self.stored_fields = {}
         for mapping in full_mapping.values():
-            self.discriminators.update({
-                key.split('.')[0]: value
-                for key, value in mapping.items()
-                if '__discriminator__' in key})
+            for key, value in mapping.items():
+                if '__discriminator__' in key:
+                    self.discriminators.update({key.split('.')[0]: value})
+                if '__stored__' in key:
+                    table = key.split('.')[0]
+                    self.stored_fields.setdefault(table, [])
+                    self.stored_fields[table] += value
 
     def newid(self, target_table):
         """ increment the global stored new_id for table
@@ -126,6 +135,42 @@ class Mapping(object):
             cursor.execute(sql, args)
             return cursor.fetchall() if 'select ' in sql.lower() else ()
 
+    def fk_lookup(self, table, identifier, arg, exc=False):
+        """
+        Certain tables are rarely migrated yet we need to set the foriegn key
+        in associated models.  This helper function looks up a unique identifier
+        in the source table and searches for it in the destination returning the
+        id.  Example usage are tables such as ir_model.
+        NOTE: The results are cached for performance, and the key is not unique
+        to the source_row table.  So if model_id in mail_alias and model_id in
+        another model, they use the same cache.
+        :param table: the database table to search e.g. ir_model
+        :param identifier: the database column to search in the target e.g. model
+        :param arg: the row value to search for in the source e.g. source_row['model_id']
+        :param exc: wether to raise an indexerror or set NULL if a match not found
+        :return:
+        """
+
+        key = '%s_%s' % (table, identifier)
+        if key not in self.fkcache:
+            self.fkcache[key] = {}
+
+            with self.source_connection.cursor() as cr:
+                cr.execute('SELECT %s, id '
+                           'FROM %s;' % (identifier, table))
+                source_res = {r[0]: str(r[1]) for r in cr.fetchall()}
+            with self.target_connection.cursor() as cr:
+                cr.execute('SELECT %s, id '
+                           'FROM %s ' % (identifier, table))
+                target_res = {str(r[1]): r[0] for r in cr.fetchall()}
+            for fk, val in target_res.items():
+                if val in source_res:
+                    self.fkcache[source_res[val]] = fk
+        if exc:
+            return self.fkcache[key][arg]
+        else:
+            return self.fkcache[key].get(arg, False)
+
     def get_target_column(self, source, column):
         """ Return the target mapping for a column or table
         """
@@ -140,8 +185,15 @@ class Mapping(object):
             partial_pattern = '%s.*' % source
             if partial_pattern in self.mapping:
                 if self.mapping[partial_pattern]:
+                    # In this function we replace the star with the sought
+                    # column if autoforget is not enabled, or it is present
+                    # in the target table
+                    # if column not in self.explicit_columns.get(source, [column]):
+                    #     LOG.warn('Source table %s contains column %s that '
+                    #              'isn\'t present in target', (source, column))
                     return {k.replace('*', column): v
-                            for k, v in self.mapping[partial_pattern].items()}
+                            for k, v in self.mapping[partial_pattern].items()
+                            if column in self.explicit_columns.get(source, [column])}
                 return {tbl_col: None}
             elif '.*' in self.mapping:
                 return {tbl_col: None}

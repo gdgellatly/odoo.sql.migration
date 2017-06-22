@@ -30,9 +30,10 @@ def main():
     parser.add_argument('-c', '--config',
                         default='.last.cfg',
                         help=u'List of mapping files. '
-                        'If not found in the specified path, '
-                        'each file is searched in the "mappings" dir of this tool. '
-                        'Example: openerp6.1-openerp7.0.yml custom.yml',
+                             u'If not found in the specified path, '
+                             u'each file is searched in the "mappings" '
+                             u'dir of this tool. '
+                             u'Example: openerp6.1-openerp7.0.yml custom.yml',
                         nargs='+'
                         )
     parser.add_argument('-l', '--list',
@@ -58,29 +59,42 @@ def main():
     parser.add_argument('-p', '--path',
                         default='openerp6.1-openerp7.0.yml',
                         help=u'List of mapping files. '
-                        'If not found in the specified path, '
-                        'each file is searched in the "mappings" dir of this tool. '
-                        'Example: openerp6.1-openerp7.0.yml custom.yml',
+                             u'If not found in the specified path, '
+                             u'each file is searched in the "mappings" '
+                             u'dir of this tool. '
+                             u'Example: openerp6.1-openerp7.0.yml custom.yml',
                         nargs='+'
                         )
     parser.add_argument('-w', '--write',
                         action='store_true', default=False,
-                        help=u'Really write to the target database if migration is successful.'
+                        help=u'Really write to the target database if '
+                             u'migration is successful.'
                         )
     parser.add_argument('-n', '--newdb',
-                        help=u'Create a new database based on target. Existing db of same name will be dropped')
+                        help=u'Create a new database based on target. '
+                             u'Existing db of same name will be dropped')
+    parser.add_argument('-o', '--owner',
+                        help=u'Owner of newly created database '
+                             u'(must already exist).')
     parser.add_argument('-f', '--dropfk',
                         action='store_true', default=False,
-                        help=u'Drops foreign key constraints on tables and adds back after import.'
+                        help=u'Drops foreign key constraints on tables '
+                             u'and adds back after import.'
                              u' Must be used with --newdb or -n')
     parser.add_argument('-q', '--quick',
                         action='store_true', default=False,
                         help=u'Turns it up to 11. '
-                             u'Drops foreign key constraints on tables and adds back after import.'
+                             u'Drops foreign key constraints on tables '
+                             u'and adds back after import.'
                              u' Auto creates new database if -n not specified')
     parser.add_argument('--tmpfs',
                         action='store_true', default=False,
-                        help=u' Uses tmpfs for csv\'s (Ubuntu / RHEL and variants')
+                        help=u'Uses tmpfs for csv\'s '
+                             u'(Ubuntu / RHEL and variants')
+    parser.add_argument('--forgetmissing',
+                        action='store_true', default=False,
+                        help=u'Will automatically drop columns '
+                             u'not in the target database')
 
 
     args = parser.parse_args()
@@ -129,21 +143,24 @@ def main():
           identifier, args.write and args.newdb or (args.write and target_db or 'left alone')))
     migrate(source_db, target_db, relation, mapping_names,
             excluded, target_dir=tempdir, write=args.write,
-            new_db=args.newdb, drop_fk=args.dropfk, del_csv=args.tmpfs)
+            new_db=args.newdb, drop_fk=args.dropfk, del_csv=args.tmpfs,
+            forget_missing=args.forgetmissing, owner=args.owner)
     print(u'The identifier for this migration is "{0}"'.format(identifier))
+
     if not args.keepcsv:
         shutil.rmtree(tempdir)
 
 
 def migrate(source_db, target_db, source_tables, mapping_names,
             excluded=None, target_dir=None, write=False,
-            new_db=False, drop_fk=False, del_csv=False):
+            new_db=False, drop_fk=False, del_csv=False,
+            forget_missing=False, owner=False):
     """ The main migration function
     """
     start_time = time.time()
     source_connection = get_db_connection(dsn="dbname=%s" % source_db)
     if new_db:
-        target_db = create_new_db(source_db, target_db, new_db)
+        target_db = create_new_db(source_db, target_db, new_db, owner)
     target_connection = get_db_connection(dsn="dbname=%s" % target_db)
 
     # Get the list of modules installed in the target db
@@ -173,13 +190,17 @@ def migrate(source_db, target_db, source_tables, mapping_names,
             LOG.warn('%s not found. Trying %s', mapping_name, mapping_names[i])
     mapping = Mapping(target_modules, mapping_names, drop_fk=drop_fk)
     processor = CSVProcessor(mapping)
-    target_tables = processor.get_target_columns(filepaths).keys()
+
+    target_tables = processor.get_target_columns(
+        filepaths, forget_missing, target_connection).keys()
+
     LOG.info(u'The real list of tables to import is:\n%s' % '\n'.join(
         make_a_nice_list(target_tables)))
     with open('import.txt', 'w') as f:
         f.write('\n'.join(make_a_nice_list(target_tables)))
     processor.mapping.set_database_ids(source_tables, source_connection,
                                        target_tables, target_connection)
+
 
     print('Computing the list of Foreign Keys '
           'to update in the target csv files...')
@@ -235,6 +256,9 @@ def migrate(source_db, target_db, source_tables, mapping_names,
         else:
             LOG.warn(u'Not updating %s as it was not imported', table)
     processor.update_all(filepaths, target_connection, suffix="_temp")
+
+    # Drop stored fields (e.g. related and computed)
+    processor.drop_stored_columns(target_connection)
 
     if write:
         target_connection.commit()

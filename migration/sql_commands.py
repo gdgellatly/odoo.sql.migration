@@ -18,13 +18,22 @@ def get_db_connection(dsn=None):
     return psycopg2.connect(dsn=dsn)
 
 
+def get_table_columns(dsn, source_table):
+    db_connection = get_db_connection(dsn)
+    with db_connection.cursor() as c:
+        if validate_identifiers(source_table):
+            c.execute("SELECT * FROM %s LIMIT 0" % source_table)
+            colnames = [desc[0] for desc in c.description]
+    return colnames
+
+
 def kill_db_connections(cursor, datname):
-    cursor.execute("""SELECT pg_terminate_backend(pg_stat_activity.pid)
-                    FROM pg_stat_activity
-                    WHERE pg_stat_activity.datname = %s;""", (datname,))
+    cursor.execute('SELECT pg_terminate_backend(pg_stat_activity.pid) '
+                   'FROM pg_stat_activity '
+                   'WHERE pg_stat_activity.datname = %s;', (datname,))
 
 
-def create_new_db(source_db, target_db, new_db):
+def create_new_db(source_db, target_db, new_db, owner):
     if new_db == target_db:
         print "If you want a new database, best you give it a different name"
         sys.exit(1)
@@ -46,7 +55,9 @@ def create_new_db(source_db, target_db, new_db):
         print(u'Creating New Database')
         kill_db_connections(m, new_db)
         kill_db_connections(m, target_db)
-        create_command = "CREATE DATABASE {0} TEMPLATE {1};".format(new_db, target_db)
+        create_command = "CREATE DATABASE {0} TEMPLATE {1}".format(new_db, target_db)
+        if owner:
+            create_command += " OWNER {}".format(owner)
         m.execute(create_command)
         print(u'New Database Created')
         target_db = new_db
@@ -158,7 +169,11 @@ def upsert(update_list, connection):
     with connection.cursor() as c:
         update_cmd = ";\n".join(["UPDATE {0.target} SET {0.cols} "
                                  "FROM {0.target}{0.suffix} "
-                                 "WHERE {0.target}.{0.pkey}={0.target}{0.suffix}.{0.pkey}".format(x) for x in update_list])
-        c.execute(update_cmd)
+                                 "WHERE {0.target}.{0.pkey}={0.target}{0.suffix}.{0.pkey} ".format(x) for x in update_list])
+        try:
+            c.execute(update_cmd)
+        except psycopg2.IntegrityError as e:
+            LOG.error(update_cmd)
+            raise e
         make_savepoint(c)
     return

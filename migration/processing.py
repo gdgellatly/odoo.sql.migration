@@ -35,18 +35,21 @@ class CSVProcessor(object):
         self.existing_target_records = {}
         self.existing_m2m_records = {}
         self.filtered_columns = {}
+        self.existing_target_columns = []
 
-    def get_target_columns(self, filepaths):
+    def get_target_columns(self, filepaths, forget_missing=False, target_connection=None):
         """ Compute target columns with source columns + mapping
         """
         if self.target_columns:
             return self.target_columns
+
         get_targets = self.mapping.get_target_column
         for filepath in filepaths:
             source_table = basename(filepath).rsplit('.', 1)[0]
             with open(filepath) as f:
                 source_columns = csv.reader(f).next()
             for source_column in source_columns + ['_']:
+
                 mapping = get_targets(source_table, source_column)
                 # no mapping found, we warn the user
                 if mapping is None:
@@ -61,10 +64,30 @@ class CSVProcessor(object):
                     for target in mapping:
                         t, c = target.split('.')
                         self.target_columns.setdefault(t, set()).add(c)
-
         self.target_columns = {k: sorted([c for c in v if c != '_'])
                                for k, v in self.target_columns.items()}
+
+        if forget_missing and target_connection:
+            self.existing_target_columns = self.get_explicit_columns(self.target_columns.keys(), target_connection)
+            for table, cols in self.target_columns.items():
+                LOG.warn('The following columns will be auto forgotten in table %s', table)
+                LOG.warn(','.join(set(cols).difference(self.existing_target_columns[table])))
+                self.target_columns[table] = [c for c in cols if c in self.existing_target_columns[table]]
         return self.target_columns
+
+    def get_explicit_columns(self, target_tables, target_connection):
+        """
+        If autoforget is enabled we need to explicitly specify
+        which columns exist in target
+        """
+        res = {}
+        for target_table in target_tables:
+            with target_connection.cursor() as c:
+                c.execute("SELECT * FROM {} LIMIT 0".format(target_table))
+                res[target_table] = [
+                    desc[0] for desc in c.description]
+        return res
+
 
     def set_existing_data(self, existing_records):
         """let the existing data be accessible during processing
@@ -246,6 +269,13 @@ class CSVProcessor(object):
                     for target_record, function in mapping.items(): # This holds what we need to do
                         target_table, target_column = target_record.split('.')
                         target_rows.setdefault(target_table, {}) # create a dictionary for the rows using the table as key
+
+                        # We deal with forgotten columns here
+                        if self.existing_target_columns and (
+                                    target_column not in
+                                    self.existing_target_columns[target_table]):
+                            continue
+
                         if target_column == '_': # if its a new column to feed we move on, this makes no sense?
                             continue
                         #next we handle special indicators
@@ -443,3 +473,9 @@ class CSVProcessor(object):
         else:
             LOG.info(u'Nothing to update')
 
+    def drop_stored_columns(self, connection):
+        for table, columns in self.mapping.stored_fields.items():
+            # potentially unsafe
+            query = ','.join(['DROP COLUMN %s CASCADE' % f for f in columns])
+            with connection.cursor() as c:
+                c.execute('ALTER TABLE %s %s' % (table, query))

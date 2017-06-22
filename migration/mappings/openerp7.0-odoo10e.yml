@@ -1,0 +1,150 @@
+base:
+    ir_sequence.*:
+    ir_sequence.number_next:
+        ir_sequence.number_next: |
+            # don't conflict with the next statement (could be avoided with ordereddict)
+            return target_rows['ir_sequence'].get('number_next', source_row['number_next'])
+    ir_sequence.id:
+        ir_sequence.id: |
+            # we don't merge sequences, it's too painful
+            sequence_name = 'ir_sequence_' + source_row['id'].zfill(3)
+            sequence_exists = sql('source', 'select * from pg_class where relname=(%s)', (sequence_name,))
+            if sequence_exists:
+                last_value = sql('source', 'select last_value from %s' % sequence_name)[0][0]
+                target_rows['ir_sequence']['number_next'] = last_value + 1
+                sequence_id = int(source_row['id']) + self.mapping.max_target_id['ir_sequence']
+                sql('target',
+                    "create sequence ir_sequence_%03d increment by %%s start with %%s" % sequence_id,
+                    (int(source_row['number_increment']), last_value))
+            return source_row['id']
+
+    ir_mail_server.*:
+
+#  ir_attachment.*:
+#  ir_attachment._:
+#    ir_attachment.public: False
+#    ir_attachment.mimetype:
+
+    res_company.__discriminator__:
+        - name
+    res_company.*:
+    res_company.rml_paper_format:
+        res_company.paper_format:
+    res_company.__stored__:
+        - email
+        - phone
+        - logo_web
+        #Note no need to do name as requirement is they match already
+
+    #res_lang - rely on defaults of base
+
+    res_users.__discriminator__:
+        - login
+    res_users.*:
+    res_users.menu_id: __forget__
+
+    res_company_users_rel.*:
+    res_company_users_rel.__discriminator__:
+        - cid
+        - user_id
+
+    # Partners
+    res_partner.*:
+    res_partner.lang:
+      res_partner.lang: return 'en_US'
+      #placeholder
+    res_partner.commercial_partner_id:
+      res_partner.commercial_partner_id: __fk__ res_partner
+
+    res_partner.__discriminator__:
+        - name
+        - company_id
+    res_partner.__stored__:
+        - partner_share
+        - commercial_company_name
+      #display name should be OK
+    # Need to handle images
+
+    res_country.*:
+    res_country.__discriminator__:
+        - code
+
+    res_partner_title.*:
+    res_partner_title.domain: __forget__
+    res_partner_title.__discriminator__:
+        - name
+
+    res_country_state.*:
+    res_country_state.__discriminator__:
+        - code
+        - country_id
+
+    res_currency.*:
+    res_currency.__discriminator__:
+        - name
+    res_currency.company_id:
+        res_currency_rate.company_id:
+    res_currency.base: __forget__
+    res_currency.date: __forget__
+    res_currency.accuracy: __forget__
+
+    res_currency_rate.*:
+    res_currency_rate.name:
+        res_currency_rate.name: return source_row['name'] + ' 00:00:00.000000'
+    res_currency_rate.currency_rate_type_id: __forget__
+
+    res_partner_category.*:
+    res_partner_category.__discriminator__:
+        - name
+    res_partner_category.__stored__:
+        - parent_left
+        - parent_right
+
+    res_partner_category_rel.*:
+
+    res_bank.*:
+
+    #res partner bank is very different,
+    # rather than forget everything we explicitly state
+    res_partner_bank.*:
+    res_partner_bank.acc_number:
+        res_partner_bank.acc_number: return source_row['acc_number'] or source_row['name']
+    res_partner_bank.bank:
+        res_partner_bank.bank_id:
+    res_partner_bank.__stored__:
+        - sanitized_acc_number
+
+    
+web_mobile: __nothing_to_do__
+web_settings_dashboard: __nothing_to_do__
+web_kanban_gauge: __nothing_to_do__
+base_import: __nothing_to_do__
+# Check these two but should be nothing anyway in a v7 to v10
+web_tour: __nothing_to_do__
+web_planner: __nothing_to_do__
+web_kanban: __nothing_to_do__
+web_gantt: __nothing_to_do__
+web_enterprise: __nothing_to_do__
+web_editor: __nothing_to_do__
+web_diagram: __nothing_to_do__
+web_calendar: __nothing_to_do__
+grid: __nothing_to_do__
+web: __nothing_to_do__
+base_setup: __nothing_to_do__
+
+
+mail:
+    res_partner.notification_email_send:
+        res_partner.notify_email: return 'none' if (not source_row['notification_email_send'] or source_row['notification_email_send'] == 'none') else 'always'
+    res_partner.alias_id: __forget__
+
+    res_users.alias_id: __forget__
+
+    mail_alias.*:
+    mail_alias.alias_model_id:
+        mail_alias.alias_model_id: |
+          res = fk_lookup('ir_model', 'model', source_row['alias_model_id'])
+          return res or '__forget_row__'
+    mail_alias._:
+        mail_alias.alias_contact: return 'everyone'
+
